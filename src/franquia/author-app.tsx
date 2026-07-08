@@ -363,4 +363,4 @@ function StudentApp({ course, start }) {
   );
 }
 
-export { Cover, StudentApp, StudentHome, StudentCourse, StudentLesson, PaywallModal, DEFAULT_OFFER, LOCK_ICON };
+export { Cover, StudentApp, StudentHome, StudentCourse, StudentLesson, PaywallModal, DEFAULT_OFFER, LOCK_ICON, StudentTabBar, SUP_ICON };

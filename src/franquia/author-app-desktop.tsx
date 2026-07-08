@@ -1,5 +1,5 @@
 import React from 'react';
-import { Cover, DEFAULT_OFFER, LOCK_ICON, PaywallModal } from './author-app';
+import { Cover, DEFAULT_OFFER, LOCK_ICON, PaywallModal, SUP_ICON } from './author-app';
 import { AIC } from './author-kit';
 import { MobileBlock } from './author-preview';
 import { Perfil, Suporte } from './co-tabs';
@@ -216,4 +216,4 @@ function StudentAppDesktop({ course }) {
   );
 }
 
-export { StudentAppDesktop };
+export { StudentAppDesktop, DeskSidebar };

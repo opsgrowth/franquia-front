@@ -1,9 +1,12 @@
 import React from 'react';
-import { DEFAULT_OFFER, LOCK_ICON, PaywallModal } from './author-app';
+import { DEFAULT_OFFER, LOCK_ICON, PaywallModal, StudentTabBar } from './author-app';
+import { DeskSidebar } from './author-app-desktop';
 import { AIC } from './author-kit';
 import { CO_COURSES, CoCover, Row, allLessons, coDarken, coLighten, coRgba, coTheme, courseProgress, firstOpenLessonInModule, lessonLocked, moduleDuration, moduleProgress, nextLessonInModule } from './co-app';
 import { MentorIA, Perfil, Suporte } from './co-tabs';
 import { DISP, IC, Ico, MONO, Mark, T } from './kit';
+
+const { useState: useStateCO } = React;
 
 // Produtos & Cursos — telas (Vitrine · Curso · Player) + container. Reusa co-app.jsx.
 
