@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import './styles/global.css';
 import './franquia/cover-assets';
 import { FRANQUIA_INIT } from './franquia/co-admin';
+import { loadFranchiseCatalog } from './lib/catalog';
+import { hasSession } from './lib/api';
 import { DDashboard, DCatalogo } from './franquia/desktop-screens-1';
 import { DGerador, DEditor } from './franquia/desktop-screens-2';
 import { DVendas } from './franquia/desktop-vendas';
@@ -75,6 +77,17 @@ export default function App() {
       if (t) setScreen(t);
     };
     return () => { delete window.__go; };
+  }, []);
+
+  // Catálogo REAL da franquia: se há sessão, busca do backend e substitui o mock.
+  // Falha → mantém FRANQUIA_INIT (degrada sem quebrar a tela).
+  useEffect(() => {
+    if (!hasSession()) return;
+    let alive = true;
+    loadFranchiseCatalog()
+      .then((real) => { if (alive && real && real.length) setFranquiaProducts(real); })
+      .catch((e) => { console.warn('catálogo real indisponível, usando mock:', e); });
+    return () => { alive = false; };
   }, []);
 
   const SCREENS: Record<string, any> = {
