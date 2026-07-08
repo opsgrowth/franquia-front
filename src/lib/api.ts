@@ -10,6 +10,10 @@ export function setSession(token: string, tenant: string) {
   _token = token;
   _tenant = tenant;
 }
+export function clearSession() {
+  _token = '';
+  _tenant = '';
+}
 export function hasSession(): boolean {
   return !!_token;
 }

@@ -1,5 +1,6 @@
 import React from 'react';
 import { DISP, Lockup, MONO, Mark, T, useIsMobile } from './kit';
+import { loginWithPassword } from '../lib/auth';
 
 // Tela: Login premium (email + senha). Reusa T/DISP/MONO/Mark/Lockup.
 function LoginScreen() {
@@ -9,12 +10,18 @@ function LoginScreen() {
   const [busy, setBusy] = React.useState(false);
   const [err, setErr] = React.useState('');
   const fld = { width: '100%', background: T.paper, border: `1.5px solid ${T.line}`, borderRadius: 12, padding: '14px 15px', fontFamily: DISP, fontSize: 16, color: T.ink, outline: 'none' };
-  const submit = (e) => {
+  const submit = async (e) => {
     e && e.preventDefault();
     setErr('');
     if (!email.trim() || !senha.trim()) { setErr('Preencha email e senha.'); return; }
     setBusy(true);
-    setTimeout(() => { window.__go && window.__go('home'); }, 900);
+    try {
+      await loginWithPassword(email.trim(), senha);
+      // sucesso → o App transiciona pro painel via onAuthChange (esta tela desmonta)
+    } catch (e2) {
+      setErr('Email ou senha inválidos.');
+      setBusy(false);
+    }
   };
   return (
     <div style={{ display: 'flex', height: '100%', background: T.paper, fontFamily: DISP, color: T.ink }}>

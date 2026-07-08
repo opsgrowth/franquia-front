@@ -3,7 +3,7 @@ import './styles/global.css';
 import './franquia/cover-assets';
 import { FRANQUIA_INIT } from './franquia/co-admin';
 import { loadFranchiseCatalog } from './lib/catalog';
-import { hasSession } from './lib/api';
+import { bootstrapAuth, isAuthed, onAuthChange, logout } from './lib/auth';
 import { DDashboard, DCatalogo } from './franquia/desktop-screens-1';
 import { DGerador, DEditor } from './franquia/desktop-screens-2';
 import { DVendas } from './franquia/desktop-vendas';
@@ -41,6 +41,8 @@ const SCREEN_FOR: Record<string, string> = {
 
 export default function App() {
   const [screen, setScreen] = useState('dashboard');
+  const [authed, setAuthed] = useState(isAuthed());
+  const [booting, setBooting] = useState(true);
   const [franquiaProducts, setFranquiaProducts] = useState(() => {
     let base: any[] = typeof FRANQUIA_INIT !== 'undefined' ? FRANQUIA_INIT : [];
     try {
@@ -73,22 +75,30 @@ export default function App() {
 
   useEffect(() => {
     window.__go = (key: string) => {
+      if (key === 'logout') { logout(); setScreen('dashboard'); return; }
       const t = SCREEN_FOR[key];
       if (t) setScreen(t);
     };
     return () => { delete window.__go; };
   }, []);
 
-  // Catálogo REAL da franquia: se há sessão, busca do backend e substitui o mock.
+  // Boot de auth: resolve sessão (Supabase ou dev bearer) e reage a login/logout.
+  useEffect(() => {
+    const off = onAuthChange(() => setAuthed(isAuthed()));
+    bootstrapAuth().finally(() => { setAuthed(isAuthed()); setBooting(false); });
+    return off;
+  }, []);
+
+  // Catálogo REAL: assim que autenticado, busca do backend e substitui o mock.
   // Falha → mantém FRANQUIA_INIT (degrada sem quebrar a tela).
   useEffect(() => {
-    if (!hasSession()) return;
+    if (!authed) return;
     let alive = true;
     loadFranchiseCatalog()
       .then((real) => { if (alive && real && real.length) setFranquiaProducts(real); })
       .catch((e) => { console.warn('catálogo real indisponível, usando mock:', e); });
     return () => { alive = false; };
-  }, []);
+  }, [authed]);
 
   const SCREENS: Record<string, any> = {
     dashboard: DDashboard,
@@ -105,6 +115,25 @@ export default function App() {
     'fadmin-gen': () => React.createElement(IngestScreen, { scope: 'franquia' }),
     'fadmin-review': () => React.createElement(ReviewDeskScreen, { scope: 'franquia' }),
   };
+  // Splash enquanto resolve a sessão (evita piscar o login).
+  if (booting) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#18121F' }}>
+        <span style={{ width: 22, height: 22, border: '3px solid rgba(255,255,255,.25)', borderTopColor: '#7C3AED', borderRadius: '50%', display: 'inline-block', animation: 'fia-spin .7s linear infinite' }} />
+        <style>{`@keyframes fia-spin{to{transform:rotate(360deg)}}`}</style>
+      </div>
+    );
+  }
+
+  // Não autenticado → tela de login (mesmo que o screen aponte pra outra coisa).
+  if (!authed) {
+    return (
+      <ErrorBoundary key="login">
+        <LoginScreen />
+      </ErrorBoundary>
+    );
+  }
+
   const Current = SCREENS[screen] || SCREENS.dashboard;
   return (
     <ErrorBoundary key={screen}>
