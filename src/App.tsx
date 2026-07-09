@@ -48,8 +48,19 @@ const PREMIUM_MOCK: any[] = [
   { id: 'prem-trafego-avancado', title: 'Tráfego Avançado & Escala', subtitle: 'Estruturas de campanha para escalar sem quebrar o ROI.', kind: 'Premium', color: '#159A8C', displayPrice: 'Premium', access: 'Premium (upsell)', coverImg: null, students: 0, banners: [], modules: [] },
 ];
 
+// Tela a partir da URL (#catalog etc.) — reload mantém a aba atual. 'login' nunca é
+// restaurada (o gate de auth cuida disso).
+function screenFromHash(): string {
+  try {
+    const h = (window.location.hash || '').replace(/^#\/?/, '');
+    const s = SCREEN_FOR[h];
+    if (s && s !== 'login') return s;
+  } catch (e) {}
+  return 'dashboard';
+}
+
 export default function App() {
-  const [screen, setScreen] = useState('dashboard');
+  const [screen, setScreen] = useState<string>(screenFromHash);
   const [authed, setAuthed] = useState(isAuthed());
   const [booting, setBooting] = useState(true);
   const [franquiaProducts, setFranquiaProducts] = useState(() => {
@@ -89,6 +100,22 @@ export default function App() {
       if (t) setScreen(t);
     };
     return () => { delete window.__go; };
+  }, []);
+
+  // Persiste a tela atual na URL (#catalog etc.) → reload mantém a aba.
+  useEffect(() => {
+    try {
+      const target = '#' + screen;
+      if (screen !== 'login' && window.location.hash !== target) {
+        window.history.replaceState(null, '', target);
+      }
+    } catch (e) {}
+  }, [screen]);
+  // Reage a mudança de hash (voltar/avançar do navegador ou editar a URL).
+  useEffect(() => {
+    const onHash = () => setScreen(screenFromHash());
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
   }, []);
 
   // Boot de auth: resolve sessão (Supabase ou dev bearer) e reage a login/logout.
