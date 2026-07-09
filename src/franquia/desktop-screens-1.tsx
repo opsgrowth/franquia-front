@@ -154,6 +154,9 @@ function DDashboard() {
   // --- dados REAIS do franqueado (sobrepõem o mock) ---
   const [realSales, setRealSales] = React.useState([]);
   React.useEffect(() => { let a = true; loadSales().then((s) => { if (a) setRealSales(s); }).catch(() => {}); return () => { a = false; }; }, []);
+  // re-renderiza quando o catálogo muda (a tabela abaixo segue o catálogo automaticamente)
+  const [, _forceD] = React.useState(0);
+  React.useEffect(() => { const id = setInterval(() => { if (window.__franquiaProducts) _forceD((n) => n + 1); }, 500); return () => clearInterval(id); }, []);
   const _catCount = ((typeof window !== 'undefined' && window.__franquiaProducts) || []).length;
   const _maxD = period === 'hoje' ? 0 : period === '7d' ? 7 : period === '15d' ? 15 : 30;
   const _inP = realSales.filter((s) => s.d <= _maxD && s.status === 'Acesso liberado');
@@ -166,12 +169,18 @@ function DDashboard() {
     ['Produtos no ar', String(_catCount || 8), ''],
     ['Ticket médio', _fmt(_tk), ''],
   ];
-  // linhas por produto (agregadas das vendas reais)
+  // Tabela = TODOS os produtos do CATÁLOGO (segue o catálogo automaticamente), com as
+  // vendas/receita reais do período por produto (0 se ainda não vendeu).
   const _byProd = {};
   _inP.forEach((s) => { const p = _byProd[s.prod] || { n: 0, v: 0 }; p.n += 1; p.v += s._val || 0; _byProd[s.prod] = p; });
-  const rows = Object.entries(_byProd)
-    .sort((a, b) => b[1].v - a[1].v)
-    .map(([prod, p]) => [prod, 'No ar', p.n ? _fmt(p.v / p.n) : '—', String(p.n), _fmt(p.v)]);
+  const _catalogo = (typeof window !== 'undefined' && window.__franquiaProducts) || [];
+  const rows = _catalogo
+    .map((p) => {
+      const agg = _byProd[p.title] || { n: 0, v: 0 };
+      return { prod: p.title, price: p.displayPrice || '—', n: agg.n, v: agg.v };
+    })
+    .sort((a, b) => b.v - a.v || b.n - a.n)
+    .map((r) => [r.prod, 'No ar', r.price, String(r.n), _fmt(r.v)]);
   // gráfico: barras derivadas das vendas reais por dia (vazio → barras baixas).
   const _dayMap = {};
   _inP.forEach((s) => { _dayMap[s.d] = (_dayMap[s.d] || 0) + (s._val || 0); });
