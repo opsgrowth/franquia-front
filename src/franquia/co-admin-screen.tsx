@@ -7,6 +7,7 @@ import { LessonModal, ModuleModal, ProductModal } from './co-admin-modals';
 import { coDarken, coTheme, moduleDuration } from './co-app';
 import { DBtn, DShell } from './desktop-screens-1';
 import { DISP, IC, Ico, MONO, T, useIsMobile } from './kit';
+import { persistAppCover, persistBanners, persistModuleCover } from '../lib/covers';
 
 // "Criar do zero" — ProductsAdminScreen (lista, produto, módulos & aulas, modais).
 
@@ -43,19 +44,36 @@ function ProductsAdminScreen({ scope, sharedProducts, setSharedProducts }) {
 
   // ── mutations ──
   const addProduct = (data) => { const id = aid('p'); setProducts((ps) => [...ps, { id, students: 0, status: data.access === 'Premium (upsell)' ? 'Premium' : 'Rascunho', modules: [], ...data }]); setSelId(id); setView('product'); };
-  const updateProduct = (id, data) => setProducts((ps) => ps.map((p) => (p.id === id ? { ...p, ...data, status: data.access === 'Premium (upsell)' ? 'Premium' : (p.status === 'Premium' ? 'Publicado' : p.status), } : p)));
+  const updateProduct = (id, data) => {
+    // capa do produto: persiste no backend só se mudou (evita re-upload em cada save)
+    const cur = products.find((p) => p.id === id);
+    if (cur && data.coverImg !== cur.coverImg) persistAppCover(id, data.coverImg);
+    setProducts((ps) => ps.map((p) => (p.id === id ? { ...p, ...data, status: data.access === 'Premium (upsell)' ? 'Premium' : (p.status === 'Premium' ? 'Publicado' : p.status), } : p)));
+  };
   const delProduct = (id) => setProducts((ps) => ps.filter((p) => p.id !== id));
   const dupProduct = (id) => setProducts((ps) => { const src = ps.find((p) => p.id === id); if (!src) return ps; const dup = { ...src, id: aid('p'), title: src.title + ' (cópia)', status: 'Rascunho', students: 0, modules: src.modules.map((m) => ({ ...m, id: aid('m'), lessons: m.lessons.map((l) => ({ ...l, id: aid('l') })) })) }; return [...ps, dup]; });
   const addModule = (pid, data) => setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, modules: [...p.modules, { id: aid('m'), title: data.title, cover: data.cover, lessons: [] }] } : p)));
-  const updateModule = (pid, mid, data) => setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, modules: p.modules.map((m) => (m.id === mid ? { ...m, title: data.title, cover: data.cover } : m)) } : p)));
+  const updateModule = (pid, mid, data) => {
+    const cur = products.find((p) => p.id === pid);
+    const m0 = cur && cur.modules.find((mm) => mm.id === mid);
+    if (m0 && data.cover !== m0.cover) persistModuleCover(mid, data.cover);
+    setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, modules: p.modules.map((m) => (m.id === mid ? { ...m, title: data.title, cover: data.cover } : m)) } : p)));
+  };
   const delModule = (pid, mid) => setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, modules: p.modules.filter((m) => m.id !== mid) } : p)));
   const moveModule = (pid, mid, dir) => setProducts((ps) => ps.map((p) => { if (p.id !== pid) return p; const i = p.modules.findIndex((m) => m.id === mid); const j = i + dir; if (j < 0 || j >= p.modules.length) return p; const a = [...p.modules]; [a[i], a[j]] = [a[j], a[i]]; return { ...p, modules: a }; }));
   const addLesson = (pid, mid, data) => setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, modules: p.modules.map((m) => (m.id === mid ? { ...m, lessons: [...m.lessons, { id: aid('l'), ...data }] } : m)) } : p)));
   const updateLesson = (pid, mid, lid, data) => setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, modules: p.modules.map((m) => (m.id === mid ? { ...m, lessons: m.lessons.map((l) => (l.id === lid ? { ...l, ...data } : l)) } : m)) } : p)));
   const delLesson = (pid, mid, lid) => setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, modules: p.modules.map((m) => (m.id === mid ? { ...m, lessons: m.lessons.filter((l) => l.id !== lid) } : m)) } : p)));
   const setProdBanner = (pid, v) => setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, banner: v } : p)));
-  const setProdBanners = (pid, arr) => setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, banners: arr } : p)));
-  const setModCover = (pid, mid, v) => setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, modules: p.modules.map((m) => (m.id === mid ? { ...m, cover: v } : m)) } : p)));
+  const setProdBanners = (pid, arr) => {
+    const cur = products.find((p) => p.id === pid);
+    persistBanners(pid, (cur && cur.banners) || [], arr);
+    setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, banners: arr } : p)));
+  };
+  const setModCover = (pid, mid, v) => {
+    persistModuleCover(mid, v);
+    setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, modules: p.modules.map((m) => (m.id === mid ? { ...m, cover: v } : m)) } : p)));
+  };
   const imgOf = (v) => (typeof v === 'string' ? v : null);
 
   // ── list view ──

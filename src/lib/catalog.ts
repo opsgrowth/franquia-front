@@ -23,11 +23,14 @@ function mapBlock(b: any) {
   }
 }
 
+const isB64 = (v: any): boolean => typeof v === 'string' && v.startsWith('data:');
+
 function mapProduct(d: any) {
   const modules = (d.modules || []).map((m: any, mi: number) => ({
     id: m.id,
     title: m.title,
-    cover: mi, // índice → família de cor determinística (coverArt)
+    // só aceita capa base64 do backend; URL gated (/modules/..) quebraria o <img> → cai no índice
+    cover: isB64(m.cover_image_url) ? m.cover_image_url : mi,
     lessons: (m.lessons || []).map((l: any, li: number) => ({
       id: l.id,
       title: l.title,
@@ -46,12 +49,12 @@ function mapProduct(d: any) {
     subtitle: d.tagline || 'Produto da Franquia — pronto para vender',
     kind: 'Curso da Franquia',
     color: d.accent_color || '#7C3AED',
-    coverImg: null,
+    coverImg: isB64(d.cover_image_url) ? d.cover_image_url : null, // só base64 (não URL gated)
     students: d.students_count || 0,
     displayPrice: priceCents ? `R$ ${Math.round(priceCents / 100)}` : 'R$ —',
     access: 'Liberado',
     status: 'Publicado',
-    banners: [],
+    banners: (d.banners || []).filter(isB64), // banners do hero (base64)
     modules,
   };
 }

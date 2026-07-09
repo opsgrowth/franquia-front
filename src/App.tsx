@@ -131,10 +131,35 @@ export default function App() {
   useEffect(() => {
     if (!authed) return;
     let alive = true;
+    // Fallback de capa de PRODUTO: se o backend ainda não tem capa (antes do criador
+    // subir), reusa a capa fixa atual (FIXED_COVERS) p/ não regredir o visual. Capa
+    // do backend (base64) SEMPRE ganha.
+    const norm = (s: string) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+    const isB64 = (v: any) => typeof v === 'string' && v.startsWith('data:');
+    const init: any[] = typeof FRANQUIA_INIT !== 'undefined' ? FRANQUIA_INIT : [];
+    let saved: any[] = [];
+    try { saved = JSON.parse(localStorage.getItem('fia_products') || '[]'); } catch (e) {}
+    const savedOf = (p: any) => saved.find((x: any) => x.id === p.id || norm(x.title) === norm(p.title));
+    const withLocalCovers = (p: any) => {
+      const s = savedOf(p);
+      let coverImg = isB64(s && s.coverImg) ? s.coverImg : (isB64(p.coverImg) ? p.coverImg : null);
+      if (!coverImg) {
+        const fixed = init.find((i: any) => norm(i.title) === norm(p.title) && typeof i.coverImg === 'string');
+        if (fixed) coverImg = fixed.coverImg;
+        else if (window.FIXED_COVERS && window.FIXED_COVERS[norm(p.title)]) coverImg = window.FIXED_COVERS[norm(p.title)];
+      }
+      const savedBanners = s && (s.banners || []).filter(isB64);
+      const banners = (savedBanners && savedBanners.length) ? savedBanners : p.banners;
+      const modules = (p.modules || []).map((m: any) => {
+        const sm = s && (s.modules || []).find((mm: any) => mm.id === m.id || norm(mm.title) === norm(m.title));
+        return (sm && isB64(sm.cover)) ? { ...m, cover: sm.cover } : m;
+      });
+      return { ...p, coverImg, banners, modules };
+    };
     loadFranchiseCatalog()
       .then((real) => {
         if (!alive) return;
-        const abertos = (real && real.length) ? real : [];
+        const abertos = (real && real.length) ? real.map(withLocalCovers) : [];
         setFranquiaProducts([...abertos, ...PREMIUM_MOCK]);
       })
       .catch((e) => { console.warn('catálogo real indisponível, usando mock:', e); });

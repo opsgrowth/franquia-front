@@ -40,3 +40,20 @@ export async function api<T = any>(
   }
   return res.json();
 }
+
+// Upload multipart (capa/banner) — NÃO seta Content-Type (o browser põe o boundary).
+// `file` é um Blob/File; o backend espera o campo `file` (UploadFile).
+export async function apiUpload<T = any>(path: string, file: Blob, filename = 'upload'): Promise<T> {
+  const fd = new FormData();
+  fd.append('file', file, filename);
+  const headers: Record<string, string> = {};
+  if (_token) headers['Authorization'] = `Bearer ${_token}`;
+  if (_tenant) headers['X-Tenant-Id'] = _tenant;
+  const res = await fetch(`${BASE}${path}`, { method: 'POST', headers, body: fd });
+  if (res.status === 204) return null as T;
+  if (!res.ok) {
+    const detail = await res.text().catch(() => res.statusText);
+    throw new Error(`${res.status}: ${detail}`);
+  }
+  return res.json();
+}
