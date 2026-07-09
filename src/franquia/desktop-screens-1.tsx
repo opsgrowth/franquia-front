@@ -6,6 +6,7 @@ import { MaterialsSheet } from './desktop-materiais';
 import { RecorrenciaPaywall } from './author-ingest';
 import { DISP, IC, Ico, Lockup, MONO, Mark, T, Wordmark, useIsMobile } from './kit';
 import { getMe } from '../lib/auth';
+import { loadSales } from '../lib/sales';
 
 // Ferramenta FranquIA · desktop (parte 1) — Shell + Dashboard + Catálogo
 // Reusa T/DISP/MONO/Mark/Wordmark + Ico/IC (de mobile-screens-1.jsx).
@@ -143,8 +144,35 @@ function DDashboard() {
   DATA['custom'] = { ...DATA['30d'], label: 'personalizado', chartNote: `${cFrom.split('-').reverse().slice(0,2).join('/')} – ${cTo.split('-').reverse().slice(0,2).join('/')}`, metrics: [['Vendas · período', 'R$ 408.510', '+24%'], ...DATA['30d'].metrics.slice(1)] };
 
   const d = DATA[period];
-  const metrics = d.metrics;
-  const rows = d.rows;
+
+  // --- dados REAIS do franqueado (sobrepõem o mock) ---
+  const [realSales, setRealSales] = React.useState([]);
+  React.useEffect(() => { let a = true; loadSales().then((s) => { if (a) setRealSales(s); }).catch(() => {}); return () => { a = false; }; }, []);
+  const _catCount = ((typeof window !== 'undefined' && window.__franquiaProducts) || []).length;
+  const _maxD = period === 'hoje' ? 0 : period === '7d' ? 7 : period === '15d' ? 15 : 30;
+  const _inP = realSales.filter((s) => s.d <= _maxD && s.status === 'Acesso liberado');
+  const _rec = _inP.reduce((acc, s) => acc + (s._val || 0), 0);
+  const _tk = _inP.length ? _rec / _inP.length : 0;
+  const _fmt = (n) => `R$ ${Number(n).toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`;
+  const metrics = [
+    [`Vendas · ${d.label}`, _fmt(_rec), _inP.length ? `${_inP.length} venda${_inP.length > 1 ? 's' : ''}` : ''],
+    ['Comissão', '100%', 'sempre'],
+    ['Produtos no ar', String(_catCount || 8), ''],
+    ['Ticket médio', _fmt(_tk), ''],
+  ];
+  // linhas por produto (agregadas das vendas reais)
+  const _byProd = {};
+  _inP.forEach((s) => { const p = _byProd[s.prod] || { n: 0, v: 0 }; p.n += 1; p.v += s._val || 0; _byProd[s.prod] = p; });
+  const rows = Object.entries(_byProd)
+    .sort((a, b) => b[1].v - a[1].v)
+    .map(([prod, p]) => [prod, 'No ar', p.n ? _fmt(p.v / p.n) : '—', String(p.n), _fmt(p.v)]);
+  // gráfico: barras derivadas das vendas reais por dia (vazio → barras baixas).
+  const _dayMap = {};
+  _inP.forEach((s) => { _dayMap[s.d] = (_dayMap[s.d] || 0) + (s._val || 0); });
+  const _days = Object.keys(_dayMap).map(Number).sort((a, b) => b - a).slice(0, 8).reverse();
+  const _dmax = Math.max(...Object.values(_dayMap).map(Number), 1);
+  const bars = _days.length ? _days.map((k) => Math.max(8, Math.round((_dayMap[k] / _dmax) * 100))) : [5, 5, 5, 5];
+  const barLabels = _days.length ? _days.map((k) => (k === 0 ? 'hoje' : `${k}d`)) : ['—', '—', '—', '—'];
 
   const periods = [['hoje', 'Hoje'], ['7d', '7 dias'], ['15d', '15 dias'], ['30d', '30 dias']];
 
@@ -194,11 +222,11 @@ function DDashboard() {
             <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 16 }}>{d.chartTitle}</div>
             <div style={{ fontFamily: MONO, fontSize: 11.5, color: T.dim }}>{d.chartNote}</div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: d.bars.length > 10 ? 5 : 12, height: 150, marginTop: 22 }}>
-            {d.bars.map((h, i) => (
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: bars.length > 10 ? 5 : 12, height: 150, marginTop: 22 }}>
+            {bars.map((h, i) => (
               <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, justifyContent: 'flex-end', height: '100%' }}>
-                <div style={{ width: '100%', height: `${Math.round(h * 1.18)}px`, borderRadius: d.bars.length > 10 ? 4 : 7, background: i === d.bars.length - 1 ? T.accent : 'rgba(124,58,237,.18)' }}></div>
-                <span style={{ fontFamily: MONO, fontSize: d.bars.length > 10 ? 8 : 9.5, color: T.dim }}>{d.barLabels[i]}</span>
+                <div style={{ width: '100%', height: `${Math.round(h * 1.18)}px`, borderRadius: bars.length > 10 ? 4 : 7, background: i === bars.length - 1 ? T.accent : 'rgba(124,58,237,.18)' }}></div>
+                <span style={{ fontFamily: MONO, fontSize: bars.length > 10 ? 8 : 9.5, color: T.dim }}>{barLabels[i]}</span>
               </div>
             ))}
           </div>
@@ -208,8 +236,8 @@ function DDashboard() {
           <div style={{ position: 'absolute', right: -30, bottom: -30, opacity: 0.16 }}><Mark size={150} front={T.accent} ghost={T.pill} inner={T.ink} /></div>
           <div style={{ position: 'relative', flex: 1 }}>
             <Ico d={IC.spark} size={22} c={T.pill} />
-            <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 19, color: T.darkText, marginTop: 16, lineHeight: 1.25, letterSpacing: '-0.02em' }}>Seu “Renda com IA — Método” é o que mais vende.</div>
-            <div style={{ fontFamily: DISP, fontSize: 13.5, color: 'rgba(246,241,251,.6)', marginTop: 10 }}>Gere uma versão para um novo público e dobre o alcance do que já funciona.</div>
+            <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 19, color: T.darkText, marginTop: 16, lineHeight: 1.25, letterSpacing: '-0.02em' }}>{rows.length ? `Seu “${rows[0][0]}” é o que mais vende.` : 'Escolha um produto do catálogo e comece a promover.'}</div>
+            <div style={{ fontFamily: DISP, fontSize: 13.5, color: 'rgba(246,241,251,.6)', marginTop: 10 }}>{rows.length ? 'Foque nele e amplie o alcance do que já funciona.' : 'O catálogo da franquia está pronto — é só conectar seu checkout.'}</div>
           </div>
           <div style={{ position: 'relative', marginTop: 18 }}><DBtn icon={IC.arrow} onClick={() => setPaywall(true)}>Gerar versão</DBtn></div>
         </div>
@@ -220,8 +248,11 @@ function DDashboard() {
         <div style={{ display: 'grid', gridTemplateColumns: '2.4fr 1fr 1fr 0.8fr 1fr', padding: '14px 22px', fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.06em', color: T.dim, borderBottom: `1px solid ${T.line}` }}>
           <span>PRODUTO</span><span>STATUS</span><span>PREÇO</span><span>VENDAS</span><span style={{ textAlign: 'right' }}>RECEITA</span>
         </div>
+        {rows.length === 0 && (
+          <div style={{ padding: '40px 22px', textAlign: 'center', fontFamily: DISP, fontSize: 13.5, color: T.dim }}>Nenhuma venda no período. Suas vendas por produto aparecem aqui.</div>
+        )}
         {rows.map((r, i) => (
-          <div key={i} style={{ display: 'grid', gridTemplateColumns: '2.4fr 1fr 1fr 0.8fr 1fr', padding: '14px 22px', alignItems: 'center', borderBottom: i < 3 ? `1px solid ${T.line}` : 'none' }}>
+          <div key={i} style={{ display: 'grid', gridTemplateColumns: '2.4fr 1fr 1fr 0.8fr 1fr', padding: '14px 22px', alignItems: 'center', borderBottom: i < rows.length - 1 ? `1px solid ${T.line}` : 'none' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ width: 32, height: 32, borderRadius: 8, background: T.halo, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Mark size={16} /></div>
               <span style={{ fontFamily: DISP, fontWeight: 600, fontSize: 14 }}>{r[0]}</span>
