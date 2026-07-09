@@ -4,7 +4,8 @@ import { Perfil } from './co-tabs';
 import { DShell } from './desktop-screens-1';
 import { DISP, IC, Ico, MONO, Mark, T, useIsMobile } from './kit';
 import { getWebhookUrl } from '../lib/promotions';
-import { getMe } from '../lib/auth';
+import { getMe, setMeName } from '../lib/auth';
+import { api } from '../lib/api';
 
 // Tela: Config — conta, identidade do app do aluno, integrações (webhooks), preferências.
 // Reusa T/DISP/MONO/Ico/IC/AIC/Mark + DShell (desktop-screens-1).
@@ -18,7 +19,20 @@ function DConfig() {
   const _me = getMe();
   const _nome = (_me && _me.creator && _me.creator.name) || 'Você';
   const _email = (_me && _me.creator && _me.creator.email) || '';
-  const _inicial = _nome.charAt(0).toUpperCase();
+  const [nomeEdit, setNomeEdit] = React.useState(_nome);
+  const [savingConta, setSavingConta] = React.useState<'idle' | 'saving' | 'ok'>('idle');
+  const _inicial = (nomeEdit || _nome).charAt(0).toUpperCase();
+  const saveConta = async () => {
+    setSavingConta('saving');
+    try {
+      await api('/me', { method: 'PATCH', tenant: false, body: { name: nomeEdit.trim() } });
+      setMeName(nomeEdit.trim());
+      setSavingConta('ok');
+      setTimeout(() => setSavingConta('idle'), 1800);
+    } catch (e) {
+      setSavingConta('idle');
+    }
+  };
   const [notif, setNotif] = React.useState({ venda: true, acesso: true, resumo: false, mkt: false });
   const PLAT_NAMES = ['Kiwify', 'Hotmart', 'Digistore24', 'Eduzz', 'Cartpanda'];
   const franqProds = (typeof window !== 'undefined' && window.__franquiaProducts) ? window.__franquiaProducts : [];
@@ -75,8 +89,8 @@ function DConfig() {
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, border: `1px solid ${T.line}`, borderRadius: 10, padding: '9px 15px', fontFamily: DISP, fontWeight: 600, fontSize: 13.5, color: T.ink, cursor: 'pointer' }}><Ico d={AIC.upload} size={15} c={T.ink} />Trocar foto</div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: cmob ? '1fr' : '1fr 1fr', gap: 16 }}>
-          <div><label style={lbl}>Nome</label><input defaultValue={_nome} style={inp} /></div>
-          <div><label style={lbl}>E-mail</label><input defaultValue={_email} style={inp} /></div>
+          <div><label style={lbl}>Nome</label><input value={nomeEdit} onChange={(e) => setNomeEdit(e.target.value)} style={inp} /></div>
+          <div><label style={lbl}>E-mail</label><input value={_email} readOnly style={{ ...inp, background: T.paper, color: T.dim, cursor: 'not-allowed' }} /></div>
         </div>
       </Card>
       <Card>
@@ -92,7 +106,7 @@ function DConfig() {
           <Ico d={'M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3 M10 17l5-5-5-5 M15 12H3'} size={17} c={'#C0392B'} />Sair da conta
         </div>
       </Card>
-      <div><Save /></div>
+      <div onClick={saveConta} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: savingConta === 'ok' ? '#0E9A50' : T.accent, color: '#fff', borderRadius: 11, padding: '12px 20px', fontFamily: DISP, fontWeight: 600, fontSize: 14.5, boxShadow: '0 8px 20px rgba(124,58,237,.32)', cursor: 'pointer', opacity: savingConta === 'saving' ? 0.7 : 1 }}><Ico d={AIC.check} size={17} c="#fff" />{savingConta === 'ok' ? 'Salvo!' : savingConta === 'saving' ? 'Salvando…' : 'Salvar alterações'}</div>
     </div>
   );
 

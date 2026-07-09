@@ -15,6 +15,10 @@ export function onAuthChange(cb: () => void): () => void {
 }
 export function isAuthed(): boolean { return _authed; }
 export function getMe(): any { return _me; }
+// Atualiza o nome no _me local (após salvar no backend) e avisa os componentes.
+export function setMeName(name: string): void {
+  if (_me && _me.creator) { _me.creator.name = name; emit(); }
+}
 
 async function loadMe(token: string): Promise<void> {
   setSession(token, '');
