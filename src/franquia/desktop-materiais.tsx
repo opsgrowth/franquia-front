@@ -77,7 +77,7 @@ function MaterialsSheet({ item, course, onClose }) {
               <div style={{ flex: 1 }}>
                 <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 15.5, color: T.ink }}>Checkout próprio + integração</div>
                 <div style={{ fontFamily: DISP, fontSize: 13, color: T.dim, marginTop: 3, lineHeight: 1.55 }}>Venda pelo checkout da plataforma que você escolher (Kiwify, Hotmart…). Depois, conecte o produto via webhook para o cliente receber o acesso automaticamente.</div>
-                <div onClick={() => { onClose && onClose(); if (typeof window !== 'undefined') { window.__integProduct = item && item.n; window.__cfgSection = 'integ'; } window.__go && window.__go('cfg'); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, marginTop: 12, fontFamily: DISP, fontWeight: 600, fontSize: 13, color: T.accent, cursor: 'pointer' }}>Configurar integração <Ico d={AIC.chevron} size={14} c={T.accent} style={{ transform: 'rotate(-90deg)' }} /></div>
+                <div onClick={() => { onClose && onClose(); if (typeof window !== 'undefined') { window.__integProduct = item && item.n; (window as any).__integAppId = item && ((item.raw && item.raw.id) || item.id); window.__cfgSection = 'integ'; } window.__go && window.__go('cfg'); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, marginTop: 12, fontFamily: DISP, fontWeight: 600, fontSize: 13, color: T.accent, cursor: 'pointer' }}>Configurar integração <Ico d={AIC.chevron} size={14} c={T.accent} style={{ transform: 'rotate(-90deg)' }} /></div>
               </div>
             </div>
           </div>

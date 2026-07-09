@@ -3,6 +3,7 @@ import { AIC } from './author-kit';
 import { Perfil } from './co-tabs';
 import { DShell } from './desktop-screens-1';
 import { DISP, IC, Ico, MONO, Mark, T, useIsMobile } from './kit';
+import { getWebhookUrl } from '../lib/promotions';
 
 // Tela: Config — conta, identidade do app do aluno, integrações (webhooks), preferências.
 // Reusa T/DISP/MONO/Ico/IC/AIC/Mark + DShell (desktop-screens-1).
@@ -11,6 +12,8 @@ function DConfig() {
   const cmob = useIsMobile();
   const [sec, setSec] = React.useState(() => (typeof window !== 'undefined' && window.__cfgSection) ? window.__cfgSection : 'conta');
   const [color, setColor] = React.useState('#7C3AED');
+  const [webhookUrl, setWebhookUrl] = React.useState('Gerando sua URL…');
+  const [copied, setCopied] = React.useState(false);
   const [notif, setNotif] = React.useState({ venda: true, acesso: true, resumo: false, mkt: false });
   const PLAT_NAMES = ['Kiwify', 'Hotmart', 'Digistore24', 'Eduzz', 'Cartpanda'];
   const franqProds = (typeof window !== 'undefined' && window.__franquiaProducts) ? window.__franquiaProducts : [];
@@ -25,6 +28,18 @@ function DConfig() {
       setLinks((ls) => ls.some((l) => l.product === p) ? ls : [...ls, { id: 'lk' + Date.now(), product: p, platform: 'Kiwify', offer: '', status: 'wait', revoke: true }]);
     }
   }, []);
+  // URL de webhook REAL do backend (promoção). Cola na Kiwify → venda dispara o loop.
+  React.useEffect(() => {
+    let alive = true;
+    const appId = typeof window !== 'undefined' ? (window as any).__integAppId : undefined;
+    getWebhookUrl(appId)
+      .then((u) => { if (alive) setWebhookUrl(u); })
+      .catch(() => { if (alive) setWebhookUrl('Conecte um produto do catálogo para gerar sua URL.'); });
+    return () => { alive = false; };
+  }, []);
+  const copyWebhook = () => {
+    try { navigator.clipboard.writeText(webhookUrl); setCopied(true); setTimeout(() => setCopied(false), 1600); } catch (e) {}
+  };
   const setLink = (id, patch) => setLinks((ls) => ls.map((l) => l.id === id ? { ...l, ...patch } : l));
   const addLink = () => setLinks((ls) => [...ls, { id: 'lk' + Date.now(), product: (franqProds[0] && franqProds[0].title) || '', platform: 'Kiwify', offer: '', status: 'wait', revoke: true }]);
   const delLink = (id) => setLinks((ls) => ls.filter((l) => l.id !== id));
@@ -125,8 +140,8 @@ function DConfig() {
         <CardTitle sub="Cole esta URL no painel de webhook de cada plataforma. O acesso é roteado pelo ID da oferta.">Sua URL de webhook</CardTitle>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: T.paper, border: `1px solid ${T.line}`, borderRadius: 11, padding: '12px 14px' }}>
           <Ico d={AIC.link} size={16} c={T.dim} />
-          <span style={{ flex: 1, fontFamily: MONO, fontSize: 13, color: T.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>https://hook.franquia.ia/v1/camila/a92f3c</span>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: '#fff', border: `1px solid ${T.line}`, borderRadius: 8, padding: '7px 12px', fontFamily: DISP, fontWeight: 600, fontSize: 12.5, color: T.ink, cursor: 'pointer' }}><Ico d={AIC.copy} size={14} c={T.ink} />Copiar</div>
+          <span style={{ flex: 1, fontFamily: MONO, fontSize: 13, color: T.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{webhookUrl}</span>
+          <div onClick={copyWebhook} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: copied ? '#0E9A50' : '#fff', border: `1px solid ${copied ? '#0E9A50' : T.line}`, borderRadius: 8, padding: '7px 12px', fontFamily: DISP, fontWeight: 600, fontSize: 12.5, color: copied ? '#fff' : T.ink, cursor: 'pointer' }}><Ico d={AIC.copy} size={14} c={copied ? '#fff' : T.ink} />{copied ? 'Copiado!' : 'Copiar'}</div>
         </div>
         <div style={{ fontFamily: DISP, fontSize: 12.5, color: T.dim, marginTop: 10, lineHeight: 1.5 }}>Use a mesma URL em todas as plataformas. Cada compra é entregue ao produto certo pelo <b style={{ color: T.ink, fontWeight: 600 }}>ID da oferta</b> abaixo.</div>
       </Card>
