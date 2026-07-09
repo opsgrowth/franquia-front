@@ -1,9 +1,7 @@
 // Auth do painel — login real via Supabase (email/senha) com auto-provisão.
-// Fallback dev: VITE_DEV_BEARER (token forjado) pula o Supabase p/ testes locais.
+// SEM dev-bearer: o login é sempre o do usuário (evita sessão fantasma de token fixo).
 import { api, clearSession, setSession } from './api';
 import { getSupabase, supabaseConfigured } from './supabase';
-
-const DEV_BEARER: string = (import.meta as any).env?.VITE_DEV_BEARER || '';
 
 let _authed = false;
 let _me: any = null;
@@ -38,21 +36,18 @@ async function loadMe(token: string): Promise<void> {
   emit();
 }
 
-// Chamado uma vez no boot do app. Resolve sessão existente (dev bearer ou Supabase).
+// Chamado uma vez no boot do app. Resolve a sessão persistida do Supabase (se houver).
 export async function bootstrapAuth(): Promise<void> {
   if (_booted) return;
   _booted = true;
 
-  if (DEV_BEARER) {
-    try { await loadMe(DEV_BEARER); } catch (e) { console.warn('dev bearer falhou', e); }
-    return;
-  }
   if (!supabaseConfigured()) return;
 
   try {
     const { data } = await getSupabase().auth.getSession();
     const jwt = data.session?.access_token;
-    if (jwt) await loadMe(jwt);
+    // !_authed: se o usuário logou durante este await, NÃO sobrescreve com a sessão antiga.
+    if (jwt && !_authed) await loadMe(jwt);
   } catch (e) {
     console.warn('sessão inicial falhou', e);
   }

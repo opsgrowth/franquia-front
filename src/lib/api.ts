@@ -1,10 +1,9 @@
 // Cliente da API FastAPI (franquia). Injeta Authorization: Bearer + X-Tenant-Id.
-// Sessão do franqueado vem de env (VITE_DEV_BEARER + VITE_TENANT_ID) — modo demo do
-// lançamento; trocável por login Supabase real depois (só muda a origem do token).
+// A sessão (token + tenant) é SEMPRE do login real do Supabase (setSession no auth).
 
 const BASE: string = (import.meta as any).env?.VITE_API_URL || '';
-let _token: string = (import.meta as any).env?.VITE_DEV_BEARER || '';
-let _tenant: string = (import.meta as any).env?.VITE_TENANT_ID || '';
+let _token = '';
+let _tenant = '';
 
 export function setSession(token: string, tenant: string) {
   _token = token;

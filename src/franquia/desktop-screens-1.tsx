@@ -14,9 +14,8 @@ import { getMe } from '../lib/auth';
 function DShell({ active = 'home', title, sub, action, bleed = false, search, onSearch, searchPlaceholder = 'Buscar…', children }) {
   const _me = getMe();
   const IS_ADMIN = !!(_me && _me.is_admin); // role real do /me (franqueado NÃO é admin)
-  const _nav = [['home', 'Início', IC.home], ['cat', 'Catálogo', IC.grid], ['gen', 'Estúdio', IC.spark], ['sales', 'Vendas', IC.chart], ['cfg', 'Configurações', IC.cfg]];
-  // Estúdio (gerar produtos com IA) é do ADMIN; o franqueado promove, não cria.
-  const nav = IS_ADMIN ? _nav : _nav.filter(([k]) => k !== 'gen');
+  // Estúdio aparece pra todos; só "Catálogo Franquia" (seção ADMIN abaixo) é gated.
+  const nav = [['home', 'Início', IC.home], ['cat', 'Catálogo', IC.grid], ['gen', 'Estúdio', IC.spark], ['sales', 'Vendas', IC.chart], ['cfg', 'Configurações', IC.cfg]];
   const _nome = (_me && _me.creator && _me.creator.name) || 'Você';
   const _email = (_me && _me.creator && _me.creator.email) || '';
   const _inicial = _nome.charAt(0).toUpperCase();
