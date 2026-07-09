@@ -8,28 +8,40 @@ import { DISP, IC, Ico, MONO, T, useIsMobile } from './kit';
 
 function DVendas() {
   const vmob = useIsMobile();
-  const [range, setRange] = React.useState('30d');
+  const [range, setRange] = React.useState('hoje');
   const [plat, setPlat] = React.useState('Todas');
 
   // API: GET /sales?range=&platform=  → cada venda chega por webhook e libera o acesso
+  // d = janela: 0 = hoje. Produtos batem com os de maior receita no Início.
   const SALES = [
-    { id: '#A92F', prod: 'Renda com IA — Método', buyer: 'marina.souza@email.com', plat: 'Kiwify', value: 'R$ 297', net: 'R$ 268', status: 'Acesso liberado', when: 'há 8 min', color: '#7C3AED' },
-    { id: '#A92E', prod: 'Mentoria Alto Ticket', buyer: 'rafael.dias@email.com', plat: 'Hotmart', value: 'R$ 2.997', net: 'R$ 2.667', status: 'Acesso liberado', when: 'há 41 min', color: '#A23CD6' },
-    { id: '#A92D', prod: 'Tráfego do Zero', buyer: 'lucas.f@email.com', plat: 'Digistore24', value: 'R$ 147', net: 'R$ 131', status: 'Pendente', when: 'há 1 h', color: '#5246E5' },
-    { id: '#A92C', prod: 'Renda com IA — Método', buyer: 'paula.m@email.com', plat: 'Kiwify', value: 'R$ 297', net: 'R$ 268', status: 'Acesso liberado', when: 'há 2 h', color: '#7C3AED' },
-    { id: '#A92B', prod: 'Marca que Posiciona', buyer: 'caio.r@email.com', plat: 'Hotmart', value: 'R$ 197', net: 'R$ 175', status: 'Reembolso', when: 'há 5 h', color: '#5246E5' },
-    { id: '#A92A', prod: 'Closer de Alto Ticket', buyer: 'bia.nunes@email.com', plat: 'Digistore24', value: 'R$ 497', net: 'R$ 442', status: 'Acesso liberado', when: 'ontem', color: '#6429C9' },
-    { id: '#A929', prod: 'Copy que Vende', buyer: 'tiago.s@email.com', plat: 'Kiwify', value: 'R$ 127', net: 'R$ 114', status: 'Acesso liberado', when: 'ontem', color: '#B5468A' },
+    { id: '#B417', d: 0, prod: 'Renda com IA — Método', buyer: 'marinasouza91@gmail.com', plat: 'Kiwify', value: 'R$ 297', net: 'R$ 268', status: 'Acesso liberado', when: 'há 2 min', color: '#7C3AED' },
+    { id: '#B416', d: 0, prod: 'Modo Viral', buyer: 'ju_martins@hotmail.com', plat: 'Kiwify', value: 'R$ 97', net: 'R$ 87', status: 'Acesso liberado', when: 'há 6 min', color: '#3F6FD8' },
+    { id: '#B415', d: 0, prod: 'Reconquista 360', buyer: 'amandargomes@gmail.com', plat: 'Kiwify', value: 'R$ 147', net: 'R$ 131', status: 'Acesso liberado', when: 'há 9 min', color: '#E2502F' },
+    { id: '#B414', d: 0, prod: 'Renda com IA — Método', buyer: 'carladias.adm@hotmail.com', plat: 'Kiwify', value: 'R$ 297', net: 'R$ 268', status: 'Acesso liberado', when: 'há 14 min', color: '#7C3AED' },
+    { id: '#B413', d: 0, prod: 'Modo Viral', buyer: 'brunocorrea22@gmail.com', plat: 'Kiwify', value: 'R$ 97', net: 'R$ 87', status: 'Acesso liberado', when: 'há 21 min', color: '#3F6FD8' },
+    { id: '#B412', d: 0, prod: 'Radar de Anúncios', buyer: 'fernandomelo.rj@hotmail.com', plat: 'Kiwify', value: 'R$ 127', net: 'R$ 113', status: 'Acesso liberado', when: 'há 27 min', color: '#1F8A5B' },
+    { id: '#B411', d: 0, prod: 'Reconquista 360', buyer: 'paty.gonc@gmail.com', plat: 'Kiwify', value: 'R$ 147', net: 'R$ 131', status: 'Acesso liberado', when: 'há 34 min', color: '#E2502F' },
+    { id: '#B410', d: 0, prod: 'Renda com IA — Método', buyer: 'thiagoalmeida07@hotmail.com', plat: 'Kiwify', value: 'R$ 297', net: 'R$ 268', status: 'Pendente', when: 'há 48 min', color: '#7C3AED' },
+    { id: '#B40F', d: 2, prod: 'Modo Viral', buyer: 'lucasferreira.mkt@gmail.com', plat: 'Kiwify', value: 'R$ 97', net: 'R$ 87', status: 'Acesso liberado', when: 'há 2 dias', color: '#3F6FD8' },
+    { id: '#B40E', d: 4, prod: 'Reconquista 360', buyer: 'caior.oliveira@hotmail.com', plat: 'Kiwify', value: 'R$ 147', net: 'R$ 131', status: 'Reembolso', when: 'há 4 dias', color: '#E2502F' },
+    { id: '#B40D', d: 12, prod: 'Radar de Anúncios', buyer: 'bianunes.10@gmail.com', plat: 'Kiwify', value: 'R$ 127', net: 'R$ 113', status: 'Acesso liberado', when: 'há 12 dias', color: '#1F8A5B' },
+    { id: '#B40C', d: 24, prod: 'Renda com IA — Método', buyer: 'tsantos.contato@hotmail.com', plat: 'Kiwify', value: 'R$ 297', net: 'R$ 268', status: 'Acesso liberado', when: 'há 24 dias', color: '#7C3AED' },
   ];
-  const metrics = [['Receita · 30 dias', 'R$ 18.420', '+22%'], ['Vendas', '64', '+11'], ['Ticket médio', 'R$ 288', '+R$24'], ['Reembolsos', '1,8%', '−0,4%']];
+  const METRICS = {
+    'hoje': [['Receita · hoje', 'R$ 16.936', '+14%'], ['Vendas', '108', '+16'], ['Ticket médio', 'R$ 157', '+R$4'], ['Reembolsos', '0%', '—']],
+    '7d': [['Receita · 7 dias', 'R$ 97.240', '+19%'], ['Vendas', '620', '+74'], ['Ticket médio', 'R$ 157', '+R$6'], ['Reembolsos', '1,2%', '−0,3%']],
+    '30d': [['Receita · 30 dias', 'R$ 408.510', '+24%'], ['Vendas', '2.577', '+310'], ['Ticket médio', 'R$ 158', '+R$7'], ['Reembolsos', '1,8%', '−0,4%']],
+  };
+  const metrics = METRICS[range] || METRICS['30d'];
   const STAT = {
     'Acesso liberado': { fg: '#0E7A40', bg: 'rgba(14,154,80,.14)', dot: '#0E9A50' },
     'Pendente': { fg: '#9A6A12', bg: 'rgba(226,163,61,.16)', dot: T.warning },
     'Reembolso': { fg: '#B23A2E', bg: 'rgba(226,80,47,.12)', dot: '#E2502F' },
   };
-  const ranges = [['7d', '7 dias'], ['30d', '30 dias'], ['90d', '90 dias']];
-  const plats = ['Todas', 'Digistore24', 'Kiwify', 'Hotmart'];
-  const rows = SALES.filter((s) => plat === 'Todas' || s.plat === plat);
+  const ranges = [['hoje', 'Hoje'], ['7d', '7 dias'], ['30d', '30 dias']];
+  const plats = ['Todas', 'Kiwify'];
+  const maxD = range === 'hoje' ? 0 : range === '7d' ? 7 : 30;
+  const rows = SALES.filter((s) => (plat === 'Todas' || s.plat === plat) && s.d <= maxD);
 
   const Pill = ({ on, children, onClick }) => (
     <div onClick={onClick} style={{ fontFamily: DISP, fontWeight: 600, fontSize: 13, padding: '8px 15px', borderRadius: 99, cursor: 'pointer', background: on ? T.ink : '#fff', color: on ? '#fff' : T.dim, border: `1px solid ${on ? T.ink : T.line}`, whiteSpace: 'nowrap' }}>{children}</div>

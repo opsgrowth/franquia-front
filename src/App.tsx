@@ -39,6 +39,15 @@ const SCREEN_FOR: Record<string, string> = {
   ingest: 'ingest', review: 'review', manual: 'manual', logout: 'login', login: 'login',
 };
 
+// Produtos PREMIUM (mockup até a gravação) — travados no catálogo, abrem o popup
+// "libera em 7 dias". Entram por ÚLTIMO (o design marca os últimos 4 como premium).
+const PREMIUM_MOCK: any[] = [
+  { id: 'prem-escala', title: 'Escala 7 Dígitos', subtitle: 'O sistema dos que faturam 7 dígitos com produtos digitais.', kind: 'Premium', color: '#C9A227', displayPrice: 'Premium', access: 'Premium (upsell)', coverImg: null, students: 0, banners: [], modules: [] },
+  { id: 'prem-alto-ticket', title: 'Mentoria Alto Ticket', subtitle: 'Venda de R$5k a R$50k com o método da sessão estratégica.', kind: 'Premium', color: '#B5468A', displayPrice: 'Premium', access: 'Premium (upsell)', coverImg: null, students: 0, banners: [], modules: [] },
+  { id: 'prem-ia-auto', title: 'IA que Vende no Automático', subtitle: 'Funis e atendimento com IA rodando 24 horas por dia.', kind: 'Premium', color: '#3F6FD8', displayPrice: 'Premium', access: 'Premium (upsell)', coverImg: null, students: 0, banners: [], modules: [] },
+  { id: 'prem-trafego-avancado', title: 'Tráfego Avançado & Escala', subtitle: 'Estruturas de campanha para escalar sem quebrar o ROI.', kind: 'Premium', color: '#159A8C', displayPrice: 'Premium', access: 'Premium (upsell)', coverImg: null, students: 0, banners: [], modules: [] },
+];
+
 export default function App() {
   const [screen, setScreen] = useState('dashboard');
   const [authed, setAuthed] = useState(isAuthed());
@@ -89,13 +98,18 @@ export default function App() {
     return off;
   }, []);
 
-  // Catálogo REAL: assim que autenticado, busca do backend e substitui o mock.
-  // Falha → mantém FRANQUIA_INIT (degrada sem quebrar a tela).
+  // Catálogo: produtos ABERTOS = reais (backend); + 4 PREMIUM (mockup, travados =
+  // popup "libera em 7 dias"). O design marca os ÚLTIMOS 4 como premium, então os
+  // mock entram por último. Falha no backend → mantém o mock (não quebra a tela).
   useEffect(() => {
     if (!authed) return;
     let alive = true;
     loadFranchiseCatalog()
-      .then((real) => { if (alive && real && real.length) setFranquiaProducts(real); })
+      .then((real) => {
+        if (!alive) return;
+        const abertos = (real && real.length) ? real : [];
+        setFranquiaProducts([...abertos, ...PREMIUM_MOCK]);
+      })
       .catch((e) => { console.warn('catálogo real indisponível, usando mock:', e); });
     return () => { alive = false; };
   }, [authed]);

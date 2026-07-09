@@ -47,7 +47,7 @@ function MaterialsSheet({ item, course, onClose }) {
         </div>
         {/* tabs */}
         <div style={{ display: 'flex', gap: 6, padding: '14px 26px 0' }}>
-          {[['mat', 'Materiais de venda'], ['prev', 'Prévia do app']].map(([k, l]) => {
+          {[['mat', 'Materiais de venda'], ['comp', 'Materiais complementares'], ['prev', 'Prévia do app']].map(([k, l]) => {
             const on = tab === k;
             return <div key={k} onClick={() => setTab(k)} style={{ fontFamily: DISP, fontWeight: 600, fontSize: 14, padding: '10px 16px', borderRadius: '10px 10px 0 0', cursor: 'pointer', color: on ? T.accent : T.dim, borderBottom: `2px solid ${on ? T.accent : 'transparent'}` }}>{l}</div>;
           })}
@@ -80,6 +80,26 @@ function MaterialsSheet({ item, course, onClose }) {
                 <div onClick={() => { onClose && onClose(); if (typeof window !== 'undefined') { window.__integProduct = item && item.n; window.__cfgSection = 'integ'; } window.__go && window.__go('cfg'); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, marginTop: 12, fontFamily: DISP, fontWeight: 600, fontSize: 13, color: T.accent, cursor: 'pointer' }}>Configurar integração <Ico d={AIC.chevron} size={14} c={T.accent} style={{ transform: 'rotate(-90deg)' }} /></div>
               </div>
             </div>
+          </div>
+        ) : tab === 'comp' ? (
+          <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ fontFamily: DISP, fontSize: 14, color: T.dim, lineHeight: 1.55 }}>Materiais extras para divulgar e escalar suas vendas nas redes. Todos os franqueados recebem os mesmos arquivos.</div>
+
+            <AssetCard icon={'M3 5h18v11H3z M3 16l5-4 3 2 4-4 6 5'} title="Criativos para anúncios" desc="Pacote de imagens e vídeos prontos para tráfego pago (Meta e Google).">
+              <Btn icon={DL} solid onClick={() => copy('cre', 'download')}>{copied === 'cre' ? 'Baixando…' : 'Baixar criativos'}</Btn>
+            </AssetCard>
+
+            <AssetCard icon={'M4 5h16v14H4z M4 9l8 5 8-5'} title="Copy para e-mail e WhatsApp" desc="Sequência de mensagens prontas para aquecer e converter sua lista.">
+              <Btn icon={DL} solid onClick={() => copy('cpy', 'download')}>{copied === 'cpy' ? 'Baixando…' : 'Baixar copies'}</Btn>
+            </AssetCard>
+
+            <AssetCard icon={AIC.image} title="Artes para redes sociais" desc="Posts e stories editáveis para feed e status, no padrão da marca.">
+              <Btn icon={DL} solid onClick={() => copy('soc', 'download')}>{copied === 'soc' ? 'Baixando…' : 'Baixar artes'}</Btn>
+            </AssetCard>
+
+            <AssetCard icon={AIC.play} title="Roteiros de stories e reels" desc="Roteiros prontos para gravar e divulgar o produto no seu perfil.">
+              <Btn icon={DL} solid onClick={() => copy('rot', 'download')}>{copied === 'rot' ? 'Baixando…' : 'Baixar roteiros'}</Btn>
+            </AssetCard>
           </div>
         ) : (
           <div style={{ padding: 24, textAlign: 'center' }}>

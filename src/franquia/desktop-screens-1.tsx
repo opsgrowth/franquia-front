@@ -3,6 +3,7 @@ import { AIC } from './author-kit';
 import { PhonePreview } from './author-preview';
 import { FRANQUIA_INIT } from './co-admin';
 import { MaterialsSheet } from './desktop-materiais';
+import { RecorrenciaPaywall } from './author-ingest';
 import { DISP, IC, Ico, Lockup, MONO, Mark, T, Wordmark, useIsMobile } from './kit';
 
 // Ferramenta FranquIA · desktop (parte 1) — Shell + Dashboard + Catálogo
@@ -47,9 +48,9 @@ function DShell({ active = 'home', title, sub, action, bleed = false, search, on
         </React.Fragment>}
         {/* upgrade / status card */}
         <div style={{ marginTop: 'auto', background: T.surface, borderRadius: 14, padding: 16 }}>
-          <div style={{ fontFamily: MONO, fontSize: 10, color: T.pill, letterSpacing: '0.06em' }}>ACESSO VITALÍCIO</div>
+          <div style={{ fontFamily: MONO, fontSize: 10, color: T.pill, letterSpacing: '0.06em' }}>LICENÇA ANUAL</div>
           <div style={{ fontFamily: DISP, fontWeight: 600, fontSize: 14, color: T.darkText, marginTop: 6 }}>Tudo liberado</div>
-          <div style={{ fontFamily: DISP, fontSize: 12, color: 'rgba(246,241,251,.5)', marginTop: 2 }}>23 produtos no catálogo</div>
+          <div style={{ fontFamily: DISP, fontSize: 12, color: 'rgba(246,241,251,.5)', marginTop: 2 }}>8 produtos no catálogo</div>
         </div>
         <div onClick={() => window.__go && window.__go('logout')} title="Sair da conta" style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14, padding: '8px 4px', borderRadius: 10, cursor: 'pointer' }}>
           <div style={{ width: 34, height: 34, borderRadius: '50%', background: T.accent, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: DISP, fontWeight: 700, fontSize: 14 }}>C</div>
@@ -101,6 +102,7 @@ function DBtn({ children, icon, variant = 'solid', onClick }) {
 // ── Dashboard ─────────────────────────────────────────────────────
 function DDashboard() {
   const dmob = useIsMobile();
+  const [paywall, setPaywall] = React.useState(false);
   const [period, setPeriod] = React.useState('30d');
   const [custom, setCustom] = React.useState(false);
   const [cFrom, setCFrom] = React.useState('2026-05-20');
@@ -109,30 +111,30 @@ function DDashboard() {
   const DATA = {
     'hoje': {
       label: 'hoje', chartTitle: 'Vendas por hora', chartNote: 'hoje, por hora',
-      metrics: [['Vendas · hoje', 'R$ 14.968', '+12%'], ['Comissão', '100%', 'sempre'], ['Produtos no ar', '8', '—'], ['Ticket médio', 'R$ 159', '+R$5']],
-      bars: [22, 35, 48, 41, 67, 58, 79, 100], barLabels: ['8h', '10h', '12h', '13h', '15h', '17h', '18h', '19h'],
-      rows: [['Renda com IA — Método', 'No ar', 'R$ 297', '20', 'R$ 5.940'], ['Reconquista 360', 'No ar', 'R$ 147', '28', 'R$ 4.116'], ['Modo Viral', 'No ar', 'R$ 97', '31', 'R$ 3.007'], ['Radar de Anúncios', 'No ar', 'R$ 127', '15', 'R$ 1.905']],
+      metrics: [['Vendas · hoje', 'R$ 16.936', '+14%'], ['Comissão', '100%', 'sempre'], ['Produtos no ar', '8', '—'], ['Ticket médio', 'R$ 157', '+R$4']],
+      bars: [18, 29, 44, 38, 61, 52, 71, 100], barLabels: ['8h', '10h', '12h', '13h', '15h', '17h', '18h', '19h'],
+      rows: [['Renda com IA — Método', 'No ar', 'R$ 297', '22', 'R$ 6.534'], ['Reconquista 360', 'No ar', 'R$ 147', '31', 'R$ 4.557'], ['Modo Viral', 'No ar', 'R$ 97', '38', 'R$ 3.686'], ['Radar de Anúncios', 'No ar', 'R$ 127', '17', 'R$ 2.159']],
     },
     '7d': {
       label: '7 dias', chartTitle: 'Vendas por dia', chartNote: 'últimos 7 dias',
-      metrics: [['Vendas · 7 dias', 'R$ 83.489', '+19%'], ['Comissão', '100%', 'sempre'], ['Produtos no ar', '8', '+1'], ['Ticket médio', 'R$ 158', '+R$6']],
+      metrics: [['Vendas · 7 dias', 'R$ 97.240', '+19%'], ['Comissão', '100%', 'sempre'], ['Produtos no ar', '8', '+1'], ['Ticket médio', 'R$ 157', '+R$6']],
       bars: [54, 62, 48, 71, 80, 67, 100], barLabels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
-      rows: [['Renda com IA — Método', 'No ar', 'R$ 297', '110', 'R$ 32.670'], ['Reconquista 360', 'No ar', 'R$ 147', '154', 'R$ 22.638'], ['Modo Viral', 'No ar', 'R$ 97', '174', 'R$ 16.878'], ['Radar de Anúncios', 'No ar', 'R$ 127', '89', 'R$ 11.303']],
+      rows: [['Renda com IA — Método', 'No ar', 'R$ 297', '124', 'R$ 36.828'], ['Reconquista 360', 'No ar', 'R$ 147', '168', 'R$ 24.696'], ['Modo Viral', 'No ar', 'R$ 97', '212', 'R$ 20.564'], ['Radar de Anúncios', 'No ar', 'R$ 127', '106', 'R$ 13.462']],
     },
     '15d': {
       label: '15 dias', chartTitle: 'Vendas por dia', chartNote: 'últimos 15 dias',
-      metrics: [['Vendas · 15 dias', 'R$ 177.677', '+21%'], ['Comissão', '100%', 'sempre'], ['Produtos no ar', '8', '+1'], ['Ticket médio', 'R$ 158', '+R$6']],
+      metrics: [['Vendas · 15 dias', 'R$ 206.080', '+21%'], ['Comissão', '100%', 'sempre'], ['Produtos no ar', '8', '+1'], ['Ticket médio', 'R$ 158', '+R$6']],
       bars: [40, 52, 47, 61, 55, 70, 64, 76, 72, 84, 80, 91, 88, 95, 100], barLabels: Array.from({length:15}, (_,i)=>`${i+1}`),
-      rows: [['Renda com IA — Método', 'No ar', 'R$ 297', '235', 'R$ 69.795'], ['Reconquista 360', 'No ar', 'R$ 147', '326', 'R$ 47.922'], ['Modo Viral', 'No ar', 'R$ 97', '372', 'R$ 36.084'], ['Radar de Anúncios', 'No ar', 'R$ 127', '188', 'R$ 23.876']],
+      rows: [['Renda com IA — Método', 'No ar', 'R$ 297', '262', 'R$ 77.814'], ['Reconquista 360', 'No ar', 'R$ 147', '358', 'R$ 52.626'], ['Modo Viral', 'No ar', 'R$ 97', '449', 'R$ 43.553'], ['Radar de Anúncios', 'No ar', 'R$ 127', '226', 'R$ 28.702']],
     },
     '30d': {
-      label: '30 dias', chartTitle: 'Vendas por semana', chartNote: 'últimas 8 semanas',
-      metrics: [['Vendas · 30 dias', 'R$ 349.743', '+24%'], ['Comissão', '100%', 'sempre'], ['Produtos no ar', '8', '+2'], ['Ticket médio', 'R$ 158', '+R$7']],
-      bars: [34, 41, 52, 60, 71, 83, 92, 100], barLabels: ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8'],
-      rows: [['Renda com IA — Método', 'No ar', 'R$ 297', '462', 'R$ 137.214'], ['Reconquista 360', 'No ar', 'R$ 147', '640', 'R$ 94.080'], ['Modo Viral', 'No ar', 'R$ 97', '738', 'R$ 71.586'], ['Radar de Anúncios', 'No ar', 'R$ 127', '369', 'R$ 46.863']],
+      label: '30 dias', chartTitle: 'Vendas por semana', chartNote: 'últimas 4 semanas',
+      metrics: [['Vendas · 30 dias', 'R$ 408.510', '+24%'], ['Comissão', '100%', 'sempre'], ['Produtos no ar', '8', '+2'], ['Ticket médio', 'R$ 158', '+R$7']],
+      bars: [58, 74, 88, 100], barLabels: ['S1', 'S2', 'S3', 'S4'],
+      rows: [['Renda com IA — Método', 'No ar', 'R$ 297', '524', 'R$ 155.628'], ['Reconquista 360', 'No ar', 'R$ 147', '712', 'R$ 104.664'], ['Modo Viral', 'No ar', 'R$ 97', '892', 'R$ 86.524'], ['Radar de Anúncios', 'No ar', 'R$ 127', '449', 'R$ 57.023']],
     },
   };
-  DATA['custom'] = { ...DATA['30d'], label: 'personalizado', chartNote: `${cFrom.split('-').reverse().slice(0,2).join('/')} – ${cTo.split('-').reverse().slice(0,2).join('/')}`, metrics: [['Vendas · período', 'R$ 349.743', '+24%'], ...DATA['30d'].metrics.slice(1)] };
+  DATA['custom'] = { ...DATA['30d'], label: 'personalizado', chartNote: `${cFrom.split('-').reverse().slice(0,2).join('/')} – ${cTo.split('-').reverse().slice(0,2).join('/')}`, metrics: [['Vendas · período', 'R$ 408.510', '+24%'], ...DATA['30d'].metrics.slice(1)] };
 
   const d = DATA[period];
   const metrics = d.metrics;
@@ -142,6 +144,7 @@ function DDashboard() {
 
   return (
     <DShell active="home" sub="Olá, Camila" title="Seu painel">
+      {paywall && <RecorrenciaPaywall onClose={() => setPaywall(false)} />}
       {/* seletor de período */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, flexWrap: 'wrap', position: 'relative' }}>
         <div style={{ display: 'inline-flex', background: '#fff', border: `1px solid ${T.line}`, borderRadius: 11, padding: 4, gap: 2 }}>
@@ -202,7 +205,7 @@ function DDashboard() {
             <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 19, color: T.darkText, marginTop: 16, lineHeight: 1.25, letterSpacing: '-0.02em' }}>Seu “Renda com IA — Método” é o que mais vende.</div>
             <div style={{ fontFamily: DISP, fontSize: 13.5, color: 'rgba(246,241,251,.6)', marginTop: 10 }}>Gere uma versão para um novo público e dobre o alcance do que já funciona.</div>
           </div>
-          <div style={{ position: 'relative', marginTop: 18 }}><DBtn icon={IC.arrow} onClick={() => window.__go && window.__go('generator')}>Gerar versão</DBtn></div>
+          <div style={{ position: 'relative', marginTop: 18 }}><DBtn icon={IC.arrow} onClick={() => setPaywall(true)}>Gerar versão</DBtn></div>
         </div>
       </div>
 
@@ -232,6 +235,8 @@ function DDashboard() {
 function DCatalogo() {
   const cmob = useIsMobile();
   const [tab, setTab] = React.useState('franquia');
+  const [paywall, setPaywall] = React.useState(false);
+  const [premInfo, setPremInfo] = React.useState(false);
   const [previewCourse, setPreviewCourse] = React.useState(null);
   const [sheetItem, setSheetItem] = React.useState(null);
   const [q, setQ] = React.useState('');
@@ -277,11 +282,12 @@ function DCatalogo() {
 
   return (
     <DShell active="cat" sub="Catálogo" title="Catálogo" search={q} onSearch={setQ} searchPlaceholder="Buscar produto…">
+      {paywall && <RecorrenciaPaywall onClose={() => setPaywall(false)} />}
       {/* abas */}
       <div style={{ display: 'flex', gap: 6, background: '#fff', border: `1px solid ${T.line}`, borderRadius: 12, padding: 5, width: 'fit-content' }}>
         {[['franquia', 'Produtos da Franquia', FRAN.length], ['meus', 'Meus produtos', MEUS.length]].map(([k, label, n]) => {
           const on = tab === k;
-          return <div key={k} onClick={() => setTab(k)} style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: DISP, fontWeight: 600, fontSize: 14, padding: '9px 18px', borderRadius: 9, cursor: 'pointer', background: on ? T.ink : 'transparent', color: on ? '#fff' : T.dim }}>{label}<span style={{ fontFamily: MONO, fontSize: 11, opacity: 0.7 }}>{n}</span></div>;
+          return <div key={k} onClick={() => { if (k === 'meus') { setPaywall(true); } else { setTab(k); } }} style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: DISP, fontWeight: 600, fontSize: 14, padding: '9px 18px', borderRadius: 9, cursor: 'pointer', background: on ? T.ink : 'transparent', color: on ? '#fff' : T.dim }}>{label}<span style={{ fontFamily: MONO, fontSize: 11, opacity: 0.7 }}>{n}</span></div>;
         })}
       </div>
 
@@ -294,9 +300,12 @@ function DCatalogo() {
 
       {/* grid */}
       <div style={{ display: 'grid', gridTemplateColumns: cmob ? '1fr 1fr' : 'repeat(4, 1fr)', gap: 16, alignContent: 'start' }}>
-        {list.map((it, i) => (
+        {list.map((it, i) => {
+          const isPrem = isF && FRAN.indexOf(it) >= FRAN.length - 4;
+          return (
           <div key={i} style={{ background: '#fff', border: `1px solid ${T.line}`, borderRadius: 16, padding: 14 }}>
             <Capa c={it.c} img={it.coverImg}>
+              {isPrem && <span style={{ position: 'absolute', top: 10, left: 10, fontFamily: MONO, fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: '#3B2A00', background: 'linear-gradient(135deg,#F3D27A,#C9A227)', padding: '4px 9px', borderRadius: 6, boxShadow: '0 2px 8px rgba(0,0,0,.25)' }}>PREMIUM</span>}
               {isF
                 ? <span style={{ position: 'absolute', top: 10, right: 10, width: 26, height: 26, borderRadius: '50%', background: 'rgba(255,255,255,.92)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ico d={IC.search} size={14} c={it.c} /></span>
                 : <span style={{ position: 'absolute', top: 10, right: 10, fontFamily: MONO, fontSize: 9, fontWeight: 600, color: it.status === 'No ar' ? '#0E9A50' : T.accentDeep, background: it.status === 'No ar' ? 'rgba(14,154,80,.16)' : 'rgba(124,58,237,.12)', padding: '4px 8px', borderRadius: 6 }}>{(it.status || '').toUpperCase()}</span>}
@@ -304,10 +313,11 @@ function DCatalogo() {
             <div style={{ fontFamily: DISP, fontWeight: 600, fontSize: 15, marginTop: 12 }}>{it.n}</div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 }}>
               <span style={{ fontFamily: DISP, fontWeight: 700, fontSize: 16, color: it.c }}>{it.p}</span>
-              <span onClick={() => isF ? setSheetItem(it) : (window.__go && window.__go('manual'))} style={{ fontFamily: DISP, fontSize: 12.5, fontWeight: 600, color: T.dim, cursor: 'pointer' }}>{isF ? 'Abrir →' : 'Editar →'}</span>
+              <span onClick={() => isF ? (isPrem ? setPremInfo(true) : setSheetItem(it)) : (window.__go && window.__go('manual'))} style={{ fontFamily: DISP, fontSize: 12.5, fontWeight: 600, color: T.dim, cursor: 'pointer' }}>{isF ? 'Abrir →' : 'Editar →'}</span>
             </div>
           </div>
-        ))}
+          );
+        })}
         {!isF && (
           <div onClick={() => window.__go && window.__go('gen')} style={{ border: `1.5px dashed ${T.line}`, borderRadius: 16, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 200, color: T.accent, cursor: 'pointer' }}>
             <Ico d={AIC.plus} size={24} c={T.accent} /><span style={{ fontFamily: DISP, fontWeight: 600, fontSize: 14 }}>Criar produto</span>
@@ -316,6 +326,33 @@ function DCatalogo() {
       </div>
       {previewCourse && <PhonePreview open={true} onClose={() => setPreviewCourse(null)} courses={[previewCourse]} />}
       {sheetItem && <MaterialsSheet item={sheetItem} course={toCourse(sheetItem)} onClose={() => setSheetItem(null)} />}
+      {premInfo && (
+        <div onClick={() => setPremInfo(false)} style={{ position: 'fixed', inset: 0, zIndex: 90, background: 'rgba(20,16,25,.62)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 440, background: T.darkBg, borderRadius: 24, overflow: 'hidden', boxShadow: '0 30px 80px rgba(0,0,0,.5)', position: 'relative' }}>
+            <div onClick={() => setPremInfo(false)} style={{ position: 'absolute', top: 14, right: 16, zIndex: 3, width: 30, height: 30, borderRadius: '50%', background: 'rgba(255,255,255,.12)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, cursor: 'pointer' }}>✕</div>
+            <div style={{ padding: '38px 32px 30px', position: 'relative', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', right: -40, top: -30, opacity: 0.18 }}><Mark size={200} front="#C9A227" ghost="#F3D27A" inner={T.darkBg} /></div>
+              <div style={{ position: 'relative' }}>
+                <div style={{ width: 60, height: 60, borderRadius: 16, background: 'linear-gradient(135deg,#F3D27A,#C9A227)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ico d={'M6 10V7a6 6 0 0 1 12 0v3 M5 10h14v11H5z'} size={28} c="#3B2A00" /></div>
+                <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.16em', color: '#F3D27A', marginTop: 22 }}>PRODUTO PREMIUM</div>
+                <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 27, letterSpacing: '-0.03em', color: '#F6F1FB', marginTop: 8, lineHeight: 1.12 }}>
+                  Alta performance, liberado em <span style={{ color: '#F3D27A' }}>7 dias</span>
+                </div>
+                <div style={{ fontFamily: DISP, fontSize: 15, lineHeight: 1.6, color: 'rgba(246,241,251,.68)', marginTop: 14 }}>
+                  Este é um produto de <b style={{ color: '#F6F1FB', fontWeight: 600 }}>alta performance</b> — dos que mais convertem no catálogo. Para garantir que você domine o essencial antes de escalar, ele é <b style={{ color: '#F6F1FB', fontWeight: 600 }}>liberado automaticamente após 7 dias</b> na sua conta.
+                </div>
+                <div style={{ fontFamily: DISP, fontSize: 14, lineHeight: 1.55, color: 'rgba(246,241,251,.55)', marginTop: 12 }}>
+                  Aproveite esse período para promover seus primeiros produtos — quando o acesso abrir, você já estará pronto para vender os campeões.
+                </div>
+                <div onClick={() => setPremInfo(false)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 26, background: 'linear-gradient(135deg,#F3D27A,#C9A227)', color: '#3B2A00', borderRadius: 14, padding: '16px', fontFamily: DISP, fontWeight: 700, fontSize: 16, cursor: 'pointer' }}>
+                  Entendi, vou me preparar
+                </div>
+                <div style={{ fontFamily: DISP, fontSize: 12.5, color: 'rgba(246,241,251,.45)', textAlign: 'center', marginTop: 12 }}>Você será avisado assim que for desbloqueado</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </DShell>
   );
 }

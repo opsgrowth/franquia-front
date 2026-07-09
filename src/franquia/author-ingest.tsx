@@ -65,10 +65,105 @@ function IngestProcessing({ fileName, onDone }) {
   );
 }
 
+// Popup: funcionalidade exclusiva para alunos do sistema Recorrência
+function RecorrenciaPaywall({ onClose }) {
+  const [stage, setStage] = useStateIng('offer');
+  const [nome, setNome] = useStateIng('Camila Oliveira');
+  const [email, setEmail] = useStateIng('camila@franquia.ia');
+  const [zap, setZap] = useStateIng('');
+  const [sent, setSent] = useStateIng(false);
+  const perks = [
+    'Gere aplicativos que faturam todo mês, no automático',
+    'Venda uma vez e receba de forma recorrente',
+    'Catálogo de produtos validados + IA que multiplica',
+    'Comunidade seleta e acesso vitalício às atualizações',
+  ];
+  const fld = { width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(196,163,255,.22)', borderRadius: 11, padding: '13px 15px', fontFamily: DISP, fontSize: 15, color: '#F6F1FB', outline: 'none' };
+  const lbl = { fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.08em', color: T.pill, textTransform: 'uppercase', margin: '0 0 7px', display: 'block' };
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 90, background: 'rgba(20,16,25,.62)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 460, background: T.darkBg, borderRadius: 24, overflow: 'hidden', boxShadow: '0 30px 80px rgba(0,0,0,.5)', position: 'relative' }}>
+        <div onClick={onClose} style={{ position: 'absolute', top: 14, right: 16, zIndex: 3, width: 30, height: 30, borderRadius: '50%', background: 'rgba(255,255,255,.12)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, cursor: 'pointer' }}>✕</div>
+        <div style={{ padding: '38px 32px 30px', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', right: -40, top: -30, opacity: 0.16 }}><Mark size={200} front={T.accent} ghost={T.pill} inner={T.darkBg} /></div>
+          <div style={{ position: 'relative' }}>
+            <div style={{ width: 60, height: 60, borderRadius: 16, background: 'rgba(196,163,255,.16)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Ico d="M6 10V7a6 6 0 0 1 12 0v3 M5 10h14v11H5z" size={28} c={T.pill} />
+            </div>
+
+            {stage === 'offer' ? (
+              <React.Fragment>
+                <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.16em', color: T.pill, marginTop: 22 }}>ACESSO EXCLUSIVO</div>
+                <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 28, letterSpacing: '-0.03em', color: '#F6F1FB', marginTop: 8, lineHeight: 1.1 }}>
+                  Criar aplicativos é para alunos do <span style={{ color: T.pill }}>RecorrêncIA</span>
+                </div>
+                <div style={{ fontFamily: DISP, fontSize: 15, lineHeight: 1.55, color: 'rgba(246,241,251,.65)', marginTop: 12 }}>
+                  Faça parte do grupo seleto que fatura todos os meses de forma recorrente — vendendo uma vez e recebendo por meses.
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 24 }}>
+                  {perks.map((p, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                      <span style={{ width: 22, height: 22, borderRadius: '50%', background: T.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: '0 0 auto', marginTop: 1 }}><Ico d={AIC.check} size={13} c="#fff" sw={2.6} /></span>
+                      <span style={{ fontFamily: DISP, fontSize: 14.5, lineHeight: 1.45, color: '#F6F1FB' }}>{p}</span>
+                    </div>
+                  ))}
+                </div>
+                <div onClick={() => setStage('form')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 28, background: T.accent, color: '#fff', borderRadius: 14, padding: '17px', fontFamily: DISP, fontWeight: 700, fontSize: 16.5, boxShadow: '0 12px 30px rgba(124,58,237,.45)', cursor: 'pointer' }}>
+                  Quero fazer parte do RecorrêncIA →
+                </div>
+                <div style={{ fontFamily: DISP, fontSize: 12.5, color: 'rgba(246,241,251,.5)', textAlign: 'center', marginTop: 14 }}>Vagas limitadas · acesso imediato após a compra</div>
+              </React.Fragment>
+            ) : sent ? (
+              <React.Fragment>
+                <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 26, letterSpacing: '-0.03em', color: '#F6F1FB', marginTop: 22, lineHeight: 1.12 }}>
+                  Tudo certo, <span style={{ color: T.pill }}>{nome.split(' ')[0]}</span>! 🎉
+                </div>
+                <div style={{ fontFamily: DISP, fontSize: 15, lineHeight: 1.55, color: 'rgba(246,241,251,.65)', marginTop: 12 }}>
+                  Você entrou na lista do <b style={{ color: '#F6F1FB', fontWeight: 600 }}>RecorrêncIA</b>. Nossa equipe vai te chamar no WhatsApp com as próximas instruções assim que as vagas abrirem.
+                </div>
+                <div onClick={onClose} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 28, background: 'rgba(255,255,255,.1)', border: '1px solid rgba(196,163,255,.25)', color: '#fff', borderRadius: 14, padding: '15px', fontFamily: DISP, fontWeight: 600, fontSize: 15, cursor: 'pointer' }}>
+                  Fechar
+                </div>
+              </React.Fragment>
+            ) : (
+              <React.Fragment>
+                <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.16em', color: T.pill, marginTop: 22 }}>LISTA DE ESPERA · RECORRÊNCIA</div>
+                <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 26, letterSpacing: '-0.03em', color: '#F6F1FB', marginTop: 8, lineHeight: 1.12 }}>
+                  Garanta seu lugar
+                </div>
+                <div style={{ fontFamily: DISP, fontSize: 14.5, lineHeight: 1.5, color: 'rgba(246,241,251,.6)', marginTop: 10 }}>
+                  Confirme seus dados — a gente te chama no WhatsApp assim que as vagas abrirem.
+                </div>
+                <div style={{ marginTop: 22 }}>
+                  <label style={lbl}>Nome</label>
+                  <input value={nome} onChange={(e) => setNome(e.target.value)} style={fld} />
+                </div>
+                <div style={{ marginTop: 16 }}>
+                  <label style={lbl}>E-mail</label>
+                  <input value={email} onChange={(e) => setEmail(e.target.value)} style={fld} />
+                </div>
+                <div style={{ marginTop: 16 }}>
+                  <label style={lbl}>WhatsApp</label>
+                  <input value={zap} onChange={(e) => setZap(e.target.value)} placeholder="(00) 00000-0000" style={fld} />
+                </div>
+                <div onClick={() => { if (zap.trim()) setSent(true); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 24, background: zap.trim() ? T.accent : 'rgba(124,58,237,.4)', color: '#fff', borderRadius: 14, padding: '17px', fontFamily: DISP, fontWeight: 700, fontSize: 16, boxShadow: zap.trim() ? '0 12px 30px rgba(124,58,237,.45)' : 'none', cursor: zap.trim() ? 'pointer' : 'default' }}>
+                  Entrar na lista de espera
+                </div>
+                <div style={{ fontFamily: DISP, fontSize: 12, color: 'rgba(246,241,251,.45)', textAlign: 'center', marginTop: 12 }}>Seus dados estão seguros · sem spam</div>
+              </React.Fragment>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function IngestScreen({ scope }) {
   const isFAdmin = scope === 'franquia';
   const mobile = useIsMobile();
   const [processing, setProcessing] = useStateIng(false);
+  const [paywall, setPaywall] = useStateIng(false);
   const reviewDest = isFAdmin ? 'fadmin-review' : 'review';
   if (isFAdmin) return (
     <DShell active="fadmin" sub="Admin · Catálogo Franquia" title="Novo produto da Franquia">
@@ -95,12 +190,13 @@ function IngestScreen({ scope }) {
   );
 
   return (
-    <AuthorShell active="gen" sub="Gerar com IA" title="Novo curso" bleed plain>
+    <AuthorShell active="gen" sub="Gerar com IA" title="Novo aplicativo" bleed plain>
       <div style={{ flex: 1, width: '100%', overflow: 'auto', padding: mobile ? '24px 18px' : '40px 44px', position: 'relative' }}>
         {processing && <IngestProcessing fileName="metodo-renda-ia.pdf" onDone={() => { setProcessing(false); window.__go && window.__go(reviewDest); }} />}
-        <h1 style={{ fontFamily: DISP, fontWeight: 700, fontSize: 34, letterSpacing: '-0.035em', color: T.ink, margin: 0 }}>Novo curso</h1>
+        {paywall && <RecorrenciaPaywall onClose={() => setPaywall(false)} />}
+        <h1 style={{ fontFamily: DISP, fontWeight: 700, fontSize: 34, letterSpacing: '-0.035em', color: T.ink, margin: 0 }}>Novo aplicativo</h1>
         <p style={{ fontFamily: DISP, fontSize: 16.5, lineHeight: 1.6, color: T.dim, margin: '12px 0 0', maxWidth: 560 }}>
-          Deixe a IA montar a partir de um PDF — ou comece do zero. Você revisa antes de publicar.
+          Crie um aplicativo que fatura de forma recorrente: você vende uma vez e recebe por meses. A IA monta a partir de um PDF, ou comece do zero — você revisa antes de publicar.
         </p>
 
         <div style={{ display: 'grid', gridTemplateColumns: mobile ? '1fr' : '1fr 1fr', gap: 22, marginTop: mobile ? 24 : 36, maxWidth: 920 }}>
@@ -128,7 +224,7 @@ function IngestScreen({ scope }) {
             </div>
 
             <div style={{ marginTop: 16 }}>
-              <div onClick={() => setProcessing(true)} style={{ cursor: 'pointer' }}>
+              <div onClick={() => setPaywall(true)} style={{ cursor: 'pointer' }}>
                 <ABtn icon={IC.spark}>Montar com a IA</ABtn>
               </div>
             </div>
@@ -159,7 +255,7 @@ function IngestScreen({ scope }) {
             </div>
 
             <div style={{ marginTop: 'auto', paddingTop: 22 }}>
-              <div onClick={() => window.__go && window.__go('manual')} style={{ cursor: 'pointer' }}>
+              <div onClick={() => setPaywall(true)} style={{ cursor: 'pointer' }}>
                 <ABtn variant="outline" icon={AIC.plus}>Começar do zero</ABtn>
               </div>
             </div>
@@ -170,4 +266,4 @@ function IngestScreen({ scope }) {
   );
 }
 
-export { IngestScreen };
+export { IngestScreen, RecorrenciaPaywall };
