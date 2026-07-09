@@ -8,6 +8,12 @@ import { DISP, IC, Ico, Lockup, MONO, Mark, T, Wordmark, useIsMobile } from './k
 import { getMe } from '../lib/auth';
 import { loadSales } from '../lib/sales';
 
+// ── FLAG DE APRESENTAÇÃO ────────────────────────────────────────────
+// Desfoque de demo: só o 1º produto da Franquia fica visível no catálogo.
+// PARA DESLIGAR EM PRODUÇÃO: troque para false (ou peça ao Claude Code
+// "remova o DEMO_LOCK_CATALOGO"). É o ÚNICO ponto de controle.
+const DEMO_LOCK_CATALOGO = true;
+
 // Ferramenta FranquIA · desktop (parte 1) — Shell + Dashboard + Catálogo
 // Reusa T/DISP/MONO/Mark/Wordmark + Ico/IC (de mobile-screens-1.jsx).
 
@@ -339,8 +345,11 @@ function DCatalogo() {
       <div style={{ display: 'grid', gridTemplateColumns: cmob ? '1fr 1fr' : 'repeat(4, 1fr)', gap: 16, alignContent: 'start' }}>
         {list.map((it, i) => {
           const isPrem = isF && FRAN.indexOf(it) >= FRAN.length - 4;
+          // DEMO_LOCK_CATALOGO: desfoque de apresentação — só o 1º produto da Franquia fica visível.
+          const demoBlur = DEMO_LOCK_CATALOGO && isF && i > 0;
           return (
-          <div key={i} style={{ background: '#fff', border: `1px solid ${T.line}`, borderRadius: 16, padding: 14 }}>
+          <div key={i} style={{ background: '#fff', border: `1px solid ${T.line}`, borderRadius: 16, padding: 14, position: 'relative' }}>
+            <div style={{ filter: demoBlur ? 'blur(9px)' : 'none', pointerEvents: demoBlur ? 'none' : 'auto', userSelect: demoBlur ? 'none' : 'auto' }}>
             <Capa c={it.c} img={it.coverImg}>
               {isPrem && <span style={{ position: 'absolute', top: 10, left: 10, fontFamily: MONO, fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: '#3B2A00', background: 'linear-gradient(135deg,#F3D27A,#C9A227)', padding: '4px 9px', borderRadius: 6, boxShadow: '0 2px 8px rgba(0,0,0,.25)' }}>PREMIUM</span>}
               {isF
@@ -351,6 +360,7 @@ function DCatalogo() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 }}>
               <span style={{ fontFamily: DISP, fontWeight: 700, fontSize: 16, color: it.c }}>{it.p}</span>
               <span onClick={() => isF ? (isPrem ? setPremInfo(true) : setSheetItem(it)) : (window.__go && window.__go('manual'))} style={{ fontFamily: DISP, fontSize: 12.5, fontWeight: 600, color: T.dim, cursor: 'pointer' }}>{isF ? 'Abrir →' : 'Editar →'}</span>
+            </div>
             </div>
           </div>
           );
