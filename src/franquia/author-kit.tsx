@@ -32,6 +32,7 @@ function ASidebar({ active = 'gen' }) {
   const _email = (_me && _me.creator && _me.creator.email) || '';
   const _inicial = _nome.charAt(0).toUpperCase();
   const _catCount = ((typeof window !== 'undefined' && window.__franquiaProducts) || []).length || 8;
+  const IS_ADMIN = !!(_me && _me.is_admin);
   return (
     <div style={{ width: 248, flex: '0 0 auto', background: T.darkBg, display: 'flex', flexDirection: 'column', padding: '26px 18px' }}>
       <div style={{ padding: '0 8px 8px' }}>
@@ -51,17 +52,26 @@ function ASidebar({ active = 'gen' }) {
           );
         })}
       </div>
+      {IS_ADMIN && <React.Fragment>
+        <div style={{ height: 1, background: 'rgba(196,163,255,.14)', margin: '10px 6px 8px' }}></div>
+        <div style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.16em', color: 'rgba(196,163,255,.5)', padding: '0 12px 6px' }}>ADMIN</div>
+        {[['fadmin', 'Catálogo Franquia', 'M4 6h16M4 12h10M4 18h7']].map(([k, label, d]) => {
+          const on = k === active;
+          return <div key={k} onClick={() => window.__go && window.__go(k)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 12px', borderRadius: 11, background: on ? T.accent : 'transparent', color: on ? '#fff' : 'rgba(246,241,251,.62)', fontFamily: DISP, fontWeight: on ? 600 : 500, fontSize: 14.5, cursor: 'pointer' }}><Ico d={d} size={20} c={on ? '#fff' : 'rgba(246,241,251,.62)'} />{label}<span style={{ marginLeft: 'auto', fontFamily: MONO, fontSize: 9, fontWeight: 600, color: on ? T.darkBg : T.pill, background: on ? T.pill : 'rgba(196,163,255,.22)', padding: '2px 6px', borderRadius: 5 }}>ADM</span></div>;
+        })}
+      </React.Fragment>}
       <div style={{ marginTop: 'auto', background: T.surface, borderRadius: 14, padding: 16 }}>
         <div style={{ fontFamily: MONO, fontSize: 10, color: T.pill, letterSpacing: '0.06em' }}>LICENÇA ANUAL</div>
         <div style={{ fontFamily: DISP, fontWeight: 600, fontSize: 14, color: T.darkText, marginTop: 6 }}>Tudo liberado</div>
         <div style={{ fontFamily: DISP, fontSize: 12, color: 'rgba(246,241,251,.5)', marginTop: 2 }}>{_catCount} produtos no catálogo</div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14, padding: '0 4px' }}>
+      <div onClick={() => window.__go && window.__go('logout')} title="Sair da conta" style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14, padding: '8px 4px', borderRadius: 10, cursor: 'pointer' }}>
         <div style={{ width: 34, height: 34, borderRadius: '50%', background: T.accent, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: DISP, fontWeight: 700, fontSize: 14 }}>{_inicial}</div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontFamily: DISP, fontWeight: 600, fontSize: 13, color: T.darkText, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{_nome}</div>
-          <div style={{ fontFamily: MONO, fontSize: 10.5, color: 'rgba(246,241,251,.45)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{_email || 'franqueado'}</div>
+          <div style={{ fontFamily: MONO, fontSize: 10.5, color: 'rgba(246,241,251,.45)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{_email || (IS_ADMIN ? 'admin' : 'franqueado')}</div>
         </div>
+        <Ico d={'M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3 M10 17l5-5-5-5 M15 12H3'} size={17} c={'rgba(246,241,251,.5)'} />
       </div>
     </div>
   );
