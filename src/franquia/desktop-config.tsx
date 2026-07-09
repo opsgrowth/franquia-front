@@ -4,6 +4,7 @@ import { Perfil } from './co-tabs';
 import { DShell } from './desktop-screens-1';
 import { DISP, IC, Ico, MONO, Mark, T, useIsMobile } from './kit';
 import { getWebhookUrl } from '../lib/promotions';
+import { getMe } from '../lib/auth';
 
 // Tela: Config — conta, identidade do app do aluno, integrações (webhooks), preferências.
 // Reusa T/DISP/MONO/Ico/IC/AIC/Mark + DShell (desktop-screens-1).
@@ -14,6 +15,10 @@ function DConfig() {
   const [color, setColor] = React.useState('#7C3AED');
   const [webhookUrl, setWebhookUrl] = React.useState('Gerando sua URL…');
   const [copied, setCopied] = React.useState(false);
+  const _me = getMe();
+  const _nome = (_me && _me.creator && _me.creator.name) || 'Você';
+  const _email = (_me && _me.creator && _me.creator.email) || '';
+  const _inicial = _nome.charAt(0).toUpperCase();
   const [notif, setNotif] = React.useState({ venda: true, acesso: true, resumo: false, mkt: false });
   const PLAT_NAMES = ['Kiwify', 'Hotmart', 'Digistore24', 'Eduzz', 'Cartpanda'];
   const franqProds = (typeof window !== 'undefined' && window.__franquiaProducts) ? window.__franquiaProducts : [];
@@ -66,12 +71,12 @@ function DConfig() {
       <Card>
         <CardTitle sub="Como você aparece na ferramenta.">Perfil do criador</CardTitle>
         <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginBottom: 22 }}>
-          <div style={{ width: 64, height: 64, borderRadius: '50%', background: T.accent, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: DISP, fontWeight: 700, fontSize: 26, flex: '0 0 auto' }}>C</div>
+          <div style={{ width: 64, height: 64, borderRadius: '50%', background: T.accent, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: DISP, fontWeight: 700, fontSize: 26, flex: '0 0 auto' }}>{_inicial}</div>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, border: `1px solid ${T.line}`, borderRadius: 10, padding: '9px 15px', fontFamily: DISP, fontWeight: 600, fontSize: 13.5, color: T.ink, cursor: 'pointer' }}><Ico d={AIC.upload} size={15} c={T.ink} />Trocar foto</div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: cmob ? '1fr' : '1fr 1fr', gap: 16 }}>
-          <div><label style={lbl}>Nome</label><input defaultValue="Camila Oliveira" style={inp} /></div>
-          <div><label style={lbl}>E-mail</label><input defaultValue="camila@franquia.ia" style={inp} /></div>
+          <div><label style={lbl}>Nome</label><input defaultValue={_nome} style={inp} /></div>
+          <div><label style={lbl}>E-mail</label><input defaultValue={_email} style={inp} /></div>
         </div>
       </Card>
       <Card>
@@ -119,7 +124,7 @@ function DConfig() {
             <div style={{ borderRadius: 16, overflow: 'hidden', border: `1px solid ${T.line}` }}>
               <div style={{ background: '#1A1422', padding: '18px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{ width: 34, height: 34, borderRadius: '50%', background: color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Mark size={18} front="#fff" ghost="#fff" inner="transparent" /></div>
-                <span style={{ fontFamily: DISP, fontWeight: 600, fontSize: 15, color: '#F6F1FB' }}>Camila Oliveira</span>
+                <span style={{ fontFamily: DISP, fontWeight: 600, fontSize: 15, color: '#F6F1FB' }}>{_nome}</span>
               </div>
               <div style={{ padding: 16, background: '#F8F5FB' }}>
                 <div style={{ height: 90, borderRadius: 12, background: `linear-gradient(135deg, ${color}99, ${color})`, position: 'relative', overflow: 'hidden' }}><div style={{ position: 'absolute', right: -8, bottom: -10, opacity: 0.25 }}><Mark size={50} front="#fff" ghost="#fff" inner="transparent" /></div></div>

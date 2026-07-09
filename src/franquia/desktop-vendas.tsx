@@ -2,6 +2,7 @@ import React from 'react';
 import { AIC } from './author-kit';
 import { DShell } from './desktop-screens-1';
 import { DISP, IC, Ico, MONO, T, useIsMobile } from './kit';
+import { loadSales } from '../lib/sales';
 
 // Tela: Vendas — transações por webhook das plataformas (Digistore/Kiwify/Hotmart…).
 // Reusa T/DISP/MONO/Ico/IC/AIC + DShell (desktop-screens-1).
@@ -11,28 +12,17 @@ function DVendas() {
   const [range, setRange] = React.useState('hoje');
   const [plat, setPlat] = React.useState('Todas');
 
-  // API: GET /sales?range=&platform=  → cada venda chega por webhook e libera o acesso
-  // d = janela: 0 = hoje. Produtos batem com os de maior receita no Início.
-  const SALES = [
-    { id: '#B417', d: 0, prod: 'Renda com IA — Método', buyer: 'marinasouza91@gmail.com', plat: 'Kiwify', value: 'R$ 297', net: 'R$ 268', status: 'Acesso liberado', when: 'há 2 min', color: '#7C3AED' },
-    { id: '#B416', d: 0, prod: 'Modo Viral', buyer: 'ju_martins@hotmail.com', plat: 'Kiwify', value: 'R$ 97', net: 'R$ 87', status: 'Acesso liberado', when: 'há 6 min', color: '#3F6FD8' },
-    { id: '#B415', d: 0, prod: 'Reconquista 360', buyer: 'amandargomes@gmail.com', plat: 'Kiwify', value: 'R$ 147', net: 'R$ 131', status: 'Acesso liberado', when: 'há 9 min', color: '#E2502F' },
-    { id: '#B414', d: 0, prod: 'Renda com IA — Método', buyer: 'carladias.adm@hotmail.com', plat: 'Kiwify', value: 'R$ 297', net: 'R$ 268', status: 'Acesso liberado', when: 'há 14 min', color: '#7C3AED' },
-    { id: '#B413', d: 0, prod: 'Modo Viral', buyer: 'brunocorrea22@gmail.com', plat: 'Kiwify', value: 'R$ 97', net: 'R$ 87', status: 'Acesso liberado', when: 'há 21 min', color: '#3F6FD8' },
-    { id: '#B412', d: 0, prod: 'Radar de Anúncios', buyer: 'fernandomelo.rj@hotmail.com', plat: 'Kiwify', value: 'R$ 127', net: 'R$ 113', status: 'Acesso liberado', when: 'há 27 min', color: '#1F8A5B' },
-    { id: '#B411', d: 0, prod: 'Reconquista 360', buyer: 'paty.gonc@gmail.com', plat: 'Kiwify', value: 'R$ 147', net: 'R$ 131', status: 'Acesso liberado', when: 'há 34 min', color: '#E2502F' },
-    { id: '#B410', d: 0, prod: 'Renda com IA — Método', buyer: 'thiagoalmeida07@hotmail.com', plat: 'Kiwify', value: 'R$ 297', net: 'R$ 268', status: 'Pendente', when: 'há 48 min', color: '#7C3AED' },
-    { id: '#B40F', d: 2, prod: 'Modo Viral', buyer: 'lucasferreira.mkt@gmail.com', plat: 'Kiwify', value: 'R$ 97', net: 'R$ 87', status: 'Acesso liberado', when: 'há 2 dias', color: '#3F6FD8' },
-    { id: '#B40E', d: 4, prod: 'Reconquista 360', buyer: 'caior.oliveira@hotmail.com', plat: 'Kiwify', value: 'R$ 147', net: 'R$ 131', status: 'Reembolso', when: 'há 4 dias', color: '#E2502F' },
-    { id: '#B40D', d: 12, prod: 'Radar de Anúncios', buyer: 'bianunes.10@gmail.com', plat: 'Kiwify', value: 'R$ 127', net: 'R$ 113', status: 'Acesso liberado', when: 'há 12 dias', color: '#1F8A5B' },
-    { id: '#B40C', d: 24, prod: 'Renda com IA — Método', buyer: 'tsantos.contato@hotmail.com', plat: 'Kiwify', value: 'R$ 297', net: 'R$ 268', status: 'Acesso liberado', when: 'há 24 dias', color: '#7C3AED' },
-  ];
-  const METRICS = {
-    'hoje': [['Receita · hoje', 'R$ 16.936', '+14%'], ['Vendas', '108', '+16'], ['Ticket médio', 'R$ 157', '+R$4'], ['Reembolsos', '0%', '—']],
-    '7d': [['Receita · 7 dias', 'R$ 97.240', '+19%'], ['Vendas', '620', '+74'], ['Ticket médio', 'R$ 157', '+R$6'], ['Reembolsos', '1,2%', '−0,3%']],
-    '30d': [['Receita · 30 dias', 'R$ 408.510', '+24%'], ['Vendas', '2.577', '+310'], ['Ticket médio', 'R$ 158', '+R$7'], ['Reembolsos', '1,8%', '−0,4%']],
-  };
-  const metrics = METRICS[range] || METRICS['30d'];
+  // Vendas REAIS do franqueado (GET /sales, isolado no backend). Vazio até a 1ª venda.
+  const [SALES, setSALES] = React.useState([]);
+  const [loadingSales, setLoadingSales] = React.useState(true);
+  React.useEffect(() => {
+    let alive = true;
+    loadSales()
+      .then((s) => { if (alive) setSALES(s); })
+      .catch((e) => { console.warn('vendas indisponíveis:', e); })
+      .finally(() => { if (alive) setLoadingSales(false); });
+    return () => { alive = false; };
+  }, []);
   const STAT = {
     'Acesso liberado': { fg: '#0E7A40', bg: 'rgba(14,154,80,.14)', dot: '#0E9A50' },
     'Pendente': { fg: '#9A6A12', bg: 'rgba(226,163,61,.16)', dot: T.warning },
@@ -42,6 +32,19 @@ function DVendas() {
   const plats = ['Todas', 'Kiwify'];
   const maxD = range === 'hoje' ? 0 : range === '7d' ? 7 : 30;
   const rows = SALES.filter((s) => (plat === 'Todas' || s.plat === plat) && s.d <= maxD);
+
+  // métricas calculadas das vendas REAIS (do range/plataforma filtrados)
+  const _granted = rows.filter((s) => s.status === 'Acesso liberado');
+  const _receita = _granted.reduce((a, s) => a + (s._val || 0), 0);
+  const _ticket = _granted.length ? _receita / _granted.length : 0;
+  const _reemb = rows.length ? (rows.filter((s) => s.status === 'Reembolso').length / rows.length) * 100 : 0;
+  const _rangeLbl = range === 'hoje' ? 'hoje' : range === '7d' ? '7 dias' : '30 dias';
+  const metrics = [
+    [`Receita · ${_rangeLbl}`, `R$ ${_receita.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`, ''],
+    ['Vendas', String(_granted.length), ''],
+    ['Ticket médio', `R$ ${_ticket.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`, ''],
+    ['Reembolsos', `${_reemb.toFixed(0)}%`, ''],
+  ];
 
   const Pill = ({ on, children, onClick }) => (
     <div onClick={onClick} style={{ fontFamily: DISP, fontWeight: 600, fontSize: 13, padding: '8px 15px', borderRadius: 99, cursor: 'pointer', background: on ? T.ink : '#fff', color: on ? '#fff' : T.dim, border: `1px solid ${on ? T.ink : T.line}`, whiteSpace: 'nowrap' }}>{children}</div>
@@ -79,8 +82,15 @@ function DVendas() {
             <span>VENDA</span><span>PRODUTO · COMPRADOR</span><span>PLATAFORMA</span><span>VALOR</span><span>ACESSO</span><span style={{ textAlign: 'right' }}>QUANDO</span>
           </div>
         )}
+        {loadingSales && <div style={{ padding: '46px 22px', textAlign: 'center', fontFamily: DISP, fontSize: 13.5, color: T.dim }}>Carregando suas vendas…</div>}
+        {!loadingSales && rows.length === 0 && (
+          <div style={{ padding: '46px 22px', textAlign: 'center' }}>
+            <div style={{ fontFamily: DISP, fontWeight: 600, fontSize: 15, color: T.ink }}>Nenhuma venda ainda</div>
+            <div style={{ fontFamily: DISP, fontSize: 13.5, color: T.dim, marginTop: 6 }}>Assim que uma venda chegar pelo seu webhook, ela aparece aqui — só as suas.</div>
+          </div>
+        )}
         {rows.map((s, i) => {
-          const st = STAT[s.status];
+          const st = STAT[s.status] || { fg: T.dim, bg: 'rgba(24,18,31,.06)', dot: T.dim };
           if (vmob) return (
             <div key={s.id} style={{ padding: '14px 16px', borderBottom: i < rows.length - 1 ? `1px solid ${T.line}` : 'none' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>

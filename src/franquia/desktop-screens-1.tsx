@@ -5,14 +5,21 @@ import { FRANQUIA_INIT } from './co-admin';
 import { MaterialsSheet } from './desktop-materiais';
 import { RecorrenciaPaywall } from './author-ingest';
 import { DISP, IC, Ico, Lockup, MONO, Mark, T, Wordmark, useIsMobile } from './kit';
+import { getMe } from '../lib/auth';
 
 // Ferramenta FranquIA · desktop (parte 1) — Shell + Dashboard + Catálogo
 // Reusa T/DISP/MONO/Mark/Wordmark + Ico/IC (de mobile-screens-1.jsx).
 
 // ── Shell: sidebar + topbar ───────────────────────────────────────
 function DShell({ active = 'home', title, sub, action, bleed = false, search, onSearch, searchPlaceholder = 'Buscar…', children }) {
-  const nav = [['home', 'Início', IC.home], ['cat', 'Catálogo', IC.grid], ['gen', 'Estúdio', IC.spark], ['sales', 'Vendas', IC.chart], ['cfg', 'Configurações', IC.cfg]];
-  const IS_ADMIN = true; // API: trocar por check de role do usuário
+  const _me = getMe();
+  const IS_ADMIN = !!(_me && _me.is_admin); // role real do /me (franqueado NÃO é admin)
+  const _nav = [['home', 'Início', IC.home], ['cat', 'Catálogo', IC.grid], ['gen', 'Estúdio', IC.spark], ['sales', 'Vendas', IC.chart], ['cfg', 'Configurações', IC.cfg]];
+  // Estúdio (gerar produtos com IA) é do ADMIN; o franqueado promove, não cria.
+  const nav = IS_ADMIN ? _nav : _nav.filter(([k]) => k !== 'gen');
+  const _nome = (_me && _me.creator && _me.creator.name) || 'Você';
+  const _email = (_me && _me.creator && _me.creator.email) || '';
+  const _inicial = _nome.charAt(0).toUpperCase();
   const mobile = useIsMobile();
   const [drawer, setDrawer] = React.useState(false);
   return (
@@ -53,10 +60,10 @@ function DShell({ active = 'home', title, sub, action, bleed = false, search, on
           <div style={{ fontFamily: DISP, fontSize: 12, color: 'rgba(246,241,251,.5)', marginTop: 2 }}>8 produtos no catálogo</div>
         </div>
         <div onClick={() => window.__go && window.__go('logout')} title="Sair da conta" style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14, padding: '8px 4px', borderRadius: 10, cursor: 'pointer' }}>
-          <div style={{ width: 34, height: 34, borderRadius: '50%', background: T.accent, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: DISP, fontWeight: 700, fontSize: 14 }}>C</div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: DISP, fontWeight: 600, fontSize: 13, color: T.darkText }}>Camila</div>
-            <div style={{ fontFamily: MONO, fontSize: 10.5, color: 'rgba(246,241,251,.45)' }}>franquia.ia/camila</div>
+          <div style={{ width: 34, height: 34, borderRadius: '50%', background: T.accent, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: DISP, fontWeight: 700, fontSize: 14 }}>{_inicial}</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: DISP, fontWeight: 600, fontSize: 13, color: T.darkText, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{_nome}</div>
+            <div style={{ fontFamily: MONO, fontSize: 10.5, color: 'rgba(246,241,251,.45)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{_email || (IS_ADMIN ? 'admin' : 'franqueado')}</div>
           </div>
           <Ico d={'M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3 M10 17l5-5-5-5 M15 12H3'} size={17} c={'rgba(246,241,251,.5)'} />
         </div>
