@@ -10,7 +10,8 @@ const { useState: useStateCO } = React;
 
 // Produtos & Cursos — telas (Vitrine · Curso · Player) + container. Reusa co-app.jsx.
 
-function CoVitrine({ courses, progress, openCourse }) {
+function CoVitrine({ courses, progress, openCourse, studentName }) {
+  const primeiroNome = (studentName || '').trim().split(' ')[0] || 'que bom te ver';
   const [slide, setSlide] = React.useState(0);
   const [chip, setChip] = React.useState('Tudo');
   const kinds = [];
@@ -50,7 +51,7 @@ function CoVitrine({ courses, progress, openCourse }) {
 
       {/* saudação */}
       <div style={{ padding: '24px 28px 0' }}>
-        <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 28, letterSpacing: '-0.03em', color: T.ink }}>Bom dia, Marina.</div>
+        <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 28, letterSpacing: '-0.03em', color: T.ink }}>Olá, {primeiroNome}.</div>
         <div style={{ fontFamily: DISP, fontSize: 15, color: T.dim, marginTop: 5 }}>Sua trilha é <span style={{ color: T.accent, fontWeight: 600 }}>{courses[0] ? courses[0].title : 'seu curso'}</span> — vamos avançar mais uma etapa hoje.</div>
       </div>
 
@@ -307,7 +308,7 @@ function MobileTopBar({ creator }) {
   );
 }
 
-function CoApp({ courses, narrow, creator }) {
+function CoApp({ courses, narrow, creator, studentName }) {
   const data = courses && courses.length ? courses : CO_COURSES;
   const [progress, setProgress] = useStateCO({ 'fia-1': true, 'fia-2': true });
   const [unlocked, setUnlocked] = useStateCO({});
@@ -332,20 +333,20 @@ function CoApp({ courses, narrow, creator }) {
     if (tab === 'mentor') body = <MentorIA accent={accent} />;
     else if (tab === 'suporte') body = <Suporte accent={accent} />;
     else if (tab === 'perfil') body = <Perfil accent={accent} courses={data} progress={progress} />;
-    else body = <CoVitrine courses={data} progress={progress} openCourse={app.openCourse} />;
+    else body = <CoVitrine courses={data} progress={progress} openCourse={app.openCourse} studentName={studentName} />;
   } else if (route.name === 'course' && course) {
     body = <CoCourse course={course} progress={progress} app={app} />;
   } else if (route.name === 'player' && course) {
     const lesson = allLessons(course).find((l) => l.id === route.lessonId) || course.modules[0].lessons[0];
     body = <CoPlayer course={course} lesson={lesson} progress={progress} app={app} narrow={narrow} />;
   } else {
-    body = <CoVitrine courses={data} progress={progress} openCourse={app.openCourse} />;
+    body = <CoVitrine courses={data} progress={progress} openCourse={app.openCourse} studentName={studentName} />;
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: narrow ? 'column' : 'row', height: '100%', background: T.paper, fontFamily: DISP, position: 'relative', overflow: 'hidden' }}>
       {narrow && <MobileTopBar creator={creator || { name: 'Camila Oliveira' }} />}
-      {!narrow && <DeskSidebar creator={{ name: 'Camila Oliveira' }} active={tab} onTab={(t) => { setTab(t); if (t === 'inicio') setRoute({ name: 'home' }); }} />}
+      {!narrow && <DeskSidebar creator={creator || { name: 'Camila Oliveira' }} studentName={studentName} active={tab} onTab={(t) => { setTab(t); if (t === 'inicio') setRoute({ name: 'home' }); }} />}
       <div style={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex', overflow: 'hidden' }}>{body}</div>
       {pay && <PaywallModal offer={(data.find((c) => c.id === pay) || {}).offer || DEFAULT_OFFER} onClose={() => setPay(null)} />}
       {narrow && <StudentTabBar active={tab} onTab={(t) => { setTab(t); if (t === 'inicio') setRoute({ name: 'home' }); }} />}

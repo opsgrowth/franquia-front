@@ -19,7 +19,18 @@ export function StudentApp() {
   const mob = useIsMobile();
   const [state, setState] = React.useState<'loading' | 'ready' | 'error'>('loading');
   const [course, setCourse] = React.useState<any>(null);
+  const [student, setStudent] = React.useState<any>(null);
   const [msg, setMsg] = React.useState('');
+  // Altura REAL da viewport (px) via JS — funciona em qualquer navegador mobile
+  // (100dvh quebra em iOS antigo → tela em branco). Atualiza ao mostrar/esconder a
+  // barra do navegador e ao girar a tela. As barras ficam fixas; só o miolo rola.
+  const [vh, setVh] = React.useState(typeof window !== 'undefined' ? window.innerHeight : 800);
+  React.useEffect(() => {
+    const on = () => setVh(window.innerHeight);
+    window.addEventListener('resize', on);
+    window.addEventListener('orientationchange', on);
+    return () => { window.removeEventListener('resize', on); window.removeEventListener('orientationchange', on); };
+  }, []);
 
   React.useEffect(() => {
     const token = readStudentToken();
@@ -30,7 +41,7 @@ export function StudentApp() {
     }
     let alive = true;
     loadStudentCourse(token)
-      .then(({ course }) => { if (alive) { setCourse(course); setState('ready'); } })
+      .then(({ course, student }) => { if (alive) { setCourse(course); setStudent(student); setState('ready'); } })
       .catch((e) => {
         if (!alive) return;
         const is401 = String(e?.message || '').includes('401');
@@ -58,7 +69,9 @@ export function StudentApp() {
       </Center>
     );
   }
-  // 100dvh (não 100vh): no mobile evita a barra do navegador empurrar o layout e
-  // fazer topo/rodapé rolarem. As barras ficam fixas; só o miolo rola.
-  return <div style={{ height: '100dvh', overflow: 'hidden' }}><CoApp courses={[course]} narrow={mob} /></div>;
+  return (
+    <div style={{ height: vh, overflow: 'hidden' }}>
+      <CoApp courses={[course]} narrow={mob} studentName={student?.name} creator={{ name: course?.title || 'FranquIA' }} />
+    </div>
+  );
 }
