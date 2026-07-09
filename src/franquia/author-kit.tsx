@@ -1,6 +1,7 @@
 import React from 'react';
 import { Cover } from './author-app';
 import { DISP, IC, Ico, Lockup, MONO, Mark, T, useIsMobile } from './kit';
+import { getMe } from '../lib/auth';
 
 // Ferramenta FranquIA · Autoria — kit compartilhado (protótipo)
 // Reusa T/DISP/MONO/Mark/Lockup (manual-kit.jsx) e Ico/IC (mobile-screens-1.jsx).
@@ -26,6 +27,11 @@ const AIC = {
 // ── Sidebar (escura, idêntica à do app) ───────────────────────────
 function ASidebar({ active = 'gen' }) {
   const nav = [['home', 'Início', IC.home], ['cat', 'Catálogo', IC.grid], ['gen', 'Estúdio', IC.spark], ['sales', 'Vendas', IC.chart], ['cfg', 'Configurações', IC.cfg]];
+  const _me = getMe();
+  const _nome = (_me && _me.creator && _me.creator.name) || 'Você';
+  const _email = (_me && _me.creator && _me.creator.email) || '';
+  const _inicial = _nome.charAt(0).toUpperCase();
+  const _catCount = ((typeof window !== 'undefined' && window.__franquiaProducts) || []).length || 8;
   return (
     <div style={{ width: 248, flex: '0 0 auto', background: T.darkBg, display: 'flex', flexDirection: 'column', padding: '26px 18px' }}>
       <div style={{ padding: '0 8px 8px' }}>
@@ -46,15 +52,15 @@ function ASidebar({ active = 'gen' }) {
         })}
       </div>
       <div style={{ marginTop: 'auto', background: T.surface, borderRadius: 14, padding: 16 }}>
-        <div style={{ fontFamily: MONO, fontSize: 10, color: T.pill, letterSpacing: '0.06em' }}>ACESSO VITALÍCIO</div>
+        <div style={{ fontFamily: MONO, fontSize: 10, color: T.pill, letterSpacing: '0.06em' }}>LICENÇA ANUAL</div>
         <div style={{ fontFamily: DISP, fontWeight: 600, fontSize: 14, color: T.darkText, marginTop: 6 }}>Tudo liberado</div>
-        <div style={{ fontFamily: DISP, fontSize: 12, color: 'rgba(246,241,251,.5)', marginTop: 2 }}>3 cursos no catálogo</div>
+        <div style={{ fontFamily: DISP, fontSize: 12, color: 'rgba(246,241,251,.5)', marginTop: 2 }}>{_catCount} produtos no catálogo</div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14, padding: '0 4px' }}>
-        <div style={{ width: 34, height: 34, borderRadius: '50%', background: T.accent, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: DISP, fontWeight: 700, fontSize: 14 }}>C</div>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontFamily: DISP, fontWeight: 600, fontSize: 13, color: T.darkText }}>Camila</div>
-          <div style={{ fontFamily: MONO, fontSize: 10.5, color: 'rgba(246,241,251,.45)' }}>franquia.ia/camila</div>
+        <div style={{ width: 34, height: 34, borderRadius: '50%', background: T.accent, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: DISP, fontWeight: 700, fontSize: 14 }}>{_inicial}</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontFamily: DISP, fontWeight: 600, fontSize: 13, color: T.darkText, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{_nome}</div>
+          <div style={{ fontFamily: MONO, fontSize: 10.5, color: 'rgba(246,241,251,.45)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{_email || 'franqueado'}</div>
         </div>
       </div>
     </div>
