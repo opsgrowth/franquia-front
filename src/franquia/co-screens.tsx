@@ -294,7 +294,20 @@ function CoPlayer({ course, lesson, progress, app, narrow }) {
 }
 
 // ── container ─────────────────────────────────────────────────────
-function CoApp({ courses, narrow }) {
+// Header de topo do app do aluno no MOBILE — FIXO (não rola). Marca + busca + tema.
+function MobileTopBar({ creator }) {
+  const MOON = 'M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z';
+  return (
+    <div style={{ flex: '0 0 auto', background: T.darkBg, display: 'flex', alignItems: 'center', gap: 11, padding: 'calc(env(safe-area-inset-top, 0px) + 13px) 16px 13px', borderBottom: '1px solid rgba(196,163,255,.12)' }}>
+      <div style={{ width: 34, height: 34, borderRadius: '50%', background: T.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: '0 0 auto' }}><Mark size={17} front="#fff" ghost={T.pill} inner={T.accent} /></div>
+      <div style={{ flex: 1, minWidth: 0, fontFamily: DISP, fontWeight: 600, fontSize: 16.5, color: T.darkText, letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{creator?.name || 'FranquIA'}</div>
+      <div style={{ width: 38, height: 38, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: '0 0 auto' }}><Ico d={IC.search} size={19} c="rgba(246,241,251,.72)" /></div>
+      <div style={{ width: 38, height: 38, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: '0 0 auto' }}><Ico d={MOON} size={19} c="rgba(246,241,251,.72)" /></div>
+    </div>
+  );
+}
+
+function CoApp({ courses, narrow, creator }) {
   const data = courses && courses.length ? courses : CO_COURSES;
   const [progress, setProgress] = useStateCO({ 'fia-1': true, 'fia-2': true });
   const [unlocked, setUnlocked] = useStateCO({});
@@ -331,8 +344,9 @@ function CoApp({ courses, narrow }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: narrow ? 'column' : 'row', height: '100%', background: T.paper, fontFamily: DISP, position: 'relative', overflow: 'hidden' }}>
+      {narrow && <MobileTopBar creator={creator || { name: 'Camila Oliveira' }} />}
       {!narrow && <DeskSidebar creator={{ name: 'Camila Oliveira' }} active={tab} onTab={(t) => { setTab(t); if (t === 'inicio') setRoute({ name: 'home' }); }} />}
-      <div style={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex' }}>{body}</div>
+      <div style={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex', overflow: 'hidden' }}>{body}</div>
       {pay && <PaywallModal offer={(data.find((c) => c.id === pay) || {}).offer || DEFAULT_OFFER} onClose={() => setPay(null)} />}
       {narrow && <StudentTabBar active={tab} onTab={(t) => { setTab(t); if (t === 'inicio') setRoute({ name: 'home' }); }} />}
     </div>

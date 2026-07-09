@@ -58,5 +58,7 @@ export function StudentApp() {
       </Center>
     );
   }
-  return <div style={{ height: '100vh', overflow: 'hidden' }}><CoApp courses={[course]} narrow={mob} /></div>;
+  // 100dvh (não 100vh): no mobile evita a barra do navegador empurrar o layout e
+  // fazer topo/rodapé rolarem. As barras ficam fixas; só o miolo rola.
+  return <div style={{ height: '100dvh', overflow: 'hidden' }}><CoApp courses={[course]} narrow={mob} /></div>;
 }
