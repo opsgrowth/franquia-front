@@ -14,6 +14,8 @@ function mapBlock(b: any) {
       return { kind: 'video', title: b.text || attrs.title };
     case 'image':
       return { kind: 'image', caption: attrs.caption };
+    case 'divider':
+      return { kind: 'divider' };
     case 'paragraph':
     case 'text':
     default:

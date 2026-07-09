@@ -172,6 +172,51 @@ function CoCourse({ course, progress, app }) {
   );
 }
 
+// Render dos blocos reais da aula (semente do app do aluno) — tema escuro do player.
+function StudentBlocks({ blocks, color }) {
+  if (!blocks || !blocks.length) return null;
+  return (
+    <div style={{ maxWidth: 620, marginTop: 8 }}>
+      {blocks.map((b, i) => {
+        switch (b.kind) {
+          case 'heading':
+            return <h3 key={i} style={{ fontFamily: DISP, fontWeight: 700, fontSize: 19, letterSpacing: '-0.02em', color: T.darkText, margin: '26px 0 0' }}>{b.text}</h3>;
+          case 'list':
+            return (
+              <ul key={i} style={{ listStyle: 'none', padding: 0, margin: '14px 0 0', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {(b.items || []).map((it, j) => (
+                  <li key={j} style={{ display: 'flex', gap: 11, alignItems: 'flex-start', fontFamily: DISP, fontSize: 15, lineHeight: 1.5, color: 'rgba(246,241,251,.8)' }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: coLighten(color, .2), marginTop: 8, flex: '0 0 auto' }} />{it}
+                  </li>
+                ))}
+              </ul>
+            );
+          case 'quote':
+            return (
+              <div key={i} style={{ margin: '20px 0 0', borderLeft: `3px solid ${coLighten(color, .2)}`, paddingLeft: 16 }}>
+                <div style={{ fontFamily: DISP, fontWeight: 500, fontSize: 17, lineHeight: 1.45, color: T.darkText }}>{b.text}</div>
+                {b.cite && <div style={{ fontFamily: MONO, fontSize: 11, color: 'rgba(246,241,251,.5)', marginTop: 8 }}>{b.cite}</div>}
+              </div>
+            );
+          case 'video':
+            return (
+              <div key={i} style={{ margin: '18px 0 0', borderRadius: 12, overflow: 'hidden', aspectRatio: '16 / 9', background: '#000', position: 'relative' }}>
+                <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 50% 45%, ${coRgba(color, .4)}, rgba(0,0,0,.3) 65%)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ width: 54, height: 54, borderRadius: '50%', background: 'rgba(255,255,255,.92)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ico d={AIC.play} size={22} c={color} fill={color} /></span>
+                </div>
+              </div>
+            );
+          case 'divider':
+            return <div key={i} style={{ height: 1, background: 'rgba(246,241,251,.12)', margin: '24px 0 6px' }} />;
+          case 'paragraph':
+          default:
+            return b.text ? <p key={i} style={{ fontFamily: DISP, fontSize: 15.5, lineHeight: 1.68, color: 'rgba(246,241,251,.82)', margin: '14px 0 0', maxWidth: 620 }}>{b.text}</p> : null;
+        }
+      })}
+    </div>
+  );
+}
+
 function CoPlayer({ course, lesson, progress, app, narrow }) {
   const flat = course.modules.flatMap((m) => m.lessons.map((l) => ({ l, m })));
   const idx = flat.findIndex((x) => x.l.id === lesson.id);
@@ -236,8 +281,10 @@ function CoPlayer({ course, lesson, progress, app, narrow }) {
       </div>
       <div style={{ padding: '8px 20px 24px', flex: 1 }}>
         <div style={{ fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.1em', color: coLighten(course.color, .35), textTransform: 'uppercase' }}>{lesson.type === 'video' ? 'Vídeo' : 'Aula'} · {lesson.duration}</div>
-        <h1 style={{ fontFamily: DISP, fontWeight: 700, fontSize: 26, letterSpacing: '-0.03em', color: T.darkText, margin: '8px 0 0' }}>{lesson.title}</h1>
-        <p style={{ fontFamily: DISP, fontSize: 14.5, lineHeight: 1.6, color: 'rgba(246,241,251,.6)', marginTop: 10, maxWidth: 560 }}>{lesson.desc || 'Conteúdo da aula. No produto final, aqui toca o vídeo/áudio ou aparece o texto da aula.'}</p>
+        <h1 style={{ fontFamily: DISP, fontWeight: 700, fontSize: 26, letterSpacing: '-0.03em', color: T.darkText, margin: '8px 0 12px' }}>{lesson.title}</h1>
+        {lesson.blocks && lesson.blocks.length
+          ? <StudentBlocks blocks={lesson.blocks} color={course.color} />
+          : <p style={{ fontFamily: DISP, fontSize: 14.5, lineHeight: 1.6, color: 'rgba(246,241,251,.6)', marginTop: 10, maxWidth: 560 }}>{lesson.desc || 'Conteúdo da aula. No produto final, aqui toca o vídeo/áudio ou aparece o texto da aula.'}</p>}
       </div>
     </div>
   );
