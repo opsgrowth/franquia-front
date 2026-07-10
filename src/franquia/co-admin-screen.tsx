@@ -8,6 +8,15 @@ import { coDarken, coTheme, moduleDuration } from './co-app';
 import { DBtn, DShell } from './desktop-screens-1';
 import { DISP, IC, Ico, MONO, T, useIsMobile } from './kit';
 import { persistAppCover, persistBanners, persistModuleCover } from '../lib/covers';
+import { isBackendId, patchApp } from '../lib/apps';
+
+// "R$ 397" / "R$ 1.997,00" → centavos (inteiro de reais * 100; ignora centavos do texto).
+function parsePriceCents(s: any): number | null | undefined {
+  const t = String(s == null ? '' : s).replace(/[^\d,.]/g, '');
+  if (!t) return null; // vazio → limpa o preço
+  const reais = parseInt(t.split(',')[0].replace(/\./g, ''), 10);
+  return isNaN(reais) ? undefined : reais * 100;
+}
 
 // "Criar do zero" — ProductsAdminScreen (lista, produto, módulos & aulas, modais).
 
@@ -45,10 +54,30 @@ function ProductsAdminScreen({ scope, sharedProducts, setSharedProducts }) {
   // ── mutations ──
   const addProduct = (data) => { const id = aid('p'); setProducts((ps) => [...ps, { id, students: 0, status: data.access === 'Premium (upsell)' ? 'Premium' : 'Rascunho', modules: [], ...data }]); setSelId(id); setView('product'); };
   const updateProduct = (id, data) => {
-    // capa do produto: persiste no backend só se mudou (evita re-upload em cada save)
     const cur = products.find((p) => p.id === id);
+    // capa do produto: persiste no backend só se mudou (evita re-upload em cada save)
     if (cur && data.coverImg !== cur.coverImg) persistAppCover(id, data.coverImg);
+    // metadados no backend (nome, tagline, preço, cor, premium) — só o que mudou
+    if (isBackendId(id) && cur) {
+      const f: any = {};
+      if (data.title != null && data.title !== cur.title) f.name = data.title;
+      if (data.subtitle !== cur.subtitle) f.tagline = data.subtitle || null;
+      if (data.color && data.color !== cur.color) f.accent_color = data.color;
+      const cents = parsePriceCents(data.displayPrice);
+      if (cents !== undefined) f.suggested_price_cents = cents;
+      const prem = data.access === 'Premium (upsell)';
+      if (prem !== (!!cur.isPremium || cur.access === 'Premium (upsell)')) f.is_premium = prem;
+      if (Object.keys(f).length) patchApp(id, f).catch((e: any) => console.warn('patchApp produto:', e?.message || e));
+    }
     setProducts((ps) => ps.map((p) => (p.id === id ? { ...p, ...data, status: data.access === 'Premium (upsell)' ? 'Premium' : (p.status === 'Premium' ? 'Publicado' : p.status), } : p)));
+  };
+  // Toggle de vitrine (publicar/premium/camuflar) — grava direto no backend + otimista.
+  const setAppFlag = (pid, field, value) => {
+    const uiKey = { catalog_published: 'catalogPublished', is_premium: 'isPremium', camouflaged: 'camouflaged' }[field] || field;
+    setProducts((ps) => ps.map((p) => (p.id === pid
+      ? { ...p, [uiKey]: value, ...(field === 'is_premium' ? { access: value ? 'Premium (upsell)' : 'Liberado' } : {}) }
+      : p)));
+    patchApp(pid, { [field]: value }).catch((e) => console.warn('patchApp flag:', field, e?.message || e));
   };
   const delProduct = (id) => setProducts((ps) => ps.filter((p) => p.id !== id));
   const dupProduct = (id) => setProducts((ps) => { const src = ps.find((p) => p.id === id); if (!src) return ps; const dup = { ...src, id: aid('p'), title: src.title + ' (cópia)', status: 'Rascunho', students: 0, modules: src.modules.map((m) => ({ ...m, id: aid('m'), lessons: m.lessons.map((l) => ({ ...l, id: aid('l') })) })) }; return [...ps, dup]; });
@@ -142,6 +171,30 @@ function ProductsAdminScreen({ scope, sharedProducts, setSharedProducts }) {
         </div>
         <div onClick={() => setModal({ type: 'product', editId: sel.id, data: { title: sel.title, subtitle: sel.subtitle, kind: sel.kind, access: sel.access, desc: sel.desc || '', color: sel.color, displayPrice: sel.displayPrice || '', priceInstallment: sel.priceInstallment || '', coverImg: sel.coverImg == null ? null : sel.coverImg, saleIds: sel.saleIds || [], banners: sel.banners || (sel.banner != null ? [sel.banner] : []), showTitle: sel.showTitle !== false } })} style={{ cursor: 'pointer' }}><ABtn variant="ghost" icon={AIC.pencil}>Editar produto</ABtn></div>
       </div>
+
+      {/* vitrine no catálogo — publicar / premium / camuflar (grava no backend) */}
+      {isBackendId(sel.id) && (
+        <div style={{ marginTop: 16, background: '#fff', border: `1px solid ${T.line}`, borderRadius: 14, padding: '14px 18px' }}>
+          <div style={{ fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.08em', color: T.dim, textTransform: 'uppercase', marginBottom: 10 }}>Vitrine no catálogo</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+            {([
+              ['catalog_published', sel.catalogPublished !== false, 'Publicado', 'Aparece no catálogo dos franqueados'],
+              ['is_premium', !!sel.isPremium || sel.access === 'Premium (upsell)', 'Premium', 'Tag dourada + popup "libera em 7 dias"'],
+              ['camouflaged', !!sel.camouflaged, 'Camuflado', 'Aparece embaçado (segura do público)'],
+            ] as [string, boolean, string, string][]).map(([field, on, label, hint]) => (
+              <div key={field} onClick={() => setAppFlag(sel.id, field, !on)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 11, border: `1.5px solid ${on ? T.accent : T.line}`, background: on ? T.halo : '#fff', borderRadius: 12, padding: '11px 14px', flex: '1 1 220px', minWidth: 200 }}>
+                <div style={{ width: 38, height: 22, borderRadius: 99, background: on ? T.accent : 'rgba(24,18,31,.15)', position: 'relative', flex: '0 0 auto' }}>
+                  <div style={{ position: 'absolute', top: 2, left: on ? 18 : 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'left .15s' }} />
+                </div>
+                <div>
+                  <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 14, color: T.ink }}>{label}</div>
+                  <div style={{ fontFamily: DISP, fontSize: 11.5, color: T.dim, marginTop: 1 }}>{hint}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* banners do app */}
       <div style={{ marginTop: 16 }}>

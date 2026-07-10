@@ -47,13 +47,17 @@ function mapProduct(d: any) {
     slug: d.slug,
     title: d.name,
     subtitle: d.tagline || 'Produto da Franquia — pronto para vender',
-    kind: 'Curso da Franquia',
     color: d.accent_color || '#7C3AED',
     coverImg: isB64(d.cover_image_url) ? d.cover_image_url : null, // só base64 (não URL gated)
     students: d.students_count || 0,
-    displayPrice: priceCents ? `R$ ${Math.round(priceCents / 100)}` : 'R$ —',
-    access: 'Liberado',
-    status: 'Publicado',
+    displayPrice: priceCents ? `R$ ${Math.round(priceCents / 100)}` : (d.is_premium ? 'Premium' : 'R$ —'),
+    // premium: flag do backend → dispara a tag + popup "libera em 7 dias" (mesma UI do mock)
+    access: d.is_premium ? 'Premium (upsell)' : 'Liberado',
+    isPremium: !!d.is_premium,
+    camouflaged: !!d.camouflaged, // camuflado → o catálogo embaça (controle do admin)
+    kind: d.is_premium ? 'Premium' : 'Curso da Franquia',
+    status: d.catalog_published === false ? 'Rascunho' : 'Publicado',
+    catalogPublished: d.catalog_published !== false,
     banners: (d.banners || []).filter(isB64), // banners do hero (base64)
     modules,
   };

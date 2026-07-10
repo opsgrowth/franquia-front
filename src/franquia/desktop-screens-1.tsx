@@ -8,11 +8,11 @@ import { DISP, IC, Ico, Lockup, MONO, Mark, T, Wordmark, useIsMobile } from './k
 import { getMe } from '../lib/auth';
 import { loadSales } from '../lib/sales';
 
-// ── FLAG DE APRESENTAÇÃO ────────────────────────────────────────────
-// Desfoque de demo: só o 1º produto da Franquia fica visível no catálogo.
-// PARA DESLIGAR EM PRODUÇÃO: troque para false (ou peça ao Claude Code
-// "remova o DEMO_LOCK_CATALOGO"). É o ÚNICO ponto de controle.
-const DEMO_LOCK_CATALOGO = true;
+// ── KILL-SWITCH GLOBAL de camuflagem (pitch) ────────────────────────
+// Em produção a camuflagem é POR PRODUTO (flag `camouflaged` do backend, controlado
+// no painel admin). Este flag global some com TODOS menos o 1º — só p/ apresentação.
+// Fica DESLIGADO em produção.
+const DEMO_LOCK_CATALOGO = false;
 
 // Ferramenta FranquIA · desktop (parte 1) — Shell + Dashboard + Catálogo
 // Reusa T/DISP/MONO/Mark/Wordmark + Ico/IC (de mobile-screens-1.jsx).
@@ -303,7 +303,7 @@ function DCatalogo() {
   }, []);
 
   const rawFran = (window.__franquiaProducts || (typeof FRANQUIA_INIT !== 'undefined' ? FRANQUIA_INIT : []));
-  const FRAN = rawFran.map((p) => ({ n: p.title, p: p.displayPrice || (p.access === 'Premium (upsell)' ? 'Premium' : 'R$ —'), c: p.color, id: p.id, raw: p, coverImg: typeof p.coverImg === 'string' ? p.coverImg : null }));
+  const FRAN = rawFran.map((p) => ({ n: p.title, p: p.displayPrice || (p.access === 'Premium (upsell)' ? 'Premium' : 'R$ —'), c: p.color, id: p.id, raw: p, coverImg: typeof p.coverImg === 'string' ? p.coverImg : null, isPremium: !!p.isPremium || p.access === 'Premium (upsell)', camouflaged: !!p.camouflaged }));
   const MEUS = [
     { n: 'Meu Curso de Copy', p: 'R$ 67', c: '#1F8A5B', status: 'No ar' }, { n: 'Pack de Reels Pro', p: 'R$ 47', c: '#3F6FD8', status: 'No ar' },
     { n: 'Planner Digital', p: 'R$ 37', c: '#A23CD6', status: 'Rascunho' },
@@ -353,9 +353,10 @@ function DCatalogo() {
       {/* grid */}
       <div style={{ display: 'grid', gridTemplateColumns: cmob ? '1fr 1fr' : 'repeat(4, 1fr)', gap: 16, alignContent: 'start' }}>
         {list.map((it, i) => {
-          const isPrem = isF && FRAN.indexOf(it) >= FRAN.length - 4;
-          // DEMO_LOCK_CATALOGO: desfoque de apresentação — só o 1º produto da Franquia fica visível.
-          const demoBlur = DEMO_LOCK_CATALOGO && isF && i > 0;
+          const isPrem = isF && it.isPremium;
+          // Camuflado: embaça pelo flag do backend (controle do admin por produto).
+          // DEMO_LOCK_CATALOGO fica como kill-switch global (hoje desligado).
+          const demoBlur = isF && (it.camouflaged || (DEMO_LOCK_CATALOGO && i > 0));
           return (
           <div key={i} style={{ background: '#fff', border: `1px solid ${T.line}`, borderRadius: 16, padding: 14, position: 'relative' }}>
             <div style={{ filter: demoBlur ? 'blur(9px)' : 'none', pointerEvents: demoBlur ? 'none' : 'auto', userSelect: demoBlur ? 'none' : 'auto' }}>
