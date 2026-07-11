@@ -47,6 +47,8 @@ function ProductsAdminScreen({ scope, sharedProducts, setSharedProducts }) {
   const [expanded, setExpanded] = useStateAdmS({});
   const [preview, setPreview] = useStateAdmS(false);
   const [modal, setModal] = useStateAdmS(null); // {type, ...}
+  const [savedFlash, setSavedFlash] = useStateAdmS(false);
+  const flashSaved = () => { setSavedFlash(true); setTimeout(() => setSavedFlash(false), 1500); };
   const mobile = useIsMobile();
 
   const sel = products.find((p) => p.id === selId);
@@ -89,7 +91,7 @@ function ProductsAdminScreen({ scope, sharedProducts, setSharedProducts }) {
     setProducts((ps) => ps.map((p) => (p.id === pid
       ? { ...p, [uiKey]: value, ...(field === 'is_premium' ? { access: value ? 'Premium (upsell)' : 'Liberado' } : {}) }
       : p)));
-    patchApp(pid, { [field]: value }).catch((e) => console.warn('patchApp flag:', field, e?.message || e));
+    patchApp(pid, { [field]: value }).then(flashSaved).catch((e) => console.warn('patchApp flag:', field, e?.message || e));
   };
   const delProduct = (id) => setProducts((ps) => ps.filter((p) => p.id !== id));
   const dupProduct = (id) => setProducts((ps) => { const src = ps.find((p) => p.id === id); if (!src) return ps; const dup = { ...src, id: aid('p'), title: src.title + ' (cópia)', status: 'Rascunho', students: 0, modules: src.modules.map((m) => ({ ...m, id: aid('m'), lessons: m.lessons.map((l) => ({ ...l, id: aid('l') })) })) }; return [...ps, dup]; });
@@ -109,10 +111,12 @@ function ProductsAdminScreen({ scope, sharedProducts, setSharedProducts }) {
   const setProdBanners = (pid, arr) => {
     const cur = products.find((p) => p.id === pid);
     persistBanners(pid, (cur && cur.banners) || [], arr);
+    if (isBackendId(pid)) flashSaved();
     setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, banners: arr } : p)));
   };
   const setModCover = (pid, mid, v) => {
     persistModuleCover(mid, v);
+    if (isBackendId(mid)) flashSaved();
     setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, modules: p.modules.map((m) => (m.id === mid ? { ...m, cover: v } : m)) } : p)));
   };
   const imgOf = (v) => (typeof v === 'string' ? v : null);
@@ -279,6 +283,7 @@ function ProductsAdminScreen({ scope, sharedProducts, setSharedProducts }) {
   if (isFranquia) return (
       <DShell active="fadmin" sub="Admin · Catálogo Franquia" title="Catálogo Franquia">
         <div style={{ position: 'relative', height: '100%', overflow: 'auto' }}>
+          {savedFlash && <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 100, background: '#0E7A40', color: '#fff', padding: '11px 18px', borderRadius: 12, fontFamily: DISP, fontWeight: 700, fontSize: 14, boxShadow: '0 12px 30px rgba(14,122,64,.3)', display: 'flex', alignItems: 'center', gap: 8 }}><Ico d={AIC.check} size={16} c="#fff" sw={2.6} />Salvo</div>}
           {view === 'list' ? <React.Fragment>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: mobile ? '16px 16px 0' : '24px 30px 0', background: 'rgba(124,58,237,.08)', border: `1px solid rgba(124,58,237,.22)`, borderRadius: 14, padding: '14px 18px' }}>
               <Ico d={'M13 16h-1v-4h-1m1-4h.01'} size={20} c={T.accent} />

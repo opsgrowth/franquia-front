@@ -1,7 +1,7 @@
 // Carrega o catálogo REAL da franquia e mapeia p/ o shape que a vitrine/preview usam.
 import { api } from './api';
 
-function mapBlock(b: any) {
+export function mapBlock(b: any) {
   const attrs = b.attrs || {};
   switch (b.type) {
     case 'heading':

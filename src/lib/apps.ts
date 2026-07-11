@@ -1,6 +1,7 @@
 // Gestão de produtos do ADMIN (dono dos apps do catálogo).
 // PATCH /apps/{id}: publicar/despublicar, tagline, preço, premium, camuflar.
 import { api } from './api';
+import { mapBlock } from './catalog';
 
 export const isBackendId = (id: any): boolean =>
   typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}/i.test(id);
@@ -73,12 +74,20 @@ export async function loadProductModules(appId: string): Promise<any[]> {
     id: m.id,
     title: m.title,
     cover: isB64(m.cover_image_url) ? m.cover_image_url : mi,
-    lessons: (m.lessons || []).map((l: any, li: number) => ({
-      id: l.id,
-      title: l.title,
-      type: 'video',
-      duration: `${6 + ((li * 3) % 9)} min`,
-      sample: mi === 0 && li === 0,
-    })),
+    lessons: (m.lessons || []).map((l: any, li: number) => {
+      const blocks = (l.blocks || []).map(mapBlock);
+      // tipo pelo conteúdo real: vídeo/áudio se houver bloco de mídia; senão LEITURA (texto)
+      const hasVideo = blocks.some((b: any) => b.kind === 'video');
+      const hasAudio = blocks.some((b: any) => b.kind === 'audio');
+      return {
+        id: l.id,
+        title: l.title,
+        type: hasVideo ? 'video' : hasAudio ? 'audio' : 'leitura',
+        duration: `${6 + ((li * 3) % 9)} min`,
+        sample: mi === 0 && li === 0,
+        desc: l.summary || undefined,
+        blocks,
+      };
+    }),
   }));
 }
