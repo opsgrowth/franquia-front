@@ -186,6 +186,7 @@ function ProductsAdminScreen({ scope, sharedProducts, setSharedProducts }) {
           <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 24, letterSpacing: '-0.02em', color: T.ink }}>{sel.title}</div>
           <div style={{ fontFamily: DISP, fontSize: 14.5, color: T.dim, marginTop: 2 }}>{sel.subtitle}</div>
         </div>
+        <div onClick={() => setPreview(true)} style={{ cursor: 'pointer' }}><ABtn variant="outline" icon={AIC.play}>Ver como aluno</ABtn></div>
         <div onClick={() => setModal({ type: 'product', editId: sel.id, data: { title: sel.title, subtitle: sel.subtitle, kind: sel.kind, access: sel.access, desc: sel.desc || '', color: sel.color, displayPrice: sel.displayPrice || '', priceInstallment: sel.priceInstallment || '', coverImg: sel.coverImg == null ? null : sel.coverImg, saleIds: sel.saleIds || [], banners: sel.banners || (sel.banner != null ? [sel.banner] : []), showTitle: sel.showTitle !== false } })} style={{ cursor: 'pointer' }}><ABtn variant="ghost" icon={AIC.pencil}>Editar produto</ABtn></div>
       </div>
 
@@ -347,7 +348,7 @@ function ProductsAdminScreen({ scope, sharedProducts, setSharedProducts }) {
           {modal && modal.type === 'product' && <ProductModal init={modal.data} editId={modal.editId} onClose={() => setModal(null)} onSave={(d) => { if (modal.editId) updateProduct(modal.editId, d); else addProduct(d); setModal(null); }} />}
           {modal && modal.type === 'module' && <ModuleModal init={modal.data} editId={modal.editId} onClose={() => setModal(null)} onSave={(d) => { if (modal.editId) updateModule(selId, modal.editId, d); else addModule(selId, d); setModal(null); }} />}
           {modal && modal.type === 'lesson' && <LessonModal init={modal.data} editId={modal.editId} accent={sel && sel.color} productLocked={sel && sel.access === 'Premium (upsell)'} onClose={() => setModal(null)} onSave={(d) => { if (modal.editId) updateLesson(selId, modal.mid, modal.editId, d); else addLesson(selId, modal.mid, d); setModal(null); }} />}
-          <PhonePreview open={preview} onClose={() => setPreview(false)} courses={previewCourses} />
+          <PhonePreview open={preview} onClose={() => setPreview(false)} courses={sel ? previewCourses.filter((c) => c.id === sel.id) : previewCourses} />
         </div>
       </DShell>
   );
@@ -387,7 +388,7 @@ function ProductsAdminScreen({ scope, sharedProducts, setSharedProducts }) {
         {modal && modal.type === 'module' && <ModuleModal init={modal.data} editId={modal.editId} onClose={() => setModal(null)} onSave={(d) => { if (modal.editId) updateModule(sel.id, modal.editId, d); else addModule(sel.id, d); setModal(null); }} />}
         {modal && modal.type === 'lesson' && <LessonModal init={modal.data} editId={modal.editId} accent={sel.color} productLocked={sel.access === 'Premium (upsell)'} onClose={() => setModal(null)} onSave={(d) => { if (modal.editId) updateLesson(sel.id, modal.mid, modal.editId, d); else addLesson(sel.id, modal.mid, d); setModal(null); }} />}
 
-        <PhonePreview open={preview} onClose={() => setPreview(false)} courses={previewCourses} />
+        <PhonePreview open={preview} onClose={() => setPreview(false)} courses={sel ? previewCourses.filter((c) => c.id === sel.id) : previewCourses} />
       </div>
     </AuthorShell>
   );
