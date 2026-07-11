@@ -8,7 +8,8 @@ import { coDarken, coTheme, moduleDuration } from './co-app';
 import { DBtn, DShell } from './desktop-screens-1';
 import { DISP, IC, Ico, MONO, T, useIsMobile } from './kit';
 import { persistAppCover, persistBanners, persistModuleCover } from '../lib/covers';
-import { isBackendId, loadProductModules, patchApp, reorderApps } from '../lib/apps';
+import { createLesson, createModule, createVideoBlock, deleteLesson, deleteModule, isBackendId, loadProductModules, patchApp, patchBlock, patchLesson, patchModule, reorderApps } from '../lib/apps';
+import { videoEmbed } from '../lib/video';
 
 // "R$ 397" / "R$ 1.997,00" → centavos (inteiro de reais * 100; ignora centavos do texto).
 function parsePriceCents(s: any): number | null | undefined {
@@ -115,18 +116,70 @@ function ProductsAdminScreen({ scope, sharedProducts, setSharedProducts }) {
   };
   const delProduct = (id) => setProducts((ps) => ps.filter((p) => p.id !== id));
   const dupProduct = (id) => setProducts((ps) => { const src = ps.find((p) => p.id === id); if (!src) return ps; const dup = { ...src, id: aid('p'), title: src.title + ' (cópia)', status: 'Rascunho', students: 0, modules: src.modules.map((m) => ({ ...m, id: aid('m'), lessons: m.lessons.map((l) => ({ ...l, id: aid('l') })) })) }; return [...ps, dup]; });
-  const addModule = (pid, data) => setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, modules: [...p.modules, { id: aid('m'), title: data.title, cover: data.cover, lessons: [] }] } : p)));
+  // Autoria manual PERSISTE no backend (produto real). Sucesso → "Salvo ✓"; falha → alerta
+  // explícito (nunca reverte em silêncio). Para produto local/mock, mantém o comportamento antigo.
+  const addModule = async (pid, data) => {
+    if (isFranquia && isBackendId(pid)) {
+      try {
+        const cur = (window.__franquiaProducts || []).find((p) => p.id === pid);
+        const pos = cur ? (cur.modules || []).length : 0;
+        const m = await createModule(pid, { title: data.title || 'Novo módulo', position: pos });
+        persistModuleCover(m.id, data.cover);
+        setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, modules: [...(p.modules || []), { id: m.id, title: m.title || data.title, cover: data.cover, lessons: [] }], modulesCount: (p.modulesCount || 0) + 1 } : p)));
+        flashSaved();
+      } catch (e) { alert('Não consegui salvar o módulo no servidor. Tente de novo.'); console.warn('criar módulo:', e); }
+    } else {
+      setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, modules: [...p.modules, { id: aid('m'), title: data.title, cover: data.cover, lessons: [] }] } : p)));
+    }
+  };
   const updateModule = (pid, mid, data) => {
-    const cur = products.find((p) => p.id === pid);
-    const m0 = cur && cur.modules.find((mm) => mm.id === mid);
+    const cur = (window.__franquiaProducts || []).find((p) => p.id === pid);
+    const m0 = cur && (cur.modules || []).find((mm) => mm.id === mid);
     if (m0 && data.cover !== m0.cover) persistModuleCover(mid, data.cover);
+    if (isFranquia && isBackendId(mid) && (!m0 || data.title !== m0.title)) {
+      patchModule(mid, { title: data.title }).then(flashSaved).catch((e) => { alert('Não consegui salvar o nome do módulo.'); console.warn('renomear módulo:', e); });
+    }
     setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, modules: p.modules.map((m) => (m.id === mid ? { ...m, title: data.title, cover: data.cover } : m)) } : p)));
   };
-  const delModule = (pid, mid) => setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, modules: p.modules.filter((m) => m.id !== mid) } : p)));
+  const delModule = (pid, mid) => {
+    if (isFranquia && isBackendId(mid)) deleteModule(mid).then(flashSaved).catch((e) => { alert('Não consegui excluir o módulo.'); console.warn('excluir módulo:', e); });
+    setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, modules: p.modules.filter((m) => m.id !== mid), modulesCount: Math.max(0, (p.modulesCount || 1) - 1) } : p)));
+  };
   const moveModule = (pid, mid, dir) => setProducts((ps) => ps.map((p) => { if (p.id !== pid) return p; const i = p.modules.findIndex((m) => m.id === mid); const j = i + dir; if (j < 0 || j >= p.modules.length) return p; const a = [...p.modules]; [a[i], a[j]] = [a[j], a[i]]; return { ...p, modules: a }; }));
-  const addLesson = (pid, mid, data) => setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, modules: p.modules.map((m) => (m.id === mid ? { ...m, lessons: [...m.lessons, { id: aid('l'), ...data }] } : m)) } : p)));
-  const updateLesson = (pid, mid, lid, data) => setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, modules: p.modules.map((m) => (m.id === mid ? { ...m, lessons: m.lessons.map((l) => (l.id === lid ? { ...l, ...data } : l)) } : m)) } : p)));
-  const delLesson = (pid, mid, lid) => setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, modules: p.modules.map((m) => (m.id === mid ? { ...m, lessons: m.lessons.filter((l) => l.id !== lid) } : m)) } : p)));
+  const addLesson = async (pid, mid, data) => {
+    if (isFranquia && isBackendId(mid)) {
+      try {
+        const cur = (window.__franquiaProducts || []).find((p) => p.id === pid);
+        const m0 = cur && (cur.modules || []).find((mm) => mm.id === mid);
+        const pos = m0 ? (m0.lessons || []).length : 0;
+        const les = await createLesson(mid, { title: data.title || 'Nova aula', summary: data.notes || null, position: pos });
+        let blocks: any[] = [];
+        if (data.link) { try { const b = await createVideoBlock(les.id, data.link, 0); blocks = [{ id: b.id, kind: 'video', title: data.title, url: data.link, embed: videoEmbed(data.link) }]; } catch (e) { console.warn('bloco de vídeo:', e); } }
+        setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, modules: p.modules.map((m) => (m.id === mid ? { ...m, lessons: [...(m.lessons || []), { id: les.id, ...data, blocks }] } : m)) } : p)));
+        flashSaved();
+      } catch (e) { alert('Não consegui salvar a aula no servidor. Tente de novo.'); console.warn('criar aula:', e); }
+    } else {
+      setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, modules: p.modules.map((m) => (m.id === mid ? { ...m, lessons: [...m.lessons, { id: aid('l'), ...data }] } : m)) } : p)));
+    }
+  };
+  const updateLesson = (pid, mid, lid, data) => {
+    if (isFranquia && isBackendId(lid)) {
+      patchLesson(lid, { title: data.title, summary: data.notes || null }).then(flashSaved).catch((e) => { alert('Não consegui salvar a aula.'); console.warn('editar aula:', e); });
+      const cur = (window.__franquiaProducts || []).find((p) => p.id === pid);
+      const m0 = cur && (cur.modules || []).find((mm) => mm.id === mid);
+      const l0 = m0 && (m0.lessons || []).find((ll) => ll.id === lid);
+      const vb = l0 && (l0.blocks || []).find((b) => b.kind === 'video');
+      if (data.link) {
+        if (vb && isBackendId(vb.id)) patchBlock(vb.id, { external_ref: data.link }).catch((e) => console.warn('vídeo:', e));
+        else createVideoBlock(lid, data.link, 0).catch((e) => console.warn('vídeo:', e));
+      }
+    }
+    setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, modules: p.modules.map((m) => (m.id === mid ? { ...m, lessons: m.lessons.map((l) => { if (l.id !== lid) return l; const oldVid = (l.blocks || []).find((b) => b.kind === 'video'); const blocks = data.link ? [{ id: oldVid ? oldVid.id : undefined, kind: 'video', title: data.title, url: data.link, embed: videoEmbed(data.link) }] : (l.blocks || []); return { ...l, ...data, blocks }; }) } : m)) } : p)));
+  };
+  const delLesson = (pid, mid, lid) => {
+    if (isFranquia && isBackendId(lid)) deleteLesson(lid).then(flashSaved).catch((e) => { alert('Não consegui excluir a aula.'); console.warn('excluir aula:', e); });
+    setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, modules: p.modules.map((m) => (m.id === mid ? { ...m, lessons: m.lessons.filter((l) => l.id !== lid) } : m)) } : p)));
+  };
   const setProdBanner = (pid, v) => setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, banner: v } : p)));
   const setProdBanners = (pid, arr) => {
     const cur = products.find((p) => p.id === pid);

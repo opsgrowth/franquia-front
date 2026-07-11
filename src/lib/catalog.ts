@@ -1,25 +1,28 @@
 // Carrega o catálogo REAL da franquia e mapeia p/ o shape que a vitrine/preview usam.
 import { api } from './api';
+import { videoEmbed } from './video';
 
 export function mapBlock(b: any) {
   const attrs = b.attrs || {};
   switch (b.type) {
     case 'heading':
-      return { kind: 'heading', text: b.text };
+      return { id: b.id, kind: 'heading', text: b.text };
     case 'list':
-      return { kind: 'list', items: attrs.items || [] };
+      return { id: b.id, kind: 'list', items: attrs.items || [] };
     case 'quote':
-      return { kind: 'quote', text: b.text, cite: attrs.cite };
-    case 'video':
-      return { kind: 'video', title: b.text || attrs.title };
+      return { id: b.id, kind: 'quote', text: b.text, cite: attrs.cite };
+    case 'video': {
+      const url = b.external_ref || attrs.url || null;
+      return { id: b.id, kind: 'video', title: b.text || attrs.title, url, embed: videoEmbed(url) };
+    }
     case 'image':
-      return { kind: 'image', caption: attrs.caption };
+      return { id: b.id, kind: 'image', caption: attrs.caption };
     case 'divider':
-      return { kind: 'divider' };
+      return { id: b.id, kind: 'divider' };
     case 'paragraph':
     case 'text':
     default:
-      return { kind: 'paragraph', text: b.text || '' };
+      return { id: b.id, kind: 'paragraph', text: b.text || '' };
   }
 }
 

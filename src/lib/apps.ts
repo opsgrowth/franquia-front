@@ -98,3 +98,40 @@ export async function loadProductModules(appId: string): Promise<any[]> {
     }),
   }));
 }
+
+// ── Autoria manual: módulos, aulas e blocos persistem no backend ──
+// Só para produto REAL (id UUID); o painel reconcilia o id real devolvido.
+export async function createModule(appId: string, data: { title: string; summary?: string | null; position?: number }): Promise<any> {
+  return api(`/apps/${appId}/modules`, { method: 'POST', body: { title: data.title, summary: data.summary ?? null, position: data.position ?? 0 } });
+}
+export async function patchModule(moduleId: string, fields: { title?: string; summary?: string | null; cover_show_title?: boolean }): Promise<any> {
+  if (!isBackendId(moduleId)) return null;
+  return api(`/modules/${moduleId}`, { method: 'PATCH', body: fields });
+}
+export async function deleteModule(moduleId: string): Promise<void> {
+  if (!isBackendId(moduleId)) return;
+  await api(`/modules/${moduleId}`, { method: 'DELETE' });
+}
+export async function createLesson(moduleId: string, data: { title: string; summary?: string | null; position?: number }): Promise<any> {
+  return api(`/modules/${moduleId}/lessons`, { method: 'POST', body: { title: data.title, summary: data.summary ?? null, position: data.position ?? 0 } });
+}
+export async function patchLesson(lessonId: string, fields: { title?: string; summary?: string | null }): Promise<any> {
+  if (!isBackendId(lessonId)) return null;
+  return api(`/lessons/${lessonId}`, { method: 'PATCH', body: fields });
+}
+export async function deleteLesson(lessonId: string): Promise<void> {
+  if (!isBackendId(lessonId)) return;
+  await api(`/lessons/${lessonId}`, { method: 'DELETE' });
+}
+// Vídeo da aula = um bloco type='video' com a URL em external_ref (o player do aluno lê de lá).
+export async function createVideoBlock(lessonId: string, url: string, position = 0): Promise<any> {
+  return api(`/lessons/${lessonId}/blocks`, { method: 'POST', body: { type: 'video', text: null, attrs: {}, provider: 'embed', external_ref: url, position } });
+}
+export async function patchBlock(blockId: string, fields: any): Promise<any> {
+  if (!isBackendId(blockId)) return null;
+  return api(`/blocks/${blockId}`, { method: 'PATCH', body: fields });
+}
+export async function deleteBlock(blockId: string): Promise<void> {
+  if (!isBackendId(blockId)) return;
+  await api(`/blocks/${blockId}`, { method: 'DELETE' });
+}

@@ -174,11 +174,24 @@ function CoCourse({ course, progress, app }) {
 }
 
 // Render dos blocos reais da aula (semente do app do aluno) — tema escuro do player.
-function StudentBlocks({ blocks, color }) {
+function VideoPlayer({ embed }) {
+  if (!embed || !embed.src) return null;
+  return (
+    <div style={{ position: 'relative', borderRadius: 12, overflow: 'hidden', aspectRatio: '16 / 9', background: '#000' }}>
+      {embed.kind === 'iframe'
+        ? <iframe src={embed.src} title="vídeo da aula" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowFullScreen style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }} />
+        : <video src={embed.src} controls playsInline style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', background: '#000' }} />}
+    </div>
+  );
+}
+
+function StudentBlocks({ blocks, color, skipId }) {
   if (!blocks || !blocks.length) return null;
+  const list = skipId ? blocks.filter((b) => b.id !== skipId) : blocks;
+  if (!list.length) return null;
   return (
     <div style={{ maxWidth: 620, marginTop: 8 }}>
-      {blocks.map((b, i) => {
+      {list.map((b, i) => {
         switch (b.kind) {
           case 'heading':
             return <h3 key={i} style={{ fontFamily: DISP, fontWeight: 700, fontSize: 19, letterSpacing: '-0.02em', color: T.darkText, margin: '26px 0 0' }}>{b.text}</h3>;
@@ -201,10 +214,17 @@ function StudentBlocks({ blocks, color }) {
             );
           case 'video':
             return (
-              <div key={i} style={{ margin: '18px 0 0', borderRadius: 12, overflow: 'hidden', aspectRatio: '16 / 9', background: '#000', position: 'relative' }}>
-                <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 50% 45%, ${coRgba(color, .4)}, rgba(0,0,0,.3) 65%)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <span style={{ width: 54, height: 54, borderRadius: '50%', background: 'rgba(255,255,255,.92)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ico d={AIC.play} size={22} c={color} fill={color} /></span>
-                </div>
+              <div key={i} style={{ margin: '18px 0 0' }}>
+                {b.embed
+                  ? <VideoPlayer embed={b.embed} />
+                  : (
+                    <div style={{ borderRadius: 12, overflow: 'hidden', aspectRatio: '16 / 9', background: '#000', position: 'relative' }}>
+                      <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 50% 45%, ${coRgba(color, .4)}, rgba(0,0,0,.3) 65%)`, display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center', justifyContent: 'center' }}>
+                        <span style={{ width: 54, height: 54, borderRadius: '50%', background: 'rgba(255,255,255,.92)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ico d={AIC.play} size={22} c={color} fill={color} /></span>
+                        <span style={{ fontFamily: MONO, fontSize: 10, color: 'rgba(255,255,255,.6)' }}>vídeo sem link</span>
+                      </div>
+                    </div>
+                  )}
               </div>
             );
           case 'divider':
@@ -261,9 +281,17 @@ function CoPlayer({ course, lesson, progress, app, narrow }) {
     </div>
   );
 
+  const heroVid = (lesson.blocks || []).find((b) => b.kind === 'video' && b.embed);
   const Stage = (
     <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', background: T.darkBg, overflow: 'auto' }}>
-      {(lesson.type === 'video' || lesson.type === 'audio') && (
+      {heroVid && (
+      <div style={{ position: 'relative', background: '#000', aspectRatio: '16 / 9', flex: '0 0 auto' }}>
+        {heroVid.embed.kind === 'iframe'
+          ? <iframe src={heroVid.embed.src} title="vídeo da aula" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowFullScreen style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }} />
+          : <video src={heroVid.embed.src} controls playsInline style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', background: '#000' }} />}
+      </div>
+      )}
+      {!heroVid && lesson.type === 'audio' && (
       <div style={{ position: 'relative', background: '#000', aspectRatio: '16 / 9', flex: '0 0 auto' }}>
         <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 50% 45%, ${coRgba(course.color, .5)}, rgba(0,0,0,.4) 65%)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <span style={{ width: 76, height: 76, borderRadius: '50%', background: 'rgba(255,255,255,.95)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 12px 40px rgba(0,0,0,.4)' }}><Ico d={AIC.play} size={30} c={course.color} fill={course.color} /></span>
@@ -285,9 +313,10 @@ function CoPlayer({ course, lesson, progress, app, narrow }) {
       <div style={{ padding: '8px 20px 24px', flex: 1 }}>
         <div style={{ fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.1em', color: coLighten(course.color, .35), textTransform: 'uppercase' }}>{lesson.type === 'video' ? 'Vídeo' : 'Aula'} · {lesson.duration}</div>
         <h1 style={{ fontFamily: DISP, fontWeight: 700, fontSize: 26, letterSpacing: '-0.03em', color: T.darkText, margin: '8px 0 12px' }}>{lesson.title}</h1>
+        {lesson.desc && <p style={{ fontFamily: DISP, fontSize: 15, lineHeight: 1.6, color: 'rgba(246,241,251,.72)', margin: '4px 0 2px', maxWidth: 560 }}>{lesson.desc}</p>}
         {lesson.blocks && lesson.blocks.length
-          ? <StudentBlocks blocks={lesson.blocks} color={course.color} />
-          : <p style={{ fontFamily: DISP, fontSize: 14.5, lineHeight: 1.6, color: 'rgba(246,241,251,.6)', marginTop: 10, maxWidth: 560 }}>{lesson.desc || 'Conteúdo da aula. No produto final, aqui toca o vídeo/áudio ou aparece o texto da aula.'}</p>}
+          ? <StudentBlocks blocks={lesson.blocks} color={course.color} skipId={heroVid ? heroVid.id : undefined} />
+          : (!lesson.desc && <p style={{ fontFamily: DISP, fontSize: 14.5, lineHeight: 1.6, color: 'rgba(246,241,251,.6)', marginTop: 10, maxWidth: 560 }}>Conteúdo da aula. No produto final, aqui toca o vídeo/áudio ou aparece o texto da aula.</p>)}
       </div>
     </div>
   );
