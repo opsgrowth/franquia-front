@@ -369,7 +369,7 @@ function DCatalogo() {
             <div style={{ fontFamily: DISP, fontWeight: 600, fontSize: 15, marginTop: 12 }}>{it.n}</div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 }}>
               <span style={{ fontFamily: DISP, fontWeight: 700, fontSize: 16, color: it.c }}>{it.p}</span>
-              <span onClick={() => isF ? (isPrem ? setPremInfo(true) : setSheetItem(it)) : (window.__go && window.__go('manual'))} style={{ fontFamily: DISP, fontSize: 12.5, fontWeight: 600, color: T.dim, cursor: 'pointer' }}>{isF ? 'Abrir →' : 'Editar →'}</span>
+              <span onClick={() => isF ? (isPrem ? setPremInfo(true) : setSheetItem(it)) : (window.__go && window.__go('manual'))} style={{ fontFamily: DISP, fontSize: 12.5, fontWeight: 700, color: isF && !isPrem ? T.accent : T.dim, cursor: 'pointer' }}>{isF ? (isPrem ? 'Ver →' : 'Promover →') : 'Editar →'}</span>
             </div>
             </div>
           </div>

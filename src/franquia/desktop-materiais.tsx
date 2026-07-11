@@ -2,18 +2,37 @@ import React from 'react';
 import { AIC } from './author-kit';
 import { PhonePreview } from './author-preview';
 import { DISP, IC, Ico, MONO, Mark, T, useIsMobile } from './kit';
+import { getWebhookUrl } from '../lib/promotions';
 
 // Kit de Vendas (contextual, por produto da Franquia) — aba Materiais + Prévia.
 // Reusa T/DISP/MONO/Ico/IC/AIC/Mark + PhonePreview.
 function MaterialsSheet({ item, course, onClose }) {
   const smob = useIsMobile();
-  const [tab, setTab] = React.useState('mat');
+  const [tab, setTab] = React.useState('promo');
   const [preview, setPreview] = React.useState(false);
   const [copied, setCopied] = React.useState('');
   const accent = (item && item.c) || T.accent;
   const copy = (key, text) => { try { navigator.clipboard && navigator.clipboard.writeText(text); } catch (e) {} setCopied(key); setTimeout(() => setCopied(''), 1600); };
   const coT = (c) => `linear-gradient(135deg, ${c}99 0%, ${c} 100%)`;
   const cover = item && item.coverImg;
+  // URL de webhook REAL desta promoção (franqueado + este produto). Colada na Kiwify.
+  const appId = item && ((item.raw && item.raw.id) || item.id);
+  const [webhookUrl, setWebhookUrl] = React.useState('');
+  const [whLoading, setWhLoading] = React.useState(true);
+  React.useEffect(() => {
+    let alive = true; setWhLoading(true);
+    getWebhookUrl(appId)
+      .then((u) => { if (alive) { setWebhookUrl(u); setWhLoading(false); } })
+      .catch(() => { if (alive) { setWebhookUrl(''); setWhLoading(false); } });
+    return () => { alive = false; };
+  }, [appId]);
+  const StepNum = ({ n }) => <div style={{ width: 26, height: 26, borderRadius: '50%', background: T.accent, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: DISP, fontWeight: 700, fontSize: 13, flex: '0 0 auto' }}>{n}</div>;
+  const Step = ({ n, title, desc }) => (
+    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+      <StepNum n={n} />
+      <div><div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 15, color: T.ink }}>{title}</div><div style={{ fontFamily: DISP, fontSize: 13, color: T.dim, marginTop: 2, lineHeight: 1.5 }}>{desc}</div></div>
+    </div>
+  );
 
   const AssetCard = ({ icon, title, desc, children }) => (
     <div style={{ background: '#fff', border: `1px solid ${T.line}`, borderRadius: 14, padding: 18, display: 'flex', gap: 14, alignItems: 'flex-start' }}>
@@ -47,14 +66,33 @@ function MaterialsSheet({ item, course, onClose }) {
         </div>
         {/* tabs */}
         <div style={{ display: 'flex', gap: 6, padding: '14px 26px 0' }}>
-          {[['mat', 'Materiais de venda'], ['comp', 'Materiais complementares'], ['prev', 'Prévia do app']].map(([k, l]) => {
+          {[['promo', 'Promover e vender'], ['mat', 'Materiais de venda'], ['comp', 'Materiais complementares'], ['prev', 'Prévia do app']].map(([k, l]) => {
             const on = tab === k;
             return <div key={k} onClick={() => setTab(k)} style={{ fontFamily: DISP, fontWeight: 600, fontSize: 14, padding: '10px 16px', borderRadius: '10px 10px 0 0', cursor: 'pointer', color: on ? T.accent : T.dim, borderBottom: `2px solid ${on ? T.accent : 'transparent'}` }}>{l}</div>;
           })}
         </div>
         <div style={{ height: 1, background: T.line }}></div>
 
-        {tab === 'mat' ? (
+        {tab === 'promo' ? (
+          <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ fontFamily: DISP, fontSize: 14, color: T.dim, lineHeight: 1.55 }}>Venda este produto no seu checkout (Kiwify, Hotmart…). Conecte o webhook abaixo e <b style={{ color: T.ink, fontWeight: 600 }}>toda venda aprovada libera o acesso do cliente na hora</b> — e cai nas suas Vendas.</div>
+            <Step n={1} title="Crie o produto/checkout na sua plataforma" desc="Na Kiwify (ou Hotmart), crie o produto e a oferta com o preço que você vai cobrar." />
+            <div style={{ background: '#fff', border: `1.5px solid ${T.accent}`, borderRadius: 14, padding: 18 }}>
+              <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                <StepNum n={2} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 15.5, color: T.ink }}>Cole esta URL de webhook na Kiwify</div>
+                  <div style={{ fontFamily: DISP, fontSize: 13, color: T.dim, marginTop: 3, lineHeight: 1.5 }}>Na Kiwify: <b style={{ color: T.ink, fontWeight: 600 }}>Apps → Webhooks</b> → novo webhook, evento <b style={{ color: T.ink, fontWeight: 600 }}>compra aprovada</b>, e cole a URL:</div>
+                  <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                    <div style={{ flex: 1, minWidth: 0, fontFamily: MONO, fontSize: 12.5, color: T.ink, background: T.paper, border: `1px solid ${T.line}`, borderRadius: 10, padding: '13px 14px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{whLoading ? 'Gerando sua URL…' : (webhookUrl || 'Erro ao gerar — recarregue a página.')}</div>
+                    <div onClick={() => webhookUrl && copy('wh', webhookUrl)} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, cursor: webhookUrl ? 'pointer' : 'default', background: T.accent, color: '#fff', borderRadius: 10, padding: '0 18px', fontFamily: DISP, fontWeight: 700, fontSize: 13.5, opacity: webhookUrl ? 1 : 0.5, flex: '0 0 auto' }}><Ico d={CP} size={15} c="#fff" />{copied === 'wh' ? 'Copiado!' : 'Copiar'}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <Step n={3} title="Pronto — a venda vira acesso sozinha" desc="Quando alguém comprar, o cliente recebe o acesso por email na hora, entra na base deste produto e a venda aparece na sua aba Vendas. Você não faz mais nada." />
+          </div>
+        ) : tab === 'mat' ? (
           <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div style={{ fontFamily: DISP, fontSize: 14, color: T.dim, lineHeight: 1.55 }}>Baixe os materiais e publique na sua estrutura. Todos os franqueados recebem os mesmos arquivos — você conecta seu checkout via integração.</div>
 
