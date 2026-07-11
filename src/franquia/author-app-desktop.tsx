@@ -10,7 +10,7 @@ import { DISP, IC, Ico, MONO, Mark, T } from './kit';
 
 const { useState: useStateAppD } = React;
 
-function DeskSidebar({ creator, active, onTab, studentName }) {
+function DeskSidebar({ creator, active, onTab, studentName, onLogout }) {
   const alunoNome = (studentName || '').trim() || 'Marina Souza';
   const alunoInicial = alunoNome.charAt(0).toUpperCase();
   const menu = [['inicio', 'Início', IC.home], ['mentor', 'Mentor IA', AIC.spark || IC.spark]];
@@ -46,6 +46,7 @@ function DeskSidebar({ creator, active, onTab, studentName }) {
       <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: 10, padding: '14px 6px 0', borderTop: '1px solid rgba(196,163,255,.12)' }}>
         <div style={{ width: 36, height: 36, borderRadius: '50%', background: T.accent, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: DISP, fontWeight: 700, fontSize: 14, flex: '0 0 auto' }}>{alunoInicial}</div>
         <div><div style={{ fontFamily: DISP, fontWeight: 600, fontSize: 13.5, color: T.darkText }}>{alunoNome}</div><div style={{ fontFamily: MONO, fontSize: 10.5, color: 'rgba(246,241,251,.45)' }}>Aluno</div></div>
+        {onLogout && <div onClick={onLogout} title="Sair" style={{ marginLeft: 'auto', width: 34, height: 34, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', border: '1px solid rgba(196,163,255,.16)', flex: '0 0 auto' }}><Ico d="M16 17l5-5-5-5 M21 12H9 M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" size={16} c="rgba(246,241,251,.62)" /></div>}
       </div>
     </div>
   );

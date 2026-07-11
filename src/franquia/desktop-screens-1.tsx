@@ -251,10 +251,10 @@ function DDashboard() {
           <div style={{ position: 'absolute', right: -30, bottom: -30, opacity: 0.16 }}><Mark size={150} front={T.accent} ghost={T.pill} inner={T.ink} /></div>
           <div style={{ position: 'relative', flex: 1 }}>
             <Ico d={IC.spark} size={22} c={T.pill} />
-            <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 19, color: T.darkText, marginTop: 16, lineHeight: 1.25, letterSpacing: '-0.02em' }}>{rows.length ? `Seu “${rows[0][0]}” é o que mais vende.` : 'Escolha um produto do catálogo e comece a promover.'}</div>
-            <div style={{ fontFamily: DISP, fontSize: 13.5, color: 'rgba(246,241,251,.6)', marginTop: 10 }}>{rows.length ? 'Foque nele e amplie o alcance do que já funciona.' : 'O catálogo da franquia está pronto — é só conectar seu checkout.'}</div>
+            <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 19, color: T.darkText, marginTop: 16, lineHeight: 1.25, letterSpacing: '-0.02em' }}>Produtos prontos para vender no seu catálogo.</div>
+            <div style={{ fontFamily: DISP, fontSize: 13.5, color: 'rgba(246,241,251,.6)', marginTop: 10 }}>Escolha um produto validado da Franquia e comece a vender hoje, com página e material já prontos.</div>
           </div>
-          <div style={{ position: 'relative', marginTop: 18 }}><DBtn icon={IC.arrow} onClick={() => setPaywall(true)}>Gerar versão</DBtn></div>
+          <div style={{ position: 'relative', marginTop: 18 }}><DBtn icon={IC.arrow} onClick={() => window.__go && window.__go('cat')}>Ver catálogo</DBtn></div>
         </div>
       </div>
 

@@ -348,7 +348,7 @@ function CoApp({ courses, narrow, creator, studentName, onLogout }) {
   return (
     <div style={{ display: 'flex', flexDirection: narrow ? 'column' : 'row', height: '100%', background: T.paper, fontFamily: DISP, position: 'relative', overflow: 'hidden' }}>
       {narrow && <MobileTopBar creator={creator || { name: 'Camila Oliveira' }} />}
-      {!narrow && <DeskSidebar creator={creator || { name: 'Camila Oliveira' }} studentName={studentName} active={tab} onTab={(t) => { setTab(t); if (t === 'inicio') setRoute({ name: 'home' }); }} />}
+      {!narrow && <DeskSidebar creator={creator || { name: 'Camila Oliveira' }} studentName={studentName} active={tab} onTab={(t) => { setTab(t); if (t === 'inicio') setRoute({ name: 'home' }); }} onLogout={onLogout} />}
       <div style={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex', overflow: 'hidden' }}>{body}</div>
       {pay && <PaywallModal offer={(data.find((c) => c.id === pay) || {}).offer || DEFAULT_OFFER} onClose={() => setPay(null)} />}
       {narrow && <StudentTabBar active={tab} onTab={(t) => { setTab(t); if (t === 'inicio') setRoute({ name: 'home' }); }} />}
