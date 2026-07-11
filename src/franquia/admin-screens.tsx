@@ -1,7 +1,7 @@
 import React from 'react';
 import { DShell } from './desktop-screens-1';
 import { DISP, IC, Ico, MONO, T, useIsMobile } from './kit';
-import { bulkFranchisees, createFranchisee, loadFranchisees, loadLeads } from '../lib/admin';
+import { bulkFranchisees, createFranchisee, deleteFranchisee, loadFranchisees, loadLeads } from '../lib/admin';
 
 // TXT (email, nome por linha; separador , ; ou tab) → [{email, name}]. Detecta o email pelo @.
 function parseBulk(text: string): { email: string; name?: string }[] {
@@ -63,6 +63,11 @@ function FranchiseesScreen() {
     } catch (e: any) { setMsg((e?.message || 'Erro no envio em massa.').replace(/^\d+:\s*/, '')); }
     finally { setBulkBusy(false); }
   };
+  const del = async (f: any) => {
+    if (!window.confirm(`Excluir ${f.name || f.email}? Remove o acesso dele à franquia. Os compradores dos produtos MANTÊM o acesso.`)) return;
+    try { await deleteFranchisee(f.creator_id); setList((l) => l.filter((x) => x.creator_id !== f.creator_id)); }
+    catch (e: any) { setMsg((e?.message || 'Erro ao excluir.').replace(/^\d+:\s*/, '')); }
+  };
   const inp = { fontFamily: DISP, width: '100%', boxSizing: 'border-box' as const, border: `1px solid ${T.line}`, borderRadius: 11, padding: '12px 14px', fontSize: 15, color: T.ink, outline: 'none', background: '#fff' };
   return (
     <DShell active="franqueados" sub="Admin · Franqueados" title="Franqueados">
@@ -93,8 +98,8 @@ function FranchiseesScreen() {
         </div>
         <div style={{ background: '#fff', border: `1px solid ${T.line}`, borderRadius: 18, overflow: 'hidden' }}>
           {!mobile && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 2fr 1.2fr 1fr 1fr', padding: '14px 22px', fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.06em', color: T.dim, borderBottom: `1px solid ${T.line}` }}>
-              <span>NOME</span><span>EMAIL</span><span>ÚLTIMO ACESSO</span><span>PROMOÇÕES</span><span>VENDAS</span>
+            <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 2fr 1.2fr 0.9fr 0.9fr 44px', padding: '14px 22px', fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.06em', color: T.dim, borderBottom: `1px solid ${T.line}` }}>
+              <span>NOME</span><span>EMAIL</span><span>ÚLTIMO ACESSO</span><span>PROMOÇÕES</span><span>VENDAS</span><span></span>
             </div>
           )}
           {loading ? (
@@ -102,12 +107,13 @@ function FranchiseesScreen() {
           ) : list.length === 0 ? (
             <div style={{ padding: 40, textAlign: 'center', fontFamily: DISP, fontSize: 15, color: T.dim }}>Nenhum franqueado ainda. Adicione o primeiro acima.</div>
           ) : list.map((f, i) => (
-            <div key={f.creator_id} style={{ display: mobile ? 'flex' : 'grid', flexDirection: 'column', gridTemplateColumns: '1.6fr 2fr 1.2fr 1fr 1fr', alignItems: mobile ? 'flex-start' : 'center', gap: mobile ? 4 : 0, padding: '15px 22px', borderBottom: i < list.length - 1 ? `1px solid ${T.line}` : 'none' }}>
+            <div key={f.creator_id} style={{ display: mobile ? 'flex' : 'grid', flexDirection: 'column', gridTemplateColumns: '1.6fr 2fr 1.2fr 0.9fr 0.9fr 44px', alignItems: mobile ? 'flex-start' : 'center', gap: mobile ? 4 : 0, padding: '15px 22px', borderBottom: i < list.length - 1 ? `1px solid ${T.line}` : 'none' }}>
               <span style={{ fontFamily: DISP, fontWeight: 600, fontSize: 14.5, color: T.ink }}>{f.name || '—'}</span>
               <span style={{ fontFamily: MONO, fontSize: 13, color: T.dim, overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.email}</span>
               <span style={{ fontFamily: DISP, fontSize: 13.5, color: f.last_active_at ? T.ink : T.dim }}>{fmtLast(f.last_active_at)}</span>
               <span style={{ fontFamily: DISP, fontSize: 14, color: T.ink }}>{mobile ? 'Promoções: ' : ''}{f.promotions}</span>
               <span style={{ fontFamily: DISP, fontSize: 14, fontWeight: 700, color: f.sales ? '#0E7A40' : T.dim }}>{mobile ? 'Vendas: ' : ''}{f.sales}</span>
+              <div onClick={() => del(f)} title="Excluir franqueado" style={{ width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', border: `1px solid ${T.line}`, marginLeft: mobile ? 0 : 'auto' }}><Ico d="M3 6h18 M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2 M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" size={15} c="#B23A2E" /></div>
             </div>
           ))}
         </div>

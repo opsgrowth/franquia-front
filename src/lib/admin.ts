@@ -35,6 +35,11 @@ export async function bulkFranchisees(items: { email: string; name?: string }[])
   return api('/admin/franchisees/bulk', { method: 'POST', body: { items } });
 }
 
+// Exclui o franqueado (acesso + creator/tenant + promoções/vendas). Comprador mantém acesso.
+export async function deleteFranchisee(creatorId: string): Promise<void> {
+  await api(`/admin/franchisees/${creatorId}`, { method: 'DELETE' });
+}
+
 // Franqueado define a senha pelo link do convite (público). Devolve o email.
 export async function setFranchiseePassword(token: string, password: string): Promise<{ ok: boolean; email: string }> {
   const res = await fetch(`${(import.meta as any).env?.VITE_API_URL || ''}/admin/set-password`, {
