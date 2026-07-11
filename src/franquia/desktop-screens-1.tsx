@@ -7,6 +7,7 @@ import { RecorrenciaPaywall } from './author-ingest';
 import { DISP, IC, Ico, Lockup, MONO, Mark, T, Wordmark, useIsMobile } from './kit';
 import { getMe } from '../lib/auth';
 import { loadSales } from '../lib/sales';
+import { camoName } from '../lib/camo';
 
 // ── KILL-SWITCH GLOBAL de camuflagem (pitch) ────────────────────────
 // Em produção a camuflagem é POR PRODUTO (flag `camouflaged` do backend, controlado
@@ -177,7 +178,7 @@ function DDashboard() {
   const rows = _catalogo
     .map((p) => {
       const agg = _byProd[p.title] || { n: 0, v: 0 };
-      return { prod: p.title, price: p.displayPrice || '—', n: agg.n, v: agg.v };
+      return { prod: camoName(p.title), price: p.displayPrice || '—', n: agg.n, v: agg.v };
     })
     .sort((a, b) => b.v - a.v || b.n - a.n)
     .map((r) => [r.prod, 'No ar', r.price, String(r.n), _fmt(r.v)]);

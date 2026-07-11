@@ -3,6 +3,7 @@ import { AIC } from './author-kit';
 import { DShell } from './desktop-screens-1';
 import { DISP, IC, Ico, MONO, T, useIsMobile } from './kit';
 import { loadSales } from '../lib/sales';
+import { camoName } from '../lib/camo';
 
 // Tela: Vendas — transações por webhook das plataformas (Digistore/Kiwify/Hotmart…).
 // Reusa T/DISP/MONO/Ico/IC/AIC + DShell (desktop-screens-1).
@@ -94,7 +95,7 @@ function DVendas() {
           if (vmob) return (
             <div key={s.id} style={{ padding: '14px 16px', borderBottom: i < rows.length - 1 ? `1px solid ${T.line}` : 'none' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
-                <span style={{ fontFamily: DISP, fontWeight: 600, fontSize: 14, color: T.ink }}>{s.prod}</span>
+                <span style={{ fontFamily: DISP, fontWeight: 600, fontSize: 14, color: T.ink }}>{camoName(s.prod)}</span>
                 <span style={{ fontFamily: DISP, fontWeight: 700, fontSize: 14, color: s.color }}>{s.value}</span>
               </div>
               <div style={{ fontFamily: MONO, fontSize: 11.5, color: T.dim, marginTop: 3 }}>{s.buyer} · {s.plat}</div>
@@ -108,7 +109,7 @@ function DVendas() {
             <div key={s.id} style={{ display: 'grid', gridTemplateColumns: COLS, alignItems: 'center', padding: '14px 22px', borderBottom: i < rows.length - 1 ? `1px solid ${T.line}` : 'none' }}>
               <span style={{ fontFamily: MONO, fontSize: 12.5, color: T.dim }}>{s.id}</span>
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontFamily: DISP, fontWeight: 600, fontSize: 14, color: T.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.prod}</div>
+                <div style={{ fontFamily: DISP, fontWeight: 600, fontSize: 14, color: T.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{camoName(s.prod)}</div>
                 <div style={{ fontFamily: MONO, fontSize: 11, color: T.dim, marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.buyer}</div>
               </div>
               <span style={{ fontFamily: DISP, fontSize: 13.5, color: T.ink }}>{s.plat}</span>
