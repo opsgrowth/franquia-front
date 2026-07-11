@@ -5,11 +5,25 @@ import './franquia/cover-assets';
 import App from './App';
 import { StudentApp } from './franquia/student-app';
 
-// Rota do COMPRADOR: /p/{slug} abre o app do produto (link mágico), fora do painel.
+// Quem renderiza:
+//  - /p/{slug} (link mágico) → app do COMPRADOR.
+//  - app INSTALADO abre em "/" (start_url do manifest): se há sessão de aluno persistida
+//    E NÃO há sessão de criador (painel) → app do comprador. Assim o ícone na home do
+//    comprador abre o CURSO dele, e o do admin/franqueado abre o painel.
 const isStudentRoute = window.location.pathname.startsWith('/p/');
+const hasStudentToken = (() => { try { return !!localStorage.getItem('fia_student_token'); } catch { return false; } })();
+const hasCreatorSession = (() => {
+  try { return Object.keys(localStorage).some((k) => k.startsWith('sb-') && k.includes('auth-token')); } catch { return false; }
+})();
+const showStudent = isStudentRoute || (hasStudentToken && !hasCreatorSession);
+
+// Service worker → instalabilidade PWA (Android) + shell offline.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(() => {}); });
+}
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    {isStudentRoute ? <StudentApp /> : <App />}
+    {showStudent ? <StudentApp /> : <App />}
   </React.StrictMode>,
 );

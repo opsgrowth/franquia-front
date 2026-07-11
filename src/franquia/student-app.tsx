@@ -1,7 +1,7 @@
 import React from 'react';
 import { CoApp } from './co-screens';
 import { DISP, Lockup, MONO, T, useIsMobile } from './kit';
-import { loadStudentCourse, readStudentToken } from '../lib/student';
+import { loadStudentCourse, readStudentToken, requestAccess } from '../lib/student';
 
 // App do COMPRADOR — aberto pelo link mágico (/p/{slug}?token=...). Não passa pelo
 // login do painel: a sessão é o próprio token do aluno. Renderiza o CoApp (mesma
@@ -17,10 +17,13 @@ function Center({ children }: { children: React.ReactNode }) {
 
 export function StudentApp() {
   const mob = useIsMobile();
-  const [state, setState] = React.useState<'loading' | 'ready' | 'error'>('loading');
+  const [state, setState] = React.useState<'loading' | 'ready' | 'error' | 'login' | 'sent'>('loading');
   const [course, setCourse] = React.useState<any>(null);
   const [student, setStudent] = React.useState<any>(null);
   const [msg, setMsg] = React.useState('');
+  const [email, setEmail] = React.useState('');
+  const [sending, setSending] = React.useState(false);
+  const slug = (typeof window !== 'undefined' ? (window.location.pathname.match(/\/p\/([^/?#]+)/) || [])[1] : '') || '';
   // Altura REAL da viewport (px) via JS — funciona em qualquer navegador mobile
   // (100dvh quebra em iOS antigo → tela em branco). Atualiza ao mostrar/esconder a
   // barra do navegador e ao girar a tela. As barras ficam fixas; só o miolo rola.
@@ -35,8 +38,7 @@ export function StudentApp() {
   React.useEffect(() => {
     const token = readStudentToken();
     if (!token) {
-      setState('error');
-      setMsg('Link inválido ou ausente. Abra o link que você recebeu por email.');
+      setState('login'); // sem token → tela de login por email da compra
       return;
     }
     let alive = true;
@@ -51,12 +53,42 @@ export function StudentApp() {
     return () => { alive = false; };
   }, []);
 
+  const submitAccess = async () => {
+    if (!email.trim() || sending) return;
+    setSending(true); setMsg('');
+    try { const r = await requestAccess(slug, email.trim()); setState('sent'); setMsg(r.detail || ''); }
+    catch (e) { setMsg('Não foi possível enviar agora. Tente de novo.'); }
+    finally { setSending(false); }
+  };
+
   if (state === 'loading') {
     return (
       <Center>
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 18 }}><Lockup scale={0.55} /></div>
         <span style={{ width: 22, height: 22, border: '3px solid rgba(124,58,237,.25)', borderTopColor: '#7C3AED', borderRadius: '50%', display: 'inline-block', animation: 'fia-spin .7s linear infinite' }} />
         <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.1em', color: T.dim, textTransform: 'uppercase', marginTop: 16 }}>Liberando seu acesso…</div>
+      </Center>
+    );
+  }
+  if (state === 'login' || state === 'sent') {
+    return (
+      <Center>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}><Lockup scale={0.6} /></div>
+        {state === 'sent' ? (
+          <React.Fragment>
+            <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 22, color: T.ink }}>Verifique seu email 📧</div>
+            <div style={{ fontFamily: DISP, fontSize: 14.5, lineHeight: 1.6, color: T.dim, marginTop: 10 }}>{msg || 'Se este email tiver acesso, enviamos o link. Confira a caixa de entrada e o spam.'}</div>
+            <div onClick={() => { setState('login'); setMsg(''); }} style={{ marginTop: 22, fontFamily: DISP, fontWeight: 600, fontSize: 14, color: T.accent, cursor: 'pointer' }}>Usar outro email</div>
+          </React.Fragment>
+        ) : (
+          <React.Fragment>
+            <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 22, color: T.ink }}>Acesse seu produto</div>
+            <div style={{ fontFamily: DISP, fontSize: 14.5, lineHeight: 1.6, color: T.dim, marginTop: 8 }}>Digite o <b style={{ color: T.ink, fontWeight: 600 }}>email que você usou na compra</b> — enviamos um link de acesso pra ele.</div>
+            <input value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submitAccess()} type="email" inputMode="email" autoCapitalize="none" autoCorrect="off" placeholder="seu@email.com" style={{ width: '100%', marginTop: 18, boxSizing: 'border-box', border: `1px solid ${T.line}`, borderRadius: 12, padding: '14px 16px', fontFamily: DISP, fontSize: 16, color: T.ink, outline: 'none', textAlign: 'center' }} />
+            <div onClick={submitAccess} style={{ marginTop: 12, background: sending ? 'rgba(124,58,237,.6)' : T.accent, color: '#fff', borderRadius: 12, padding: '14px', fontFamily: DISP, fontWeight: 700, fontSize: 15.5, cursor: sending ? 'default' : 'pointer' }}>{sending ? 'Enviando…' : 'Receber link de acesso'}</div>
+            {msg && <div style={{ fontFamily: DISP, fontSize: 13, color: '#B23A16', marginTop: 10 }}>{msg}</div>}
+          </React.Fragment>
+        )}
       </Center>
     );
   }

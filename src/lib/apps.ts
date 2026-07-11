@@ -23,6 +23,13 @@ export async function patchApp(appId: string, fields: AppPatch): Promise<any> {
   return api(`/apps/${appId}`, { method: 'PATCH', body: fields });
 }
 
+// Define a ordem do catálogo (posição = índice na lista). Reflete no catálogo público.
+export async function reorderApps(ids: string[]): Promise<any> {
+  const real = (ids || []).filter(isBackendId);
+  if (!real.length) return null;
+  return api('/apps/reorder', { method: 'POST', body: { ids: real } });
+}
+
 // Lista TODOS os apps do admin (inclui rascunhos não publicados) — metadados + flags.
 export async function loadMyApps(): Promise<any[]> {
   try {

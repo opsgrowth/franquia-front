@@ -8,7 +8,7 @@ import { coDarken, coTheme, moduleDuration } from './co-app';
 import { DBtn, DShell } from './desktop-screens-1';
 import { DISP, IC, Ico, MONO, T, useIsMobile } from './kit';
 import { persistAppCover, persistBanners, persistModuleCover } from '../lib/covers';
-import { isBackendId, loadProductModules, patchApp } from '../lib/apps';
+import { isBackendId, loadProductModules, patchApp, reorderApps } from '../lib/apps';
 
 // "R$ 397" / "R$ 1.997,00" → centavos (inteiro de reais * 100; ignora centavos do texto).
 function parsePriceCents(s: any): number | null | undefined {
@@ -102,6 +102,16 @@ function ProductsAdminScreen({ scope, sharedProducts, setSharedProducts }) {
       ? { ...p, [uiKey]: value, ...(field === 'is_premium' ? { access: value ? 'Premium (upsell)' : 'Liberado' } : {}) }
       : p)));
     patchApp(pid, { [field]: value }).then(flashSaved).catch((e) => console.warn('patchApp flag:', field, e?.message || e));
+  };
+  // Reordena os produtos (reflete no catálogo público dos franqueados).
+  const moveProduct = (pid, dir) => {
+    const i = products.findIndex((p) => p.id === pid);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= products.length) return;
+    const arr = [...products];
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+    setProducts(arr);
+    reorderApps(arr.map((p) => p.id)).then(flashSaved).catch((e) => console.warn('reorder:', e?.message || e));
   };
   const delProduct = (id) => setProducts((ps) => ps.filter((p) => p.id !== id));
   const dupProduct = (id) => setProducts((ps) => { const src = ps.find((p) => p.id === id); if (!src) return ps; const dup = { ...src, id: aid('p'), title: src.title + ' (cópia)', status: 'Rascunho', students: 0, modules: src.modules.map((m) => ({ ...m, id: aid('m'), lessons: m.lessons.map((l) => ({ ...l, id: aid('l') })) })) }; return [...ps, dup]; });
@@ -320,7 +330,11 @@ function ProductsAdminScreen({ scope, sharedProducts, setSharedProducts }) {
                     {!mobile && <span style={{ fontFamily: DISP, fontSize: 15, color: T.ink }}>{p.students.toLocaleString('pt-BR')}</span>}
                     {!mobile && (<div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingRight: 14 }}><div style={{ flex: 1, height: 7, borderRadius: 99, background: 'rgba(24,18,31,.08)', overflow: 'hidden' }}><div style={{ width: pct + '%', height: '100%', background: `linear-gradient(90deg,${p.color}99,${p.color})` }}></div></div><span style={{ fontFamily: MONO, fontSize: 12.5, color: T.ink, fontWeight: 600 }}>{pct}%</span></div>)}
                     {!mobile && <AdmStatus status={p.status} />}
-                    <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }} onClick={(e) => e.stopPropagation()}>
+                    <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
+                      <div style={{ display: 'flex', flexDirection: 'column', marginRight: 2 }} title="Ordenar no catálogo">
+                        <div onClick={() => moveProduct(p.id, -1)} style={{ cursor: i > 0 ? 'pointer' : 'default', opacity: i > 0 ? 1 : 0.3, height: 17, display: 'flex', alignItems: 'center' }}><Ico d="M6 15l6-6 6 6" size={15} c={T.dim} /></div>
+                        <div onClick={() => moveProduct(p.id, 1)} style={{ cursor: i < products.length - 1 ? 'pointer' : 'default', opacity: i < products.length - 1 ? 1 : 0.3, height: 17, display: 'flex', alignItems: 'center' }}><Ico d="M6 9l6 6 6-6" size={15} c={T.dim} /></div>
+                      </div>
                       <div onClick={() => dupProduct(p.id)} title="Duplicar" style={{ width: 34, height: 34, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', border: `1px solid ${T.line}`, marginRight: 4 }}><Ico d={IC.copy} size={15} c={T.dim} /></div>
                       <div onClick={() => setModal({ type: 'product', editId: p.id, data: { title: p.title, subtitle: p.subtitle, kind: p.kind, access: p.access, desc: p.desc || '', color: p.color, displayPrice: p.displayPrice || '', priceInstallment: p.priceInstallment || '', coverImg: p.coverImg == null ? null : p.coverImg, saleIds: p.saleIds || [], banners: p.banners || [], showTitle: p.showTitle !== false } })} style={{ width: 34, height: 34, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', border: `1px solid ${T.line}` }}><Ico d={AIC.pencil} size={16} c={T.dim} /></div>
                       <div onClick={() => delProduct(p.id)} style={{ width: 34, height: 34, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', border: `1px solid ${T.line}` }}><Ico d={AIC.trash} size={16} c={T.dim} /></div>

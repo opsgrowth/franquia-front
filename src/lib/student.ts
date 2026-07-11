@@ -22,6 +22,20 @@ export function clearStudentToken() {
   try { localStorage.removeItem(KEY); } catch (e) {}
 }
 
+// Login por email: pede um link de acesso pro email da compra. Resposta genérica.
+export async function requestAccess(slug: string, email: string): Promise<{ ok: boolean; detail: string }> {
+  const res = await fetch(`${API_BASE}/student/request-access`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ slug, email }),
+  });
+  if (!res.ok) {
+    const t = await res.text().catch(() => '');
+    throw new Error(t || `${res.status}`);
+  }
+  return res.json();
+}
+
 async function sfetch(path: string, token: string): Promise<any> {
   const res = await fetch(`${API_BASE}${path}`, {
     headers: { Authorization: `Bearer ${token}` },
