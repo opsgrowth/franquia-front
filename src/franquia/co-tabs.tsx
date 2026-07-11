@@ -93,7 +93,7 @@ function Suporte({ accent = T.accent }) {
 }
 
 // ── Perfil ────────────────────────────────────────────────────────
-function Perfil({ accent = T.accent, courses = [], progress = {} }) {
+function Perfil({ accent = T.accent, courses = [], progress = {}, onLogout }) {
   const done = courses.reduce((n, c) => n + c.modules.flatMap((m) => m.lessons).filter((l) => progress[l.id]).length, 0);
   const stats = [['Cursos', String(courses.length)], ['Aulas feitas', String(done)], ['Sequência', '4 dias']];
   const items = [['Editar perfil', AIC.pencil], ['Meus acessos', AIC.grid], ['Notificações', 'M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9 M13.7 21a2 2 0 0 1-3.4 0'], ['Sair', 'M16 17l5-5-5-5 M21 12H9 M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4']];
@@ -118,7 +118,7 @@ function Perfil({ accent = T.accent, courses = [], progress = {} }) {
         </div>
         <div style={{ marginTop: 18, background: '#fff', border: `1px solid ${T.line}`, borderRadius: 14, overflow: 'hidden' }}>
           {items.map(([t, d], i) => (
-            <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '15px 16px', borderTop: i ? `1px solid ${T.line}` : 'none', cursor: 'pointer' }}>
+            <div key={t} onClick={() => { if (t === 'Sair' && onLogout) onLogout(); }} style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '15px 16px', borderTop: i ? `1px solid ${T.line}` : 'none', cursor: 'pointer' }}>
               <Ico d={d} size={19} c={t === 'Sair' ? '#B23A2E' : accent} />
               <span style={{ flex: 1, fontFamily: DISP, fontWeight: 600, fontSize: 14.5, color: t === 'Sair' ? '#B23A2E' : T.ink }}>{t}</span>
               {t !== 'Sair' && <Ico d={AIC.chevron} size={15} c={T.dim} style={{ transform: 'rotate(-90deg)' }} />}

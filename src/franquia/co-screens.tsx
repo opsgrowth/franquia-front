@@ -310,7 +310,7 @@ function MobileTopBar({ creator }) {
   );
 }
 
-function CoApp({ courses, narrow, creator, studentName }) {
+function CoApp({ courses, narrow, creator, studentName, onLogout }) {
   const data = courses && courses.length ? courses : CO_COURSES;
   const [progress, setProgress] = useStateCO({ 'fia-1': true, 'fia-2': true });
   const [unlocked, setUnlocked] = useStateCO({});
@@ -334,7 +334,7 @@ function CoApp({ courses, narrow, creator, studentName }) {
     const accent = (data[0] && data[0].color) || T.accent;
     if (tab === 'mentor') body = <MentorIA accent={accent} />;
     else if (tab === 'suporte') body = <Suporte accent={accent} />;
-    else if (tab === 'perfil') body = <Perfil accent={accent} courses={data} progress={progress} />;
+    else if (tab === 'perfil') body = <Perfil accent={accent} courses={data} progress={progress} onLogout={onLogout} />;
     else body = <CoVitrine courses={data} progress={progress} openCourse={app.openCourse} studentName={studentName} />;
   } else if (route.name === 'course' && course) {
     body = <CoCourse course={course} progress={progress} app={app} />;

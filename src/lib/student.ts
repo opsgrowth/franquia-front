@@ -21,19 +21,26 @@ export function readStudentToken(): string | null {
 export function clearStudentToken() {
   try { localStorage.removeItem(KEY); } catch (e) {}
 }
+export function setStudentToken(token: string) {
+  try { localStorage.setItem(KEY, token); } catch (e) {}
+}
 
-// Login por email: pede um link de acesso pro email da compra. Resposta genérica.
-export async function requestAccess(slug: string, email: string): Promise<{ ok: boolean; detail: string }> {
-  const res = await fetch(`${API_BASE}/student/request-access`, {
+// Login por EMAIL da compra → devolve e persiste o token de sessão (email = login).
+// Erro claro se o email não tem acesso (o comprador precisa saber pra tentar de novo).
+export async function studentLogin(slug: string, email: string): Promise<string> {
+  const res = await fetch(`${API_BASE}/student/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ slug, email }),
   });
   if (!res.ok) {
-    const t = await res.text().catch(() => '');
-    throw new Error(t || `${res.status}`);
+    let detail = 'Não foi possível entrar. Tente de novo.';
+    try { const j = await res.json(); if (j && j.detail) detail = j.detail; } catch (e) {}
+    throw new Error(detail);
   }
-  return res.json();
+  const data = await res.json();
+  if (data && data.token) setStudentToken(data.token);
+  return data && data.token;
 }
 
 async function sfetch(path: string, token: string): Promise<any> {

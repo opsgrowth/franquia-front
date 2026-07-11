@@ -1,7 +1,7 @@
 import React from 'react';
 import { CoApp } from './co-screens';
 import { DISP, Lockup, MONO, T, useIsMobile } from './kit';
-import { loadStudentCourse, readStudentToken, requestAccess } from '../lib/student';
+import { clearStudentToken, loadStudentCourse, readStudentToken, studentLogin } from '../lib/student';
 
 // App do COMPRADOR — aberto pelo link mágico (/p/{slug}?token=...). Não passa pelo
 // login do painel: a sessão é o próprio token do aluno. Renderiza o CoApp (mesma
@@ -56,10 +56,17 @@ export function StudentApp() {
   const submitAccess = async () => {
     if (!email.trim() || sending) return;
     setSending(true); setMsg('');
-    try { const r = await requestAccess(slug, email.trim()); setState('sent'); setMsg(r.detail || ''); }
-    catch (e) { setMsg('Não foi possível enviar agora. Tente de novo.'); }
-    finally { setSending(false); }
+    try {
+      const token = await studentLogin(slug, email.trim());
+      if (!token) throw new Error('Não foi possível entrar.');
+      setState('loading');
+      const { course, student } = await loadStudentCourse(token);
+      setCourse(course); setStudent(student); setState('ready');
+    } catch (e: any) {
+      setMsg(e?.message || 'Não foi possível entrar.'); setState('login');
+    } finally { setSending(false); }
   };
+  const logout = () => { clearStudentToken(); setCourse(null); setStudent(null); setEmail(''); setMsg(''); setState('login'); };
 
   if (state === 'loading') {
     return (
@@ -70,25 +77,15 @@ export function StudentApp() {
       </Center>
     );
   }
-  if (state === 'login' || state === 'sent') {
+  if (state === 'login') {
     return (
       <Center>
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}><Lockup scale={0.6} /></div>
-        {state === 'sent' ? (
-          <React.Fragment>
-            <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 22, color: T.ink }}>Verifique seu email 📧</div>
-            <div style={{ fontFamily: DISP, fontSize: 14.5, lineHeight: 1.6, color: T.dim, marginTop: 10 }}>{msg || 'Se este email tiver acesso, enviamos o link. Confira a caixa de entrada e o spam.'}</div>
-            <div onClick={() => { setState('login'); setMsg(''); }} style={{ marginTop: 22, fontFamily: DISP, fontWeight: 600, fontSize: 14, color: T.accent, cursor: 'pointer' }}>Usar outro email</div>
-          </React.Fragment>
-        ) : (
-          <React.Fragment>
-            <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 22, color: T.ink }}>Acesse seu produto</div>
-            <div style={{ fontFamily: DISP, fontSize: 14.5, lineHeight: 1.6, color: T.dim, marginTop: 8 }}>Digite o <b style={{ color: T.ink, fontWeight: 600 }}>email que você usou na compra</b> — enviamos um link de acesso pra ele.</div>
-            <input value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submitAccess()} type="email" inputMode="email" autoCapitalize="none" autoCorrect="off" placeholder="seu@email.com" style={{ width: '100%', marginTop: 18, boxSizing: 'border-box', border: `1px solid ${T.line}`, borderRadius: 12, padding: '14px 16px', fontFamily: DISP, fontSize: 16, color: T.ink, outline: 'none', textAlign: 'center' }} />
-            <div onClick={submitAccess} style={{ marginTop: 12, background: sending ? 'rgba(124,58,237,.6)' : T.accent, color: '#fff', borderRadius: 12, padding: '14px', fontFamily: DISP, fontWeight: 700, fontSize: 15.5, cursor: sending ? 'default' : 'pointer' }}>{sending ? 'Enviando…' : 'Receber link de acesso'}</div>
-            {msg && <div style={{ fontFamily: DISP, fontSize: 13, color: '#B23A16', marginTop: 10 }}>{msg}</div>}
-          </React.Fragment>
-        )}
+        <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 22, color: T.ink }}>Acesse seu produto</div>
+        <div style={{ fontFamily: DISP, fontSize: 14.5, lineHeight: 1.6, color: T.dim, marginTop: 8 }}>Entre com o <b style={{ color: T.ink, fontWeight: 600 }}>email que você usou na compra</b>.</div>
+        <input value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submitAccess()} type="email" inputMode="email" autoCapitalize="none" autoCorrect="off" placeholder="seu@email.com" style={{ width: '100%', marginTop: 18, boxSizing: 'border-box', border: `1px solid ${T.line}`, borderRadius: 12, padding: '14px 16px', fontFamily: DISP, fontSize: 16, color: T.ink, outline: 'none', textAlign: 'center' }} />
+        <div onClick={submitAccess} style={{ marginTop: 12, background: sending ? 'rgba(124,58,237,.6)' : T.accent, color: '#fff', borderRadius: 12, padding: '14px', fontFamily: DISP, fontWeight: 700, fontSize: 15.5, cursor: sending ? 'default' : 'pointer' }}>{sending ? 'Entrando…' : 'Entrar'}</div>
+        {msg && <div style={{ fontFamily: DISP, fontSize: 13, color: '#B23A16', marginTop: 10, lineHeight: 1.5 }}>{msg}</div>}
       </Center>
     );
   }
@@ -103,7 +100,7 @@ export function StudentApp() {
   }
   return (
     <div style={{ height: vh, overflow: 'hidden' }}>
-      <CoApp courses={[course]} narrow={mob} studentName={student?.name} creator={{ name: course?.title || 'FranquIA' }} />
+      <CoApp courses={[course]} narrow={mob} studentName={student?.name} creator={{ name: course?.title || 'FranquIA' }} onLogout={logout} />
     </div>
   );
 }
