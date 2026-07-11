@@ -3,6 +3,8 @@ import { ABtn, AIC, AuthorShell } from './author-kit';
 import { DShell } from './desktop-screens-1';
 import { DISP, IC, Ico, MONO, Mark, T, useIsMobile } from './kit';
 import { cancelJob, confirmJob, createJob, getJob, progressPct, statusLabel } from '../lib/ingestion';
+import { getMe } from '../lib/auth';
+import { saveLead } from '../lib/admin';
 
 // Tela 2 — Ingestão (subir ebook / criar do zero). Reusa author-kit.jsx.
 
@@ -93,9 +95,10 @@ function IngestLive({ label, pct, fileName }: { label: string; pct: number; file
 
 // Popup: funcionalidade exclusiva para alunos do sistema Recorrência
 function RecorrenciaPaywall({ onClose }) {
+  const _me = getMe();
   const [stage, setStage] = useStateIng('offer');
-  const [nome, setNome] = useStateIng('Camila Oliveira');
-  const [email, setEmail] = useStateIng('camila@franquia.ia');
+  const [nome, setNome] = useStateIng((_me && _me.creator && _me.creator.name) || '');
+  const [email, setEmail] = useStateIng((_me && _me.creator && _me.creator.email) || '');
   const [zap, setZap] = useStateIng('');
   const [sent, setSent] = useStateIng(false);
   const perks = [
@@ -172,7 +175,7 @@ function RecorrenciaPaywall({ onClose }) {
                   <label style={lbl}>WhatsApp</label>
                   <input value={zap} onChange={(e) => setZap(e.target.value)} placeholder="(00) 00000-0000" style={fld} />
                 </div>
-                <div onClick={() => { if (zap.trim()) setSent(true); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 24, background: zap.trim() ? T.accent : 'rgba(124,58,237,.4)', color: '#fff', borderRadius: 14, padding: '17px', fontFamily: DISP, fontWeight: 700, fontSize: 16, boxShadow: zap.trim() ? '0 12px 30px rgba(124,58,237,.45)' : 'none', cursor: zap.trim() ? 'pointer' : 'default' }}>
+                <div onClick={() => { if (zap.trim()) { saveLead({ name: nome, email, whatsapp: zap }).catch(() => {}); setSent(true); } }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 24, background: zap.trim() ? T.accent : 'rgba(124,58,237,.4)', color: '#fff', borderRadius: 14, padding: '17px', fontFamily: DISP, fontWeight: 700, fontSize: 16, boxShadow: zap.trim() ? '0 12px 30px rgba(124,58,237,.45)' : 'none', cursor: zap.trim() ? 'pointer' : 'default' }}>
                   Entrar na lista de espera
                 </div>
                 <div style={{ fontFamily: DISP, fontSize: 12, color: 'rgba(246,241,251,.45)', textAlign: 'center', marginTop: 12 }}>Seus dados estão seguros · sem spam</div>

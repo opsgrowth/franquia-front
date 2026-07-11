@@ -15,6 +15,16 @@ export async function loadFranchisees(): Promise<Franchisee[]> {
   return api('/admin/franchisees');
 }
 
+// Formulário de interesse (Estúdio) → salva o lead (qualquer criador logado).
+export async function saveLead(data: { name?: string; email?: string; whatsapp?: string }): Promise<any> {
+  return api('/leads', { method: 'POST', body: data });
+}
+
+export type Lead = { id: string; name: string | null; email: string | null; whatsapp: string | null; created_at: string };
+export async function loadLeads(): Promise<Lead[]> {
+  try { return await api('/admin/leads'); } catch { return []; }
+}
+
 // Convite: cria o franqueado (sem senha) → ele recebe email pra definir a senha.
 export async function createFranchisee(data: { email: string; name?: string }): Promise<Franchisee> {
   return api('/admin/franchisees', { method: 'POST', body: data });

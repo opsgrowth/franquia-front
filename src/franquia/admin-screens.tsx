@@ -1,7 +1,7 @@
 import React from 'react';
 import { DShell } from './desktop-screens-1';
 import { DISP, IC, Ico, MONO, T, useIsMobile } from './kit';
-import { bulkFranchisees, createFranchisee, loadFranchisees } from '../lib/admin';
+import { bulkFranchisees, createFranchisee, loadFranchisees, loadLeads } from '../lib/admin';
 
 // TXT (email, nome por linha; separador , ; ou tab) → [{email, name}]. Detecta o email pelo @.
 function parseBulk(text: string): { email: string; name?: string }[] {
@@ -154,4 +154,33 @@ function ProductLinksScreen() {
   );
 }
 
-export { FranchiseesScreen, ProductLinksScreen };
+// ── INTERESSADOS (leads do formulário do Estúdio) — admin ────────────
+function LeadsScreen() {
+  const mobile = useIsMobile();
+  const [list, setList] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  React.useEffect(() => { loadLeads().then(setList).catch(() => setList([])).finally(() => setLoading(false)); }, []);
+  const fmt = (s: string) => { try { return new Date(s).toLocaleString('pt-BR'); } catch { return '—'; } };
+  return (
+    <DShell active="interessados" sub="Admin · Interessados" title="Interessados">
+      <div style={{ overflow: 'auto', height: '100%', padding: mobile ? '18px 16px' : '24px 30px' }}>
+        <div style={{ fontFamily: DISP, fontSize: 14.5, color: T.dim, marginBottom: 18, maxWidth: 660 }}>Quem preencheu o formulário de interesse no Estúdio (lista de espera do RecorrêncIA).</div>
+        <div style={{ background: '#fff', border: `1px solid ${T.line}`, borderRadius: 18, overflow: 'hidden' }}>
+          {!mobile && <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 2fr 1.4fr 1.4fr', padding: '14px 22px', fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.06em', color: T.dim, borderBottom: `1px solid ${T.line}` }}><span>NOME</span><span>EMAIL</span><span>WHATSAPP</span><span>QUANDO</span></div>}
+          {loading ? <div style={{ padding: 32, textAlign: 'center', fontFamily: DISP, color: T.dim }}>Carregando…</div>
+            : list.length === 0 ? <div style={{ padding: 40, textAlign: 'center', fontFamily: DISP, color: T.dim }}>Ninguém preencheu ainda.</div>
+            : list.map((l, i) => (
+              <div key={l.id} style={{ display: mobile ? 'flex' : 'grid', flexDirection: 'column', gridTemplateColumns: '1.4fr 2fr 1.4fr 1.4fr', gap: mobile ? 3 : 0, padding: '15px 22px', borderBottom: i < list.length - 1 ? `1px solid ${T.line}` : 'none' }}>
+                <span style={{ fontFamily: DISP, fontWeight: 600, fontSize: 14.5, color: T.ink }}>{l.name || '—'}</span>
+                <span style={{ fontFamily: MONO, fontSize: 13, color: T.dim, overflow: 'hidden', textOverflow: 'ellipsis' }}>{l.email || '—'}</span>
+                <span style={{ fontFamily: DISP, fontSize: 14, fontWeight: 600, color: T.ink }}>{l.whatsapp || '—'}</span>
+                <span style={{ fontFamily: DISP, fontSize: 13, color: T.dim }}>{fmt(l.created_at)}</span>
+              </div>
+            ))}
+        </div>
+      </div>
+    </DShell>
+  );
+}
+
+export { FranchiseesScreen, LeadsScreen, ProductLinksScreen };
