@@ -144,7 +144,18 @@ export default function App() {
         const real = isAdmin ? await loadMyAppsMapped() : await loadFranchiseCatalog();
         if (!alive) return;
         const list = (real && real.length) ? real.map(withLocalCovers) : [];
-        setFranquiaProducts(list);
+        // PRESERVA módulos já carregados: o /apps só traz metadados (modules: []).
+        // Sem isto, cada load() ZERA o conteúdo do produto aberto → "some ao atualizar".
+        setFranquiaProducts((prev: any[]) => {
+          const byId = new Map((prev || []).map((p: any) => [p.id, p]));
+          return list.map((p: any) => {
+            const old = byId.get(p.id);
+            if (old && old.modules && old.modules.length && (!p.modules || !p.modules.length)) {
+              return { ...p, modules: old.modules };
+            }
+            return p;
+          });
+        });
       } catch (e) { console.warn('catálogo indisponível:', e); }
     };
     (window as any).__refreshApps = load;
