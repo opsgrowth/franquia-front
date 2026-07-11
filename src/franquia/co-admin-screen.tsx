@@ -53,6 +53,16 @@ function ProductsAdminScreen({ scope, sharedProducts, setSharedProducts }) {
 
   const sel = products.find((p) => p.id === selId);
 
+  // Ingestão por IA terminou → abre o produto gerado DIRETO (a "mesa de revisão").
+  React.useEffect(() => {
+    const pid = (window as any).__openProduct;
+    if (isFranquia && pid) {
+      (window as any).__openProduct = null;
+      setSelId(pid);
+      setView('product');
+    }
+  }, []);
+
   // Carrega o CONTEÚDO (módulos/aulas) do produto aberto sob demanda — o /apps traz só
   // metadados. Sem isso, um produto real (ex. gerado pela IA) abre "vazio".
   React.useEffect(() => {

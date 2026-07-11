@@ -208,7 +208,7 @@ function IngestScreen({ scope }) {
         const j = await getJob(jobId);
         if (!alive) return;
         setJob(j);
-        if (j.status === 'done') { try { if ((window as any).__refreshApps) await (window as any).__refreshApps(); } catch (e) {} window.__go && window.__go('fadmin'); return; }
+        if (j.status === 'done') { try { if ((window as any).__refreshApps) await (window as any).__refreshApps(); } catch (e) {} if (j.app_id) (window as any).__openProduct = j.app_id; window.__go && window.__go('fadmin'); return; }
         if (j.status === 'failed') { setErr(j.error_message || 'A IA não conseguiu processar este arquivo. Tente outro PDF.'); setBusy(false); return; }
         setTimeout(tick, 2200);
       } catch (e) { if (alive) setTimeout(tick, 3500); }

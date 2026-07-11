@@ -263,12 +263,14 @@ function CoPlayer({ course, lesson, progress, app, narrow }) {
 
   const Stage = (
     <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', background: T.darkBg, overflow: 'auto' }}>
+      {(lesson.type === 'video' || lesson.type === 'audio') && (
       <div style={{ position: 'relative', background: '#000', aspectRatio: '16 / 9', flex: '0 0 auto' }}>
         <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 50% 45%, ${coRgba(course.color, .5)}, rgba(0,0,0,.4) 65%)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <span style={{ width: 76, height: 76, borderRadius: '50%', background: 'rgba(255,255,255,.95)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 12px 40px rgba(0,0,0,.4)' }}><Ico d={AIC.play} size={30} c={course.color} fill={course.color} /></span>
         </div>
         <div style={{ position: 'absolute', left: 18, top: 16, fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.1em', color: 'rgba(255,255,255,.8)' }}>{course.title.toUpperCase()}</div>
       </div>
+      )}
       {/* barra */}
       <div style={{ padding: '14px 20px', flex: '0 0 auto' }}>
         <div style={{ height: 5, borderRadius: 99, background: 'rgba(255,255,255,.16)', overflow: 'hidden' }}><div style={{ width: done ? '100%' : '34%', height: '100%', background: coLighten(course.color, .25) }}></div></div>
