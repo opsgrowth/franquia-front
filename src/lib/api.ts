@@ -46,10 +46,15 @@ export async function api<T = any>(
 export async function apiUpload<T = any>(path: string, file: Blob, filename = 'upload'): Promise<T> {
   const fd = new FormData();
   fd.append('file', file, filename);
+  return apiUploadForm<T>(path, fd);
+}
+
+// Upload de um FormData já montado (ex.: ingestão = file + name). Auth + tenant nos headers.
+export async function apiUploadForm<T = any>(path: string, form: FormData): Promise<T> {
   const headers: Record<string, string> = {};
   if (_token) headers['Authorization'] = `Bearer ${_token}`;
   if (_tenant) headers['X-Tenant-Id'] = _tenant;
-  const res = await fetch(`${BASE}${path}`, { method: 'POST', headers, body: fd });
+  const res = await fetch(`${BASE}${path}`, { method: 'POST', headers, body: form });
   if (res.status === 204) return null as T;
   if (!res.ok) {
     const detail = await res.text().catch(() => res.statusText);

@@ -3,7 +3,8 @@ import './styles/global.css';
 import './franquia/cover-assets';
 import { FRANQUIA_INIT } from './franquia/co-admin';
 import { loadFranchiseCatalog } from './lib/catalog';
-import { bootstrapAuth, isAuthed, onAuthChange, logout } from './lib/auth';
+import { loadMyAppsMapped } from './lib/apps';
+import { bootstrapAuth, isAuthed, onAuthChange, logout, getMe } from './lib/auth';
 import { DDashboard, DCatalogo } from './franquia/desktop-screens-1';
 import { DGerador, DEditor } from './franquia/desktop-screens-2';
 import { DVendas } from './franquia/desktop-vendas';
@@ -38,15 +39,6 @@ const SCREEN_FOR: Record<string, string> = {
   dashboard: 'dashboard', catalog: 'catalog', generator: 'generator', editor: 'editor',
   ingest: 'ingest', review: 'review', manual: 'manual', logout: 'login', login: 'login',
 };
-
-// Produtos PREMIUM (mockup até a gravação) — travados no catálogo, abrem o popup
-// "libera em 7 dias". Entram por ÚLTIMO (o design marca os últimos 4 como premium).
-const PREMIUM_MOCK: any[] = [
-  { id: 'prem-escala', title: 'Escala 7 Dígitos', subtitle: 'O sistema dos que faturam 7 dígitos com produtos digitais.', kind: 'Premium', color: '#C9A227', displayPrice: 'Premium', access: 'Premium (upsell)', coverImg: null, students: 0, banners: [], modules: [] },
-  { id: 'prem-alto-ticket', title: 'Mentoria Alto Ticket', subtitle: 'Venda de R$5k a R$50k com o método da sessão estratégica.', kind: 'Premium', color: '#B5468A', displayPrice: 'Premium', access: 'Premium (upsell)', coverImg: null, students: 0, banners: [], modules: [] },
-  { id: 'prem-ia-auto', title: 'IA que Vende no Automático', subtitle: 'Funis e atendimento com IA rodando 24 horas por dia.', kind: 'Premium', color: '#3F6FD8', displayPrice: 'Premium', access: 'Premium (upsell)', coverImg: null, students: 0, banners: [], modules: [] },
-  { id: 'prem-trafego-avancado', title: 'Tráfego Avançado & Escala', subtitle: 'Estruturas de campanha para escalar sem quebrar o ROI.', kind: 'Premium', color: '#159A8C', displayPrice: 'Premium', access: 'Premium (upsell)', coverImg: null, students: 0, banners: [], modules: [] },
-];
 
 // Tela a partir da URL (#catalog etc.) — reload mantém a aba atual. 'login' nunca é
 // restaurada (o gate de auth cuida disso).
@@ -156,14 +148,21 @@ export default function App() {
       });
       return { ...p, coverImg, banners, modules };
     };
-    loadFranchiseCatalog()
-      .then((real) => {
+    // ADMIN vê TODOS os seus produtos (inclui rascunhos, via /apps) pra publicar/editar;
+    // FRANQUEADO vê o catálogo publicado (cross-tenant, via /catalog).
+    const load = async () => {
+      try {
+        const me = getMe();
+        const isAdmin = !!(me && me.is_admin);
+        const real = isAdmin ? await loadMyAppsMapped() : await loadFranchiseCatalog();
         if (!alive) return;
-        const abertos = (real && real.length) ? real.map(withLocalCovers) : [];
-        setFranquiaProducts([...abertos, ...PREMIUM_MOCK]);
-      })
-      .catch((e) => { console.warn('catálogo real indisponível, usando mock:', e); });
-    return () => { alive = false; };
+        const list = (real && real.length) ? real.map(withLocalCovers) : [];
+        setFranquiaProducts(list);
+      } catch (e) { console.warn('catálogo indisponível:', e); }
+    };
+    (window as any).__refreshApps = load;
+    load();
+    return () => { alive = false; try { delete (window as any).__refreshApps; } catch (e) {} };
   }, [authed]);
 
   const SCREENS: Record<string, any> = {

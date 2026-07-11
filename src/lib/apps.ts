@@ -30,3 +30,36 @@ export async function loadMyApps(): Promise<any[]> {
     return [];
   }
 }
+
+const isB64 = (v: any): boolean => typeof v === 'string' && v.startsWith('data:');
+
+// AppOut (backend) → shape que o catálogo/painel usam. Conteúdo (módulos) é carregado
+// sob demanda no editor; aqui vêm metadados + flags + capa/banners.
+export function mapMyApp(a: any): any {
+  const priceCents = a.suggested_price_cents;
+  return {
+    id: a.id,
+    slug: a.slug,
+    title: a.name,
+    subtitle: a.tagline || 'Produto da Franquia — pronto para vender',
+    color: a.accent_color || '#7C3AED',
+    coverImg: isB64(a.cover_image_url) ? a.cover_image_url : null,
+    banners: (a.banners || []).filter(isB64),
+    displayPrice: priceCents ? `R$ ${Math.round(priceCents / 100)}` : (a.is_premium ? 'Premium' : 'R$ —'),
+    access: a.is_premium ? 'Premium (upsell)' : 'Liberado',
+    isPremium: !!a.is_premium,
+    camouflaged: !!a.camouflaged,
+    kind: a.is_premium ? 'Premium' : 'Curso da Franquia',
+    status: a.catalog_published ? 'Publicado' : 'Rascunho',
+    catalogPublished: !!a.catalog_published,
+    students: 0,
+    modulesCount: a.modules_count || 0,
+    lessonsCount: a.lessons_count || 0,
+    modules: [],
+  };
+}
+
+export async function loadMyAppsMapped(): Promise<any[]> {
+  const apps = await loadMyApps();
+  return apps.map(mapMyApp);
+}

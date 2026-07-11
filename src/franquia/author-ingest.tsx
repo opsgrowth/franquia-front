@@ -2,6 +2,7 @@ import React from 'react';
 import { ABtn, AIC, AuthorShell } from './author-kit';
 import { DShell } from './desktop-screens-1';
 import { DISP, IC, Ico, MONO, Mark, T, useIsMobile } from './kit';
+import { cancelJob, confirmJob, createJob, getJob, progressPct, statusLabel } from '../lib/ingestion';
 
 // Tela 2 — Ingestão (subir ebook / criar do zero). Reusa author-kit.jsx.
 
@@ -61,6 +62,31 @@ function IngestProcessing({ fileName, onDone }) {
         </div>
       </div>
       <style>{`@keyframes ing-spin{to{transform:rotate(360deg)}}@keyframes ing-pulse{0%,100%{opacity:1}50%{opacity:.3}}`}</style>
+    </div>
+  );
+}
+
+// Overlay de processamento REAL — dirigido pelo status do job (não animação fake).
+function IngestLive({ label, pct, fileName }: { label: string; pct: number; fileName?: string }) {
+  return (
+    <div style={{ position: 'absolute', inset: 0, zIndex: 30, background: T.darkBg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <div style={{ width: '100%', maxWidth: 460, textAlign: 'center' }}>
+        <div style={{ position: 'relative', width: 92, height: 92, margin: '0 auto' }}>
+          <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '3px solid rgba(196,163,255,.18)', borderTopColor: T.pill, animation: 'ing-spin 0.9s linear infinite' }}></div>
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Mark size={40} front={T.accent} ghost={T.pill} inner={T.darkBg} /></div>
+        </div>
+        <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.16em', color: T.pill, marginTop: 26 }}>GERANDO COM IA</div>
+        <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 24, letterSpacing: '-0.03em', color: '#F6F1FB', marginTop: 10 }}>{label}</div>
+        <div style={{ height: 8, borderRadius: 99, background: 'rgba(255,255,255,.1)', marginTop: 24, overflow: 'hidden' }}>
+          <div style={{ width: pct + '%', height: '100%', borderRadius: 99, background: `linear-gradient(90deg, ${T.accent}, ${T.pill})`, transition: 'width .3s' }}></div>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10 }}>
+          <span style={{ fontFamily: MONO, fontSize: 11.5, color: 'rgba(246,241,251,.5)' }}>{fileName || 'ebook.pdf'}</span>
+          <span style={{ fontFamily: MONO, fontSize: 11.5, color: T.pill, fontWeight: 600 }}>{pct}%</span>
+        </div>
+        <div style={{ fontFamily: DISP, fontSize: 13, color: 'rgba(246,241,251,.5)', marginTop: 22 }}>A IA continua no servidor mesmo se você sair. Leva ~1–2 min.</div>
+      </div>
+      <style>{`@keyframes ing-spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   );
 }
@@ -165,10 +191,49 @@ function IngestScreen({ scope }) {
   const [processing, setProcessing] = useStateIng(false);
   const [paywall, setPaywall] = useStateIng(false);
   const reviewDest = isFAdmin ? 'fadmin-review' : 'review';
-  if (isFAdmin) return (
+  // ── ingestão REAL (usada no branch isFAdmin) ──────────────────────────
+  const [file, setFile] = useStateIng<any>(null);
+  const [cname, setCname] = useStateIng('');
+  const [jobId, setJobId] = useStateIng<string | null>(null);
+  const [job, setJob] = useStateIng<any>(null);
+  const [err, setErr] = useStateIng('');
+  const [busy, setBusy] = useStateIng(false);
+  const fileRef = React.useRef<HTMLInputElement>(null);
+  useEffectIng(() => {
+    if (!jobId) return;
+    let alive = true;
+    const tick = async () => {
+      if (!alive) return;
+      try {
+        const j = await getJob(jobId);
+        if (!alive) return;
+        setJob(j);
+        if (j.status === 'done') { try { if ((window as any).__refreshApps) await (window as any).__refreshApps(); } catch (e) {} window.__go && window.__go('fadmin'); return; }
+        if (j.status === 'failed') { setErr(j.error_message || 'A IA não conseguiu processar este arquivo. Tente outro PDF.'); setBusy(false); return; }
+        setTimeout(tick, 2200);
+      } catch (e) { if (alive) setTimeout(tick, 3500); }
+    };
+    tick();
+    return () => { alive = false; };
+  }, [jobId]);
+  const onPick = (e: any) => { const f = e.target.files && e.target.files[0]; if (f) { setFile(f); setErr(''); if (!cname) setCname((f.name || '').replace(/\.pdf$/i, '').slice(0, 80)); } };
+  const startIngest = async () => {
+    if (!file || busy) return;
+    setBusy(true); setErr('');
+    try { const r = await createJob(file, cname); setJobId(r.job_id); setJob({ id: r.job_id, status: r.status || 'queued' }); }
+    catch (e: any) { setErr(e?.message || 'Erro ao enviar o arquivo.'); setBusy(false); }
+  };
+  const doConfirm = async () => { try { const j = await confirmJob(jobId!); setJob(j); } catch (e) {} };
+  const doCancel = async () => { try { await cancelJob(jobId!); } catch (e) {} setJobId(null); setJob(null); setFile(null); setBusy(false); setErr(''); };
+  const resetIngest = () => { setErr(''); setJobId(null); setJob(null); setBusy(false); };
+
+  if (isFAdmin) {
+    const st = job && job.status;
+    const live = !!jobId && st && st !== 'failed' && st !== 'needs_confirmation';
+    return (
     <DShell active="fadmin" sub="Admin · Catálogo Franquia" title="Novo produto da Franquia">
       <div style={{ flex: 1, overflow: 'auto', padding: mobile ? '24px 18px' : '40px 44px', position: 'relative' }}>
-        {processing && <IngestProcessing fileName="metodo-renda-ia.pdf" onDone={() => { setProcessing(false); window.__go && window.__go('fadmin-review'); }} />}
+        {live && <IngestLive label={statusLabel(job)} pct={progressPct(job)} fileName={file && file.name} />}
         <h1 style={{ fontFamily: DISP, fontWeight: 700, fontSize: 34, letterSpacing: '-0.035em', color: T.ink, margin: 0 }}>Importar PDF com IA</h1>
         <p style={{ fontFamily: DISP, fontSize: 16.5, lineHeight: 1.6, color: T.dim, margin: '12px 0 0', maxWidth: 560 }}>Arraste um PDF ou ebook — a IA monta os módulos e aulas. Você revisa antes de publicar no Catálogo Franquia.</p>
         <div style={{ maxWidth: 540, marginTop: mobile ? 24 : 36, background: '#fff', border: `1px solid ${T.line}`, borderRadius: 20, padding: 30, display: 'flex', flexDirection: 'column' }}>
@@ -176,18 +241,39 @@ function IngestScreen({ scope }) {
             <div style={{ width: 38, height: 38, borderRadius: 10, background: T.halo, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ico d={IC.spark} size={20} c={T.accent} /></div>
             <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 20, letterSpacing: '-0.02em' }}>Importar de um PDF</div>
           </div>
-          <div style={{ marginTop: 22, border: `2px dashed rgba(124,58,237,.32)`, background: 'rgba(124,58,237,.04)', borderRadius: 16, padding: '40px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, textAlign: 'center' }}>
-            <div style={{ width: 56, height: 56, borderRadius: '50%', background: T.halo, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ico d={AIC.upload} size={26} c={T.accent} /></div>
-            <div style={{ fontFamily: DISP, fontWeight: 600, fontSize: 17, color: T.ink }}>Arraste seu PDF aqui</div>
-            <div style={{ fontFamily: DISP, fontSize: 13.5, color: T.dim }}>ou clique para escolher um ebook</div>
-          </div>
-          <div style={{ marginTop: 16, background: T.paper, border: `1px solid ${T.line}`, borderRadius: 11, padding: '13px 15px', fontFamily: DISP, fontSize: 14.5, color: 'rgba(24,18,31,.4)' }}>nome do curso</div>
-          <div style={{ marginTop: 16 }}><div onClick={() => setProcessing(true)} style={{ cursor: 'pointer' }}><ABtn icon={IC.spark}>Montar com a IA</ABtn></div></div>
-          <div style={{ fontFamily: MONO, fontSize: 11, color: T.dim, marginTop: 12 }}>a IA gera os rascunhos · você revisa antes de publicar no Catálogo Franquia</div>
+          {err ? (
+            <div style={{ marginTop: 20, background: 'rgba(216,90,48,.07)', border: '1px solid rgba(216,90,48,.28)', borderRadius: 14, padding: 20 }}>
+              <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 16, color: '#B23A16' }}>Não deu certo</div>
+              <div style={{ fontFamily: DISP, fontSize: 13.5, color: T.dim, marginTop: 6, lineHeight: 1.5 }}>{err}</div>
+              <div onClick={resetIngest} style={{ cursor: 'pointer', marginTop: 14, display: 'inline-block' }}><ABtn icon={IC.spark}>Tentar de novo</ABtn></div>
+            </div>
+          ) : st === 'needs_confirmation' ? (
+            <div style={{ marginTop: 20, background: T.paper, border: `1px solid ${T.line}`, borderRadius: 14, padding: 20 }}>
+              <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 16, color: T.ink }}>Documento grande{job && job.est_modules ? ` (~${job.est_modules} módulos)` : ''}</div>
+              <div style={{ fontFamily: DISP, fontSize: 13.5, color: T.dim, marginTop: 6, lineHeight: 1.5 }}>Vai levar um pouco mais de tempo pra montar. Quer continuar?</div>
+              <div style={{ display: 'flex', gap: 12, marginTop: 14, alignItems: 'center' }}>
+                <div onClick={doConfirm} style={{ cursor: 'pointer' }}><ABtn icon={IC.spark}>Continuar</ABtn></div>
+                <div onClick={doCancel} style={{ cursor: 'pointer', fontFamily: DISP, fontWeight: 600, fontSize: 14, color: T.dim }}>Cancelar</div>
+              </div>
+            </div>
+          ) : (
+            <React.Fragment>
+              <input ref={fileRef} type="file" accept="application/pdf,.pdf" onChange={onPick} style={{ display: 'none' }} />
+              <div onClick={() => fileRef.current && fileRef.current.click()} style={{ marginTop: 22, border: `2px dashed ${file ? T.accent : 'rgba(124,58,237,.32)'}`, background: 'rgba(124,58,237,.04)', borderRadius: 16, padding: '40px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, textAlign: 'center', cursor: 'pointer' }}>
+                <div style={{ width: 56, height: 56, borderRadius: '50%', background: T.halo, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ico d={file ? AIC.check : AIC.upload} size={26} c={T.accent} /></div>
+                <div style={{ fontFamily: DISP, fontWeight: 600, fontSize: 17, color: T.ink, wordBreak: 'break-word' }}>{file ? file.name : 'Arraste seu PDF aqui'}</div>
+                <div style={{ fontFamily: DISP, fontSize: 13.5, color: T.dim }}>{file ? 'clique para trocar' : 'ou clique para escolher um ebook'}</div>
+              </div>
+              <input value={cname} onChange={(e) => setCname(e.target.value)} placeholder="nome do curso (opcional)" style={{ marginTop: 16, background: '#fff', border: `1px solid ${T.line}`, borderRadius: 11, padding: '13px 15px', fontFamily: DISP, fontSize: 14.5, color: T.ink, outline: 'none' }} />
+              <div style={{ marginTop: 16 }}><div onClick={startIngest} style={{ cursor: file && !busy ? 'pointer' : 'default', opacity: file && !busy ? 1 : 0.5 }}><ABtn icon={IC.spark}>{busy ? 'Enviando…' : 'Montar com a IA'}</ABtn></div></div>
+              <div style={{ fontFamily: MONO, fontSize: 11, color: T.dim, marginTop: 12 }}>a IA gera os rascunhos · você revisa antes de publicar no Catálogo Franquia</div>
+            </React.Fragment>
+          )}
         </div>
       </div>
     </DShell>
-  );
+    );
+  }
 
   return (
     <AuthorShell active="gen" sub="Gerar com IA" title="Novo aplicativo" bleed plain>
