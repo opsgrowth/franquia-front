@@ -35,7 +35,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { err
 
 // nav-key / cta-key → screen id  (port fiel do switcher do protótipo)
 const SCREEN_FOR: Record<string, string> = {
-  home: 'dashboard', cat: 'catalog', gen: 'ingest', sales: 'sales', cfg: 'config',
+  home: 'dashboard', cat: 'catalog', gen: 'ingest', sales: 'sales', cfg: 'config', config: 'config',
   fadmin: 'fadmin', 'fadmin-gen': 'fadmin-gen', 'fadmin-review': 'fadmin-review',
   franqueados: 'franqueados', applinks: 'applinks', interessados: 'interessados',
   dashboard: 'dashboard', catalog: 'catalog', generator: 'generator', editor: 'editor',
@@ -59,7 +59,12 @@ export default function App() {
   const [booting, setBooting] = useState(true);
   // Vazio no in\u00edcio \u2014 a fonte REAL (admin = /apps com rascunhos; franqueado = /catalog)
   // carrega logo ap\u00f3s o auth. Evita o "flash" de dados velhos/mock do localStorage.
-  const [franquiaProducts, setFranquiaProducts] = useState<any[]>([]);
+  const [franquiaProducts, setFranquiaProducts] = useState<any[]>(() => {
+    // Hidrata do cache local (produtos REAIS da ultima sessao) -> cards aparecem NA HORA
+    // no refresh; o load() logo apos o auth refresca com a fonte real. Sem mock no cache,
+    // entao nada de "flash" de dado falso -- so ~1s de eventual staleness ate o refetch.
+    try { const c = JSON.parse(localStorage.getItem('fia_products') || '[]'); return Array.isArray(c) ? c : []; } catch (e) { return []; }
+  });
 
   useEffect(() => {
     window.__franquiaProducts = franquiaProducts;
@@ -69,7 +74,7 @@ export default function App() {
 
   useEffect(() => {
     window.__go = (key: string) => {
-      if (key === 'logout') { logout(); setScreen('dashboard'); return; }
+      if (key === 'logout') { try { localStorage.removeItem('fia_products'); } catch (e) {} logout(); setScreen('dashboard'); return; }
       const t = SCREEN_FOR[key];
       if (t) setScreen(t);
     };
