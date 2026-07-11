@@ -13,6 +13,7 @@ import { LoginScreen } from './franquia/desktop-login';
 import { IngestScreen } from './franquia/author-ingest';
 import { ReviewDeskScreen } from './franquia/author-review';
 import { ProductsAdminScreen } from './franquia/co-admin-screen';
+import { FranchiseesScreen, ProductLinksScreen } from './franquia/admin-screens';
 
 // Blindagem: qualquer erro de render vira uma mensagem legível (nunca tela preta).
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { err: Error | null }> {
@@ -36,6 +37,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { err
 const SCREEN_FOR: Record<string, string> = {
   home: 'dashboard', cat: 'catalog', gen: 'ingest', sales: 'sales', cfg: 'config',
   fadmin: 'fadmin', 'fadmin-gen': 'fadmin-gen', 'fadmin-review': 'fadmin-review',
+  franqueados: 'franqueados', applinks: 'applinks',
   dashboard: 'dashboard', catalog: 'catalog', generator: 'generator', editor: 'editor',
   ingest: 'ingest', review: 'review', manual: 'manual', logout: 'login', login: 'login',
 };
@@ -159,6 +161,8 @@ export default function App() {
     fadmin: () => React.createElement(ProductsAdminScreen, { scope: 'franquia', sharedProducts: window.__franquiaProducts, setSharedProducts: window.__setFranquiaProducts }),
     'fadmin-gen': () => React.createElement(IngestScreen, { scope: 'franquia' }),
     'fadmin-review': () => React.createElement(ReviewDeskScreen, { scope: 'franquia' }),
+    franqueados: FranchiseesScreen,
+    applinks: ProductLinksScreen,
   };
   // Splash enquanto resolve a sessão (evita piscar o login).
   if (booting) {
