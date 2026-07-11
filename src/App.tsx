@@ -179,10 +179,19 @@ export default function App() {
     );
   }
 
+  // Globais SINCRONAMENTE (não em effect) → o painel lê a lista JÁ atual neste render
+  // (corrige "some no refresh, só volta ao navegar").
+  (window as any).__franquiaProducts = franquiaProducts;
+  (window as any).__setFranquiaProducts = setFranquiaProducts;
   const Current = SCREENS[screen] || SCREENS.dashboard;
+  // fadmin* são FÁBRICAS de elemento (arrow → createElement). Renderizar via Current()
+  // mantém o TIPO estável (ProductsAdminScreen) → NÃO remonta → preserva view/selId
+  // (corrige "volta pra lista em qualquer ação"). <Current /> trataria a arrow nova de
+  // cada render como um componente novo e remontaria.
+  const isFactory = screen === 'fadmin' || screen === 'fadmin-gen' || screen === 'fadmin-review';
   return (
     <ErrorBoundary key={screen}>
-      <Current />
+      {isFactory ? Current() : <Current />}
     </ErrorBoundary>
   );
 }

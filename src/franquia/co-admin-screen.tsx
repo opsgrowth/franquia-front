@@ -8,7 +8,7 @@ import { coDarken, coTheme, moduleDuration } from './co-app';
 import { DBtn, DShell } from './desktop-screens-1';
 import { DISP, IC, Ico, MONO, T, useIsMobile } from './kit';
 import { persistAppCover, persistBanners, persistModuleCover } from '../lib/covers';
-import { isBackendId, patchApp } from '../lib/apps';
+import { isBackendId, loadProductModules, patchApp } from '../lib/apps';
 
 // "R$ 397" / "R$ 1.997,00" → centavos (inteiro de reais * 100; ignora centavos do texto).
 function parsePriceCents(s: any): number | null | undefined {
@@ -50,6 +50,18 @@ function ProductsAdminScreen({ scope, sharedProducts, setSharedProducts }) {
   const mobile = useIsMobile();
 
   const sel = products.find((p) => p.id === selId);
+
+  // Carrega o CONTEÚDO (módulos/aulas) do produto aberto sob demanda — o /apps traz só
+  // metadados. Sem isso, um produto real (ex. gerado pela IA) abre "vazio".
+  React.useEffect(() => {
+    if (!isFranquia || !sel || !isBackendId(sel.id)) return;
+    if ((sel.modules && sel.modules.length) || !((sel.modulesCount || 0) > 0)) return;
+    let alive = true;
+    loadProductModules(sel.id)
+      .then((mods) => { if (alive && mods) setProducts((ps) => ps.map((p) => (p.id === sel.id ? { ...p, modules: mods } : p))); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [selId]);
 
   // ── mutations ──
   const addProduct = (data) => { const id = aid('p'); setProducts((ps) => [...ps, { id, students: 0, status: data.access === 'Premium (upsell)' ? 'Premium' : 'Rascunho', modules: [], ...data }]); setSelId(id); setView('product'); };

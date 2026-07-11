@@ -63,3 +63,22 @@ export async function loadMyAppsMapped(): Promise<any[]> {
   const apps = await loadMyApps();
   return apps.map(mapMyApp);
 }
+
+// Conteúdo (módulos + aulas) de UM produto, sob demanda — quando o admin abre pra editar.
+// A capa do módulo vem como URL gated (não exibe direto no front); cai no determinístico
+// (índice). O upload novo de capa persiste no backend e aparece na vitrine/catálogo.
+export async function loadProductModules(appId: string): Promise<any[]> {
+  const mods: any[] = await api(`/apps/${appId}/modules`);
+  return (mods || []).map((m: any, mi: number) => ({
+    id: m.id,
+    title: m.title,
+    cover: isB64(m.cover_image_url) ? m.cover_image_url : mi,
+    lessons: (m.lessons || []).map((l: any, li: number) => ({
+      id: l.id,
+      title: l.title,
+      type: 'video',
+      duration: `${6 + ((li * 3) % 9)} min`,
+      sample: mi === 0 && li === 0,
+    })),
+  }));
+}
