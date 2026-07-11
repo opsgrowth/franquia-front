@@ -15,6 +15,26 @@ export async function loadFranchisees(): Promise<Franchisee[]> {
   return api('/admin/franchisees');
 }
 
-export async function createFranchisee(data: { email: string; name?: string; password: string }): Promise<Franchisee> {
+// Convite: cria o franqueado (sem senha) → ele recebe email pra definir a senha.
+export async function createFranchisee(data: { email: string; name?: string }): Promise<Franchisee> {
   return api('/admin/franchisees', { method: 'POST', body: data });
+}
+
+// Em massa: lista de {email, name} → convida cada um.
+export async function bulkFranchisees(items: { email: string; name?: string }[]): Promise<any> {
+  return api('/admin/franchisees/bulk', { method: 'POST', body: { items } });
+}
+
+// Franqueado define a senha pelo link do convite (público). Devolve o email.
+export async function setFranchiseePassword(token: string, password: string): Promise<{ ok: boolean; email: string }> {
+  const res = await fetch(`${(import.meta as any).env?.VITE_API_URL || ''}/admin/set-password`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, password }),
+  });
+  if (!res.ok) {
+    let d = 'Não foi possível definir a senha.';
+    try { const j = await res.json(); if (j && j.detail) d = j.detail; } catch (e) {}
+    throw new Error(d);
+  }
+  return res.json();
 }

@@ -4,12 +4,14 @@ import './styles/global.css';
 import './franquia/cover-assets';
 import App from './App';
 import { StudentApp } from './franquia/student-app';
+import { SetPasswordScreen } from './franquia/set-password';
 
 // Quem renderiza:
 //  - /p/{slug} (link mágico) → app do COMPRADOR.
 //  - app INSTALADO abre em "/" (start_url do manifest): se há sessão de aluno persistida
 //    E NÃO há sessão de criador (painel) → app do comprador. Assim o ícone na home do
 //    comprador abre o CURSO dele, e o do admin/franqueado abre o painel.
+const isSetPassword = window.location.pathname.startsWith('/definir-senha');
 const isStudentRoute = window.location.pathname.startsWith('/p/');
 const hasStudentToken = (() => { try { return !!localStorage.getItem('fia_student_token'); } catch { return false; } })();
 const hasCreatorSession = (() => {
@@ -24,6 +26,6 @@ if ('serviceWorker' in navigator) {
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    {showStudent ? <StudentApp /> : <App />}
+    {isSetPassword ? <SetPasswordScreen /> : showStudent ? <StudentApp /> : <App />}
   </React.StrictMode>,
 );

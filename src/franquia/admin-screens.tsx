@@ -1,7 +1,17 @@
 import React from 'react';
 import { DShell } from './desktop-screens-1';
 import { DISP, IC, Ico, MONO, T, useIsMobile } from './kit';
-import { createFranchisee, loadFranchisees } from '../lib/admin';
+import { bulkFranchisees, createFranchisee, loadFranchisees } from '../lib/admin';
+
+// TXT (email, nome por linha; separador , ; ou tab) → [{email, name}]. Detecta o email pelo @.
+function parseBulk(text: string): { email: string; name?: string }[] {
+  return (text || '').split('\n').map((l) => l.trim()).filter(Boolean).map((line) => {
+    const parts = line.split(/[,;\t]+/).map((s) => s.trim()).filter(Boolean);
+    const email = (parts.find((p) => p.includes('@')) || parts[0] || '').toLowerCase();
+    const name = parts.find((p) => p !== email && !p.includes('@')) || '';
+    return { email, name: name || undefined };
+  }).filter((x) => x.email.includes('@'));
+}
 
 // ── Gestão de FRANQUEADOS (admin) ────────────────────────────────────
 function fmtLast(s: string | null): string {
@@ -20,22 +30,38 @@ function FranchiseesScreen() {
   const mobile = useIsMobile();
   const [list, setList] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
-  const [form, setForm] = React.useState({ email: '', name: '', password: '' });
+  const [form, setForm] = React.useState({ email: '', name: '' });
+  const [bulkText, setBulkText] = React.useState('');
+  const [bulkBusy, setBulkBusy] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
   const [msg, setMsg] = React.useState('');
   const [ok, setOk] = React.useState('');
   const load = () => { setLoading(true); loadFranchisees().then(setList).catch(() => setList([])).finally(() => setLoading(false)); };
   React.useEffect(() => { load(); }, []);
   const add = async () => {
-    if (busy || !form.email.trim() || !form.password) return;
+    if (busy || !form.email.trim()) return;
     setBusy(true); setMsg(''); setOk('');
     try {
-      await createFranchisee({ email: form.email.trim(), name: form.name.trim() || undefined, password: form.password });
-      setOk(`Franqueado criado! ${form.email.trim()} já pode entrar com esse email e a senha definida.`);
-      setForm({ email: '', name: '', password: '' });
+      await createFranchisee({ email: form.email.trim(), name: form.name.trim() || undefined });
+      setOk(`Convite enviado! ${form.email.trim()} vai receber um email pra definir a senha.`);
+      setForm({ email: '', name: '' });
       load();
-    } catch (e: any) { setMsg((e?.message || 'Erro ao criar.').replace(/^\d+:\s*/, '')); }
+    } catch (e: any) { setMsg((e?.message || 'Erro ao convidar.').replace(/^\d+:\s*/, '')); }
     finally { setBusy(false); }
+  };
+  const addBulk = async () => {
+    const items = parseBulk(bulkText);
+    if (bulkBusy) return;
+    if (!items.length) { setMsg('Nenhum email válido no texto.'); return; }
+    setBulkBusy(true); setMsg(''); setOk('');
+    try {
+      const r = await bulkFranchisees(items);
+      const errN = (r.errors || []).length;
+      setOk(`${r.created_count} de ${items.length} convidados${errN ? ` · ${errN} já existiam ou inválidos` : ''}.`);
+      setBulkText('');
+      load();
+    } catch (e: any) { setMsg((e?.message || 'Erro no envio em massa.').replace(/^\d+:\s*/, '')); }
+    finally { setBulkBusy(false); }
   };
   const inp = { fontFamily: DISP, width: '100%', boxSizing: 'border-box' as const, border: `1px solid ${T.line}`, borderRadius: 11, padding: '12px 14px', fontSize: 15, color: T.ink, outline: 'none', background: '#fff' };
   return (
@@ -44,12 +70,17 @@ function FranchiseesScreen() {
         {/* adicionar */}
         <div style={{ background: '#fff', border: `1px solid ${T.line}`, borderRadius: 18, padding: mobile ? 18 : 24, maxWidth: 720 }}>
           <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 18, color: T.ink }}>Adicionar franqueado</div>
-          <div style={{ fontFamily: DISP, fontSize: 13.5, color: T.dim, marginTop: 3 }}>Cria um acesso independente à franquia. Ele entra com o email e a senha que você definir.</div>
-          <div style={{ display: 'grid', gridTemplateColumns: mobile ? '1fr' : '1fr 1fr', gap: 12, marginTop: 16 }}>
+          <div style={{ fontFamily: DISP, fontSize: 13.5, color: T.dim, marginTop: 3 }}>Cria um acesso independente. Ele recebe um <b style={{ color: T.ink, fontWeight: 600 }}>email pra definir a senha</b> e já entra no painel.</div>
+          <div style={{ display: 'grid', gridTemplateColumns: mobile ? '1fr' : '1.4fr 1.4fr 1fr', gap: 12, marginTop: 16 }}>
             <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Nome do franqueado" style={inp} />
-            <input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} type="email" autoCapitalize="none" placeholder="email@dele.com" style={inp} />
-            <input value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Senha inicial (mín. 6)" style={inp} />
-            <div onClick={add} style={{ cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1, background: T.accent, color: '#fff', borderRadius: 11, padding: '12px', fontFamily: DISP, fontWeight: 700, fontSize: 15, textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}><Ico d={IC.plus || 'M12 5v14 M5 12h14'} size={17} c="#fff" />{busy ? 'Criando…' : 'Criar acesso'}</div>
+            <input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} onKeyDown={(e) => e.key === 'Enter' && add()} type="email" autoCapitalize="none" placeholder="email@dele.com" style={inp} />
+            <div onClick={add} style={{ cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1, background: T.accent, color: '#fff', borderRadius: 11, padding: '12px', fontFamily: DISP, fontWeight: 700, fontSize: 15, textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}><Ico d={IC.plus || 'M12 5v14 M5 12h14'} size={17} c="#fff" />{busy ? 'Enviando…' : 'Convidar'}</div>
+          </div>
+          <div style={{ marginTop: 18, borderTop: `1px solid ${T.line}`, paddingTop: 16 }}>
+            <div style={{ fontFamily: DISP, fontWeight: 600, fontSize: 14.5, color: T.ink }}>Adicionar em massa</div>
+            <div style={{ fontFamily: DISP, fontSize: 12.5, color: T.dim, marginTop: 2 }}>Um por linha: <span style={{ fontFamily: MONO }}>email, nome</span> (cole a lista do seu TXT).</div>
+            <textarea value={bulkText} onChange={(e) => setBulkText(e.target.value)} rows={5} placeholder={'joao@email.com, João Silva\nmaria@email.com, Maria Souza'} style={{ ...inp, resize: 'vertical', fontFamily: MONO, fontSize: 13, marginTop: 10 }} />
+            <div onClick={addBulk} style={{ marginTop: 10, display: 'inline-flex', cursor: bulkBusy ? 'default' : 'pointer', opacity: bulkBusy ? 0.6 : 1, background: T.ink, color: '#fff', borderRadius: 11, padding: '11px 18px', fontFamily: DISP, fontWeight: 700, fontSize: 14, alignItems: 'center', gap: 8 }}>{bulkBusy ? 'Convidando…' : `Convidar em massa${parseBulk(bulkText).length ? ` (${parseBulk(bulkText).length})` : ''}`}</div>
           </div>
           {ok && <div style={{ marginTop: 12, background: 'rgba(14,122,64,.1)', border: '1px solid rgba(14,122,64,.28)', borderRadius: 10, padding: '11px 14px', fontFamily: DISP, fontSize: 13.5, color: '#0E7A40' }}>{ok}</div>}
           {msg && <div style={{ marginTop: 12, background: 'rgba(216,90,48,.08)', border: '1px solid rgba(216,90,48,.28)', borderRadius: 10, padding: '11px 14px', fontFamily: DISP, fontSize: 13.5, color: '#B23A16' }}>{msg}</div>}
