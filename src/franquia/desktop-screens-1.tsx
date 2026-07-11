@@ -302,7 +302,7 @@ function DCatalogo() {
     return () => clearInterval(id);
   }, []);
 
-  const rawFran = (window.__franquiaProducts || (typeof FRANQUIA_INIT !== 'undefined' ? FRANQUIA_INIT : []));
+  const rawFran = (window.__franquiaProducts || []);
   const FRAN = rawFran.map((p) => ({ n: p.title, p: p.displayPrice || (p.access === 'Premium (upsell)' ? 'Premium' : 'R$ —'), c: p.color, id: p.id, raw: p, coverImg: typeof p.coverImg === 'string' ? p.coverImg : null, isPremium: !!p.isPremium || p.access === 'Premium (upsell)', camouflaged: !!p.camouflaged }));
   const MEUS = [
     { n: 'Meu Curso de Copy', p: 'R$ 67', c: '#1F8A5B', status: 'No ar' }, { n: 'Pack de Reels Pro', p: 'R$ 47', c: '#3F6FD8', status: 'No ar' },

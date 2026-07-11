@@ -29,12 +29,12 @@ function ProductsAdminScreen({ scope, sharedProducts, setSharedProducts }) {
   const [, forceUpdate] = useStateAdmS(0);
 
   const products = isFranquia
-    ? (window.__franquiaProducts || FRANQUIA_INIT)
+    ? (window.__franquiaProducts || [])
     : localProducts;
 
   const setProducts = (fn) => {
     if (isFranquia) {
-      const prev = window.__franquiaProducts || FRANQUIA_INIT;
+      const prev = window.__franquiaProducts || [];
       const next = typeof fn === 'function' ? fn(prev) : fn;
       if (window.__setFranquiaProducts) window.__setFranquiaProducts(next);
       forceUpdate((n) => n + 1); // trigger local re-render
@@ -126,7 +126,8 @@ function ProductsAdminScreen({ scope, sharedProducts, setSharedProducts }) {
           </div>
         )}
         {products.map((p, i) => {
-          const lessons = p.modules.reduce((n, m) => n + m.lessons.length, 0);
+          const lessons = p.lessonsCount != null ? p.lessonsCount : p.modules.reduce((n, m) => n + m.lessons.length, 0);
+          const nMods = p.modulesCount != null ? p.modulesCount : p.modules.length;
           const pct = ADM_progressPct(p);
           return (
             <div key={p.id} style={{ display: mobile ? 'flex' : 'grid', gridTemplateColumns: mobile ? undefined : '2.4fr 0.8fr 1fr 1.3fr 1fr 90px', alignItems: 'center', gap: mobile ? 12 : 0, padding: '16px 22px', borderBottom: i < products.length - 1 ? `1px solid ${T.line}` : 'none', cursor: 'pointer' }} onClick={() => { setSelId(p.id); setView('product'); }}>
@@ -137,7 +138,7 @@ function ProductsAdminScreen({ scope, sharedProducts, setSharedProducts }) {
                   <div style={{ fontFamily: DISP, fontSize: 13, color: T.dim, marginTop: 2 }}>{p.kind} · {lessons} aulas</div>
                 </div>
               </div>
-              {!mobile && <span style={{ fontFamily: DISP, fontSize: 15, color: T.ink }}>{p.modules.length}</span>}
+              {!mobile && <span style={{ fontFamily: DISP, fontSize: 15, color: T.ink }}>{nMods}</span>}
               {!mobile && <span style={{ fontFamily: DISP, fontSize: 15, color: T.ink }}>{p.students.toLocaleString('pt-BR')}</span>}
               {!mobile && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingRight: 14 }}>
@@ -278,7 +279,8 @@ function ProductsAdminScreen({ scope, sharedProducts, setSharedProducts }) {
             <div style={{ margin: mobile ? '18px 16px' : '24px 30px', background: '#fff', border: `1px solid ${T.line}`, borderRadius: 18, overflow: 'hidden' }}>
               {!mobile && (<div style={{ display: 'grid', gridTemplateColumns: '2.4fr 0.8fr 1fr 1.3fr 1fr 110px', padding: '14px 22px', fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.06em', color: T.dim, borderBottom: `1px solid ${T.line}` }}><span>PRODUTO</span><span>MÓDULOS</span><span>ALUNOS</span><span>CONCLUSÃO</span><span>STATUS</span><span></span></div>)}
               {products.map((p, i) => {
-                const lessons = p.modules.reduce((n, m) => n + m.lessons.length, 0);
+                const lessons = p.lessonsCount != null ? p.lessonsCount : p.modules.reduce((n, m) => n + m.lessons.length, 0);
+          const nMods = p.modulesCount != null ? p.modulesCount : p.modules.length;
                 const pct = ADM_progressPct(p);
                 return (
                   <div key={p.id} style={{ display: mobile ? 'flex' : 'grid', gridTemplateColumns: mobile ? undefined : '2.4fr 0.8fr 1fr 1.3fr 1fr 110px', alignItems: 'center', gap: mobile ? 12 : 0, padding: '16px 22px', borderBottom: i < products.length - 1 ? `1px solid ${T.line}` : 'none', cursor: 'pointer' }} onClick={() => { setSelId(p.id); setView('product'); }}>
@@ -286,7 +288,7 @@ function ProductsAdminScreen({ scope, sharedProducts, setSharedProducts }) {
                       <AdmIconSquare color={p.color} />
                       <div style={{ minWidth: 0 }}><div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 16, color: T.ink, letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.title}</div><div style={{ fontFamily: DISP, fontSize: 13, color: T.dim, marginTop: 2 }}>{p.kind} · {lessons} aulas</div></div>
                     </div>
-                    {!mobile && <span style={{ fontFamily: DISP, fontSize: 15, color: T.ink }}>{p.modules.length}</span>}
+                    {!mobile && <span style={{ fontFamily: DISP, fontSize: 15, color: T.ink }}>{nMods}</span>}
                     {!mobile && <span style={{ fontFamily: DISP, fontSize: 15, color: T.ink }}>{p.students.toLocaleString('pt-BR')}</span>}
                     {!mobile && (<div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingRight: 14 }}><div style={{ flex: 1, height: 7, borderRadius: 99, background: 'rgba(24,18,31,.08)', overflow: 'hidden' }}><div style={{ width: pct + '%', height: '100%', background: `linear-gradient(90deg,${p.color}99,${p.color})` }}></div></div><span style={{ fontFamily: MONO, fontSize: 12.5, color: T.ink, fontWeight: 600 }}>{pct}%</span></div>)}
                     {!mobile && <AdmStatus status={p.status} />}

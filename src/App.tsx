@@ -55,29 +55,9 @@ export default function App() {
   const [screen, setScreen] = useState<string>(screenFromHash);
   const [authed, setAuthed] = useState(isAuthed());
   const [booting, setBooting] = useState(true);
-  const [franquiaProducts, setFranquiaProducts] = useState(() => {
-    let base: any[] = typeof FRANQUIA_INIT !== 'undefined' ? FRANQUIA_INIT : [];
-    try {
-      const saved = localStorage.getItem('fia_products');
-      if (saved) base = JSON.parse(saved);
-    } catch (e) {}
-    try {
-      const init: any[] = typeof FRANQUIA_INIT !== 'undefined' ? FRANQUIA_INIT : [];
-      const norm = (s: string) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
-      base = base.map((p: any) => {
-        const fixed = init.find((i: any) => (i.id === p.id || norm(i.title) === norm(p.title)) && typeof i.coverImg === 'string');
-        if (fixed) return { ...p, coverImg: fixed.coverImg };
-        if (typeof window.FIXED_COVERS !== 'undefined' && window.FIXED_COVERS[norm(p.title)]) {
-          return { ...p, coverImg: window.FIXED_COVERS[norm(p.title)] };
-        }
-        return p;
-      });
-      init.forEach((i: any) => {
-        if (!base.some((p: any) => p.id === i.id || norm(p.title) === norm(i.title))) base.push(i);
-      });
-    } catch (e) {}
-    return base;
-  });
+  // Vazio no in\u00edcio \u2014 a fonte REAL (admin = /apps com rascunhos; franqueado = /catalog)
+  // carrega logo ap\u00f3s o auth. Evita o "flash" de dados velhos/mock do localStorage.
+  const [franquiaProducts, setFranquiaProducts] = useState<any[]>([]);
 
   useEffect(() => {
     window.__franquiaProducts = franquiaProducts;
