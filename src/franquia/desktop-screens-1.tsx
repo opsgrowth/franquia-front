@@ -194,7 +194,7 @@ function DDashboard() {
   const periods = [['hoje', 'Hoje'], ['7d', '7 dias'], ['15d', '15 dias'], ['30d', '30 dias']];
 
   return (
-    <DShell active="home" sub="Olá, Camila" title="Seu painel">
+    <DShell active="home" title="Seu painel">
       {paywall && <RecorrenciaPaywall onClose={() => setPaywall(false)} />}
       {/* seletor de período */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, flexWrap: 'wrap', position: 'relative' }}>

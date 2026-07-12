@@ -127,7 +127,7 @@ function SOnboarding() {
 function SHome() {
   return (
     <Screen>
-      <Head sub="Olá, Camila" right={<div style={{ width: 40, height: 40, borderRadius: '50%', background: T.halo, display: 'flex', alignItems: 'center', justifyContent: 'center', color: T.accentDeep, fontWeight: 700, fontFamily: DISP }}>C</div>}>Seu painel</Head>
+      <Head right={<div style={{ width: 40, height: 40, borderRadius: '50%', background: T.halo, display: 'flex', alignItems: 'center', justifyContent: 'center', color: T.accentDeep, fontWeight: 700, fontFamily: DISP }}>C</div>}>Seu painel</Head>
       <div style={{ flex: 1, overflow: 'hidden', padding: '4px 20px 0' }}>
         {/* hero metric */}
         <div style={{ background: T.ink, borderRadius: 20, padding: 22, position: 'relative', overflow: 'hidden' }}>
