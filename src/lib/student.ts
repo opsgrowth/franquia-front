@@ -49,6 +49,7 @@ export async function studentLogin(slug: string, email: string): Promise<string>
 async function sfetch(path: string, token: string): Promise<any> {
   const res = await fetch(`${API_BASE}${path}`, {
     headers: { Authorization: `Bearer ${token}` },
+    cache: 'no-store',  // app do aluno NUNCA serve conteudo/banner/capa do cache HTTP
   });
   if (!res.ok) throw new Error(`${res.status}`);
   return res.json();
