@@ -174,10 +174,12 @@ function CoCourse({ course, progress, app }) {
 }
 
 // Render dos blocos reais da aula (semente do app do aluno) — tema escuro do player.
-function VideoPlayer({ embed }) {
+// Container 16:9 À PROVA DE BALA: padding-bottom 56.25% (altura = 9/16 da largura fluida),
+// não depende de aspect-ratio nem de flex — idêntico em TODA aula (hero e corpo).
+function VideoPlayer({ embed, rounded = false }) {
   if (!embed || !embed.src) return null;
   return (
-    <div style={{ position: 'relative', borderRadius: 12, overflow: 'hidden', aspectRatio: '16 / 9', background: '#000' }}>
+    <div style={{ position: 'relative', width: '100%', height: 0, paddingBottom: '56.25%', overflow: 'hidden', background: '#000', borderRadius: rounded ? 12 : 0 }}>
       {embed.kind === 'iframe'
         ? <iframe src={embed.src} title="vídeo da aula" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowFullScreen style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }} />
         : <video src={embed.src} controls playsInline style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', background: '#000' }} />}
@@ -216,9 +218,9 @@ function StudentBlocks({ blocks, color, skipId }) {
             return (
               <div key={i} style={{ margin: '18px 0 0' }}>
                 {b.embed
-                  ? <VideoPlayer embed={b.embed} />
+                  ? <VideoPlayer embed={b.embed} rounded />
                   : (
-                    <div style={{ borderRadius: 12, overflow: 'hidden', aspectRatio: '16 / 9', background: '#000', position: 'relative' }}>
+                    <div style={{ borderRadius: 12, overflow: 'hidden', width: '100%', height: 0, paddingBottom: '56.25%', background: '#000', position: 'relative' }}>
                       <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 50% 45%, ${coRgba(color, .4)}, rgba(0,0,0,.3) 65%)`, display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center', justifyContent: 'center' }}>
                         <span style={{ width: 54, height: 54, borderRadius: '50%', background: 'rgba(255,255,255,.92)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ico d={AIC.play} size={22} c={color} fill={color} /></span>
                         <span style={{ fontFamily: MONO, fontSize: 10, color: 'rgba(255,255,255,.6)' }}>vídeo sem link</span>
@@ -284,15 +286,9 @@ function CoPlayer({ course, lesson, progress, app, narrow }) {
   const heroVid = (lesson.blocks || []).find((b) => b.kind === 'video' && b.embed);
   const Stage = (
     <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', background: T.darkBg, overflow: 'auto' }}>
-      {heroVid && (
-      <div style={{ position: 'relative', background: '#000', aspectRatio: '16 / 9', flex: '0 0 auto' }}>
-        {heroVid.embed.kind === 'iframe'
-          ? <iframe src={heroVid.embed.src} title="vídeo da aula" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowFullScreen style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }} />
-          : <video src={heroVid.embed.src} controls playsInline style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', background: '#000' }} />}
-      </div>
-      )}
+      {heroVid && <VideoPlayer embed={heroVid.embed} />}
       {!heroVid && lesson.type === 'audio' && (
-      <div style={{ position: 'relative', background: '#000', aspectRatio: '16 / 9', flex: '0 0 auto' }}>
+      <div style={{ position: 'relative', background: '#000', width: '100%', height: 0, paddingBottom: '56.25%', flex: '0 0 auto' }}>
         <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 50% 45%, ${coRgba(course.color, .5)}, rgba(0,0,0,.4) 65%)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <span style={{ width: 76, height: 76, borderRadius: '50%', background: 'rgba(255,255,255,.95)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 12px 40px rgba(0,0,0,.4)' }}><Ico d={AIC.play} size={30} c={course.color} fill={course.color} /></span>
         </div>
