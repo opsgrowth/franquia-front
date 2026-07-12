@@ -6,6 +6,7 @@ import { loadFranchiseCatalog } from './lib/catalog';
 import { loadMyAppsMapped } from './lib/apps';
 import { bootstrapAuth, isAuthed, onAuthChange, logout, getMe } from './lib/auth';
 import { DDashboard, DCatalogo } from './franquia/desktop-screens-1';
+import { T, DISP, MONO, Ico } from './franquia/kit';
 import { DGerador, DEditor } from './franquia/desktop-screens-2';
 import { DVendas } from './franquia/desktop-vendas';
 import { DConfig } from './franquia/desktop-config';
@@ -53,10 +54,40 @@ function screenFromHash(): string {
   return 'dashboard';
 }
 
+// Popup de boas-vindas do FRANQUEADO (recepção de marca + cobre a carga do catálogo no
+// 1º acesso). Dark premium, mesmo padrão dos popups existentes. Fecha no botão ou no fundo.
+function WelcomeOverlay({ onClose }: { onClose: () => void }) {
+  const me = getMe();
+  const full = (me && me.creator && me.creator.name && String(me.creator.name).trim()) || '';
+  const nome = full ? full.split(/\s+/)[0] : '';
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 120, background: 'rgba(20,16,25,.66)', backdropFilter: 'blur(5px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 460, background: T.darkBg, borderRadius: 26, overflow: 'hidden', boxShadow: '0 30px 90px rgba(0,0,0,.55)', position: 'relative' }}>
+        <div style={{ padding: '46px 36px 34px', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', right: -60, top: -50, width: 220, height: 220, borderRadius: '50%', background: `radial-gradient(circle, ${T.accent}33, transparent 68%)` }} />
+          <div style={{ position: 'relative' }}>
+            <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.18em', color: T.pill }}>BEM-VINDO À FRANQUIA</div>
+            <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 29, letterSpacing: '-0.03em', color: '#F6F1FB', marginTop: 12, lineHeight: 1.12 }}>
+              {nome ? `Que bom ter você aqui, ${nome}` : 'Que bom ter você aqui'}
+            </div>
+            <div style={{ fontFamily: DISP, fontSize: 15.5, lineHeight: 1.62, color: 'rgba(246,241,251,.7)', marginTop: 14 }}>
+              Seu catálogo de produtos prontos para vender está a um clique. Explore, escolha os seus e comece a promover hoje.
+            </div>
+            <div onClick={onClose} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9, marginTop: 30, background: `linear-gradient(135deg, ${T.accent}, ${T.accentDeep})`, color: '#fff', borderRadius: 14, padding: '16px', fontFamily: DISP, fontWeight: 700, fontSize: 16, cursor: 'pointer' }}>
+              Iniciar jornada <Ico d={'M5 12h14 M13 6l6 6-6 6'} size={17} c="#fff" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [screen, setScreen] = useState<string>(screenFromHash);
   const [authed, setAuthed] = useState(isAuthed());
   const [booting, setBooting] = useState(true);
+  const [showWelcome, setShowWelcome] = useState(false); // popup de boas-vindas do franqueado
   // Vazio no in\u00edcio \u2014 a fonte REAL (admin = /apps com rascunhos; franqueado = /catalog)
   // carrega logo ap\u00f3s o auth. Evita o "flash" de dados velhos/mock do localStorage.
   const [franquiaProducts, setFranquiaProducts] = useState<any[]>(() => {
@@ -103,6 +134,18 @@ export default function App() {
     bootstrapAuth().finally(() => { setAuthed(isAuthed()); setBooting(false); });
     return off;
   }, []);
+
+  // Boas-vindas do FRANQUEADO: a cada login/reload (sem persistência — refina no Bloco 2).
+  // getMe() já está populado quando authed vira true (loadMe é awaited) → gate por is_admin
+  // é determinístico, sem piscar pro admin. Aluno é outra raiz (<StudentApp/>), fora daqui.
+  useEffect(() => {
+    if (authed && !booting) {
+      const me = getMe();
+      if (me && !me.is_admin) setShowWelcome(true);
+    } else if (!authed) {
+      setShowWelcome(false);
+    }
+  }, [authed, booting]);
 
   // Catálogo: produtos ABERTOS = reais (backend); + 4 PREMIUM (mockup, travados =
   // popup "libera em 7 dias"). O design marca os ÚLTIMOS 4 como premium, então os
@@ -210,9 +253,13 @@ export default function App() {
   // (corrige "volta pra lista em qualquer ação"). <Current /> trataria a arrow nova de
   // cada render como um componente novo e remontaria.
   const isFactory = screen === 'fadmin' || screen === 'fadmin-gen' || screen === 'fadmin-review';
+  const isAdmin = !!(getMe() && getMe().is_admin);
   return (
-    <ErrorBoundary key={screen}>
-      {isFactory ? Current() : <Current />}
-    </ErrorBoundary>
+    <>
+      <ErrorBoundary key={screen}>
+        {isFactory ? Current() : <Current />}
+      </ErrorBoundary>
+      {showWelcome && !isAdmin && <WelcomeOverlay onClose={() => setShowWelcome(false)} />}
+    </>
   );
 }
