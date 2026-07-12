@@ -3,7 +3,8 @@ import { AIC } from './author-kit';
 import { Perfil } from './co-tabs';
 import { DShell } from './desktop-screens-1';
 import { DISP, IC, Ico, MONO, Mark, T, useIsMobile } from './kit';
-import { getWebhookUrl } from '../lib/promotions';
+import { loadAllWebhookUrls } from '../lib/promotions';
+import { isBackendId } from '../lib/apps';
 import { getMe, setMeName } from '../lib/auth';
 import { api } from '../lib/api';
 
@@ -14,8 +15,9 @@ function DConfig() {
   const cmob = useIsMobile();
   const [sec, setSec] = React.useState(() => (typeof window !== 'undefined' && window.__cfgSection) ? window.__cfgSection : 'conta');
   const [color, setColor] = React.useState('#7C3AED');
-  const [webhookUrl, setWebhookUrl] = React.useState('Gerando sua URL…');
-  const [copied, setCopied] = React.useState(false);
+  const [whMap, setWhMap] = React.useState<Record<string, string>>({});
+  const [copied, setCopied] = React.useState('');
+  const [, _forceCfg] = React.useState(0);
   const _me = getMe();
   const _nome = (_me && _me.creator && _me.creator.name) || 'Você';
   const _email = (_me && _me.creator && _me.creator.email) || '';
@@ -34,34 +36,27 @@ function DConfig() {
     }
   };
   const [notif, setNotif] = React.useState({ venda: true, acesso: true, resumo: false, mkt: false });
-  const PLAT_NAMES = ['Kiwify', 'Hotmart', 'Digistore24', 'Eduzz', 'Cartpanda'];
   const franqProds = (typeof window !== 'undefined' && window.__franquiaProducts) ? window.__franquiaProducts : [];
-  const [links, setLinks] = React.useState(() => ([
-    { id: 'lk1', product: (franqProds[0] && franqProds[0].title) || 'Renda com IA — Método', platform: 'Kiwify', offer: 'kw_ria01', status: 'ok', revoke: true },
-    { id: 'lk2', product: (franqProds[1] && franqProds[1].title) || 'Reconquista 360', platform: 'Hotmart', offer: '', status: 'wait', revoke: true },
-  ]));
-  React.useEffect(() => {
-    if (typeof window !== 'undefined' && window.__integProduct) {
-      const p = window.__integProduct; window.__integProduct = null;
-      setSec('integ');
-      setLinks((ls) => ls.some((l) => l.product === p) ? ls : [...ls, { id: 'lk' + Date.now(), product: p, platform: 'Kiwify', offer: '', status: 'wait', revoke: true }]);
-    }
-  }, []);
-  // URL de webhook REAL do backend (promoção). Cola na Kiwify → venda dispara o loop.
+  // Produtos REAIS que o franqueado pode vender (id UUID, publicado, não-premium).
+  const promotable = franqProds.filter((p: any) => p && isBackendId(p.id) && !p.isPremium && p.access !== 'Premium (upsell)' && p.catalogPublished !== false);
+  // Uma URL de webhook REAL por produto (backend /promotions, idempotente).
   React.useEffect(() => {
     let alive = true;
-    const appId = typeof window !== 'undefined' ? (window as any).__integAppId : undefined;
-    getWebhookUrl(appId)
-      .then((u) => { if (alive) setWebhookUrl(u); })
-      .catch(() => { if (alive) setWebhookUrl('Conecte um produto do catálogo para gerar sua URL.'); });
+    const ids = promotable.map((p: any) => p.id);
+    if (!ids.length) return;
+    loadAllWebhookUrls(ids).then((m) => { if (alive) setWhMap(m); }).catch(() => {});
     return () => { alive = false; };
-  }, []);
-  const copyWebhook = () => {
-    try { navigator.clipboard.writeText(webhookUrl); setCopied(true); setTimeout(() => setCopied(false), 1600); } catch (e) {}
+  }, [promotable.map((p: any) => p.id).join(',')]);
+  // window.__franquiaProducts chega assíncrono → re-render curto até a lista popular.
+  React.useEffect(() => {
+    if (promotable.length) return;
+    const id = setInterval(() => { if ((window as any).__franquiaProducts && (window as any).__franquiaProducts.length) _forceCfg((n: number) => n + 1); }, 500);
+    return () => clearInterval(id);
+  }, [promotable.length]);
+  const copyWebhook = (url: string, id: string) => {
+    try { navigator.clipboard.writeText(url); } catch (e) {}
+    setCopied(id); setTimeout(() => setCopied(''), 1600);
   };
-  const setLink = (id, patch) => setLinks((ls) => ls.map((l) => l.id === id ? { ...l, ...patch } : l));
-  const addLink = () => setLinks((ls) => [...ls, { id: 'lk' + Date.now(), product: (franqProds[0] && franqProds[0].title) || '', platform: 'Kiwify', offer: '', status: 'wait', revoke: true }]);
-  const delLink = (id) => setLinks((ls) => ls.filter((l) => l.id !== id));
 
   const SECTIONS = [
     ['conta', 'Conta', IC.user],
@@ -156,57 +151,32 @@ function DConfig() {
   const Integ = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <Card>
-        <CardTitle sub="Cole esta URL no painel de webhook de cada plataforma. O acesso é roteado pelo ID da oferta.">Sua URL de webhook</CardTitle>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: T.paper, border: `1px solid ${T.line}`, borderRadius: 11, padding: '12px 14px' }}>
-          <Ico d={AIC.link} size={16} c={T.dim} />
-          <span style={{ flex: 1, fontFamily: MONO, fontSize: 13, color: T.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{webhookUrl}</span>
-          <div onClick={copyWebhook} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: copied ? '#0E9A50' : '#fff', border: `1px solid ${copied ? '#0E9A50' : T.line}`, borderRadius: 8, padding: '7px 12px', fontFamily: DISP, fontWeight: 600, fontSize: 12.5, color: copied ? '#fff' : T.ink, cursor: 'pointer' }}><Ico d={AIC.copy} size={14} c={copied ? '#fff' : T.ink} />{copied ? 'Copiado!' : 'Copiar'}</div>
+        <CardTitle sub="Cada produto tem uma URL PRÓPRIA. Na sua plataforma de vendas (Kiwify), cole a URL do produto que você está vendendo.">Suas URLs de webhook</CardTitle>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, background: 'rgba(224,99,47,.08)', border: '1px solid rgba(224,99,47,.25)', borderRadius: 12, padding: '12px 14px', marginBottom: 16 }}>
+          <Ico d={'M12 9v4 M12 17h.01 M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z'} size={17} c={'#C2521F'} />
+          <span style={{ fontFamily: DISP, fontSize: 13, color: '#8A3A12', lineHeight: 1.5 }}><b style={{ fontWeight: 700 }}>Use a URL do produto certo.</b> Colar a URL de um produto na venda de outro libera o produto errado pro comprador.</span>
         </div>
-        <div style={{ fontFamily: DISP, fontSize: 12.5, color: T.dim, marginTop: 10, lineHeight: 1.5 }}>Use a mesma URL em todas as plataformas. Cada compra é entregue ao produto certo pelo <b style={{ color: T.ink, fontWeight: 600 }}>ID da oferta</b> abaixo.</div>
-      </Card>
-
-      <Card>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 14, marginBottom: 18 }}>
-          <div><div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 18, letterSpacing: '-0.02em', color: T.ink }}>Produtos conectados</div><div style={{ fontFamily: DISP, fontSize: 13.5, color: T.dim, marginTop: 3 }}>Ligue cada produto a uma oferta da sua plataforma. A venda libera só aquele produto.</div></div>
-          <div onClick={addLink} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: T.accent, color: '#fff', borderRadius: 10, padding: '10px 15px', fontFamily: DISP, fontWeight: 600, fontSize: 13.5, cursor: 'pointer', flex: '0 0 auto' }}><Ico d={AIC.plus} size={15} c="#fff" />Conectar produto</div>
-        </div>
-
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {links.length === 0 && <div style={{ fontFamily: DISP, fontSize: 14, color: T.dim, padding: '20px 0', textAlign: 'center' }}>Nenhum produto conectado ainda.</div>}
-          {links.map((l) => {
-            const ok = l.status === 'ok' && l.offer.trim();
+          {promotable.length === 0 && <div style={{ fontFamily: DISP, fontSize: 14, color: T.dim, padding: '20px 0', textAlign: 'center' }}>Publique um produto no catálogo para gerar as URLs.</div>}
+          {promotable.map((p: any) => {
+            const url = whMap[p.id];
+            const on = copied === p.id;
             return (
-              <div key={l.id} style={{ border: `1px solid ${T.line}`, borderRadius: 14, padding: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: ok ? '#0E9A50' : T.warning, flex: '0 0 auto' }}></span>
-                  <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.04em', color: ok ? '#0E7A40' : '#9A6A12' }}>{ok ? 'CONECTADO' : 'AGUARDANDO 1ª VENDA'}</span>
-                  <div onClick={() => delLink(l.id)} style={{ marginLeft: 'auto', cursor: 'pointer' }}><Ico d={AIC.trash} size={15} c={T.dim} /></div>
+              <div key={p.id} style={{ border: `1px solid ${T.line}`, borderRadius: 14, padding: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                  <span style={{ width: 24, height: 24, borderRadius: 7, background: (typeof p.coverImg === 'string' && p.coverImg) ? `center/cover no-repeat url("${p.coverImg}")` : (p.color || T.accent), flex: '0 0 auto' }} />
+                  <span style={{ fontFamily: DISP, fontWeight: 700, fontSize: 15, color: T.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.title}</span>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: cmob ? '1fr' : '1.4fr 1fr 1.2fr', gap: 12 }}>
-                  <div>
-                    <label style={{ ...lbl, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase', color: T.dim }}>Produto da Franquia</label>
-                    <select value={l.product} onChange={(e) => setLink(l.id, { product: e.target.value })} style={{ ...inp, cursor: 'pointer' }}>
-                      {(franqProds.length ? franqProds.map((p) => p.title) : [l.product]).map((t) => <option key={t}>{t}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label style={{ ...lbl, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase', color: T.dim }}>Plataforma</label>
-                    <select value={l.platform} onChange={(e) => setLink(l.id, { platform: e.target.value })} style={{ ...inp, cursor: 'pointer' }}>{PLAT_NAMES.map((p) => <option key={p}>{p}</option>)}</select>
-                  </div>
-                  <div>
-                    <label style={{ ...lbl, fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase', color: T.dim }}>ID da oferta</label>
-                    <input value={l.offer} onChange={(e) => setLink(l.id, { offer: e.target.value, status: e.target.value.trim() ? l.status : 'wait' })} placeholder="cole da plataforma" style={{ ...inp, fontFamily: MONO, fontSize: 13 }} />
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14 }}>
-                  <Toggle on={l.revoke} onClick={() => setLink(l.id, { revoke: !l.revoke })} />
-                  <span style={{ fontFamily: DISP, fontSize: 13, color: T.dim }}>Revogar acesso em reembolso / chargeback</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: T.paper, border: `1px solid ${T.line}`, borderRadius: 11, padding: '10px 12px' }}>
+                  <Ico d={AIC.link} size={15} c={T.dim} />
+                  <span style={{ flex: 1, fontFamily: MONO, fontSize: 12.5, color: url ? T.ink : T.dim, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{url || 'Gerando…'}</span>
+                  <div onClick={() => url && copyWebhook(url, p.id)} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: on ? '#0E9A50' : '#fff', border: `1px solid ${on ? '#0E9A50' : T.line}`, borderRadius: 8, padding: '7px 12px', fontFamily: DISP, fontWeight: 600, fontSize: 12.5, color: on ? '#fff' : (url ? T.ink : T.dim), cursor: url ? 'pointer' : 'default' }}><Ico d={AIC.copy} size={14} c={on ? '#fff' : (url ? T.ink : T.dim)} />{on ? 'Copiado!' : 'Copiar'}</div>
                 </div>
               </div>
             );
           })}
         </div>
-        <div style={{ fontFamily: DISP, fontSize: 12.5, color: T.dim, marginTop: 14, lineHeight: 1.5 }}>Um mesmo produto pode ter mais de uma oferta (ex.: Kiwify e Hotmart) — é só conectar de novo.</div>
+        <div style={{ fontFamily: DISP, fontSize: 12.5, color: T.dim, marginTop: 16, lineHeight: 1.6 }}><b style={{ color: T.ink, fontWeight: 600 }}>Como configurar:</b> 1) Copie a URL do produto. 2) Na Kiwify, vá em <b style={{ color: T.ink, fontWeight: 600 }}>Webhooks</b> e cole. 3) Pronto — cada venda desse produto libera o acesso automaticamente.</div>
       </Card>
     </div>
   );

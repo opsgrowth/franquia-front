@@ -127,7 +127,7 @@ function DVendas() {
       {/* nota webhook */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginTop: 16, fontFamily: DISP, fontSize: 12.5, color: T.dim }}>
         <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#0E9A50' }}></span>
-        Webhooks conectados — cada venda aprovada libera o acesso automaticamente pelo ID configurado no produto.
+        Webhooks conectados — cada venda aprovada libera o acesso automaticamente pela URL de webhook do produto.
       </div>
     </DShell>
   );
