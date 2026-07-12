@@ -8,6 +8,7 @@ import { DISP, IC, Ico, Lockup, MONO, Mark, T, Wordmark, useIsMobile } from './k
 import { getMe } from '../lib/auth';
 import { loadSales } from '../lib/sales';
 import { camoName } from '../lib/camo';
+import { isCredentialing } from '../lib/credentialing';
 
 // ── KILL-SWITCH GLOBAL de camuflagem (pitch) ────────────────────────
 // Em produção a camuflagem é POR PRODUTO (flag `camouflaged` do backend, controlado
@@ -292,6 +293,7 @@ function DCatalogo() {
   const [premInfo, setPremInfo] = React.useState(false);
   const [previewCourse, setPreviewCourse] = React.useState(null);
   const [sheetItem, setSheetItem] = React.useState(null);
+  const [credModal, setCredModal] = React.useState(false); // popup "em credenciamento" (Lancheirinha)
   const [q, setQ] = React.useState('');
   const [, forceUpdate] = React.useState(0);
 
@@ -370,7 +372,7 @@ function DCatalogo() {
             <div style={{ fontFamily: DISP, fontWeight: 600, fontSize: 15, marginTop: 12 }}>{it.n}</div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 }}>
               <span style={{ fontFamily: DISP, fontWeight: 700, fontSize: 16, color: it.c }}>{it.p}</span>
-              <span onClick={() => isF ? (isPrem ? setPremInfo(true) : setSheetItem(it)) : (window.__go && window.__go('manual'))} style={{ fontFamily: DISP, fontSize: 12.5, fontWeight: 700, color: isF && !isPrem ? T.accent : T.dim, cursor: 'pointer' }}>{isF ? (isPrem ? 'Ver →' : 'Promover →') : 'Editar →'}</span>
+              <span onClick={() => isF ? (isPrem ? setPremInfo(true) : (isCredentialing(it.id) ? setCredModal(true) : setSheetItem(it))) : (window.__go && window.__go('manual'))} style={{ fontFamily: DISP, fontSize: 12.5, fontWeight: 700, color: isF && !isPrem ? T.accent : T.dim, cursor: 'pointer' }}>{isF ? (isPrem ? 'Ver →' : 'Promover →') : 'Editar →'}</span>
             </div>
             </div>
           </div>
@@ -384,6 +386,26 @@ function DCatalogo() {
       </div>
       {previewCourse && <PhonePreview open={true} onClose={() => setPreviewCourse(null)} courses={[previewCourse]} />}
       {sheetItem && <MaterialsSheet item={sheetItem} course={toCourse(sheetItem)} onClose={() => setSheetItem(null)} />}
+      {credModal && (
+        <div onClick={() => setCredModal(false)} style={{ position: 'fixed', inset: 0, zIndex: 90, background: 'rgba(20,16,25,.62)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 420, background: T.darkBg, borderRadius: 24, overflow: 'hidden', boxShadow: '0 30px 80px rgba(0,0,0,.5)', position: 'relative' }}>
+            <div onClick={() => setCredModal(false)} style={{ position: 'absolute', top: 14, right: 16, zIndex: 3, width: 30, height: 30, borderRadius: '50%', background: 'rgba(255,255,255,.12)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, cursor: 'pointer' }}>✕</div>
+            <div style={{ padding: '38px 32px 30px' }}>
+              <div style={{ width: 60, height: 60, borderRadius: 16, background: `linear-gradient(135deg, ${T.accent}, ${T.accentDeep})`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ico d={'M6 10V7a6 6 0 0 1 12 0v3 M5 10h14v11H5z'} size={28} c="#fff" /></div>
+              <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.16em', color: T.pill, marginTop: 22 }}>EM CREDENCIAMENTO</div>
+              <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 25, letterSpacing: '-0.03em', color: '#F6F1FB', marginTop: 8, lineHeight: 1.15 }}>
+                Disponível para promoção em até <span style={{ color: T.accent }}>24 horas</span>
+              </div>
+              <div style={{ fontFamily: DISP, fontSize: 15, lineHeight: 1.6, color: 'rgba(246,241,251,.68)', marginTop: 14 }}>
+                Este produto está finalizando o credenciamento e estará disponível para promoção nas próximas <b style={{ color: '#F6F1FB', fontWeight: 600 }}>24 horas</b>. Você será avisado.
+              </div>
+              <div onClick={() => setCredModal(false)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 26, background: `linear-gradient(135deg, ${T.accent}, ${T.accentDeep})`, color: '#fff', borderRadius: 14, padding: '16px', fontFamily: DISP, fontWeight: 700, fontSize: 16, cursor: 'pointer' }}>
+                Entendi
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {premInfo && (
         <div onClick={() => setPremInfo(false)} style={{ position: 'fixed', inset: 0, zIndex: 90, background: 'rgba(20,16,25,.62)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
           <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 440, background: T.darkBg, borderRadius: 24, overflow: 'hidden', boxShadow: '0 30px 80px rgba(0,0,0,.5)', position: 'relative' }}>

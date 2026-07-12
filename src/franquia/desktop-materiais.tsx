@@ -3,6 +3,7 @@ import { AIC } from './author-kit';
 import { PhonePreview } from './author-preview';
 import { DISP, IC, Ico, MONO, Mark, T, useIsMobile } from './kit';
 import { getWebhookUrl } from '../lib/promotions';
+import { isCredentialing } from '../lib/credentialing';
 
 // Kit de Vendas (contextual, por produto da Franquia) — aba Materiais + Prévia.
 // Reusa T/DISP/MONO/Ico/IC/AIC/Mark + PhonePreview.
@@ -74,6 +75,18 @@ function MaterialsSheet({ item, course, onClose }) {
         <div style={{ height: 1, background: T.line }}></div>
 
         {tab === 'promo' ? (
+          isCredentialing(appId) ? (
+          /* dupla proteção: se o sheet for alcançado por qualquer caminho, a URL some e vira o aviso das 24h */
+          <div style={{ padding: 24 }}>
+            <div style={{ background: '#fff', border: `1.5px solid ${T.accent}`, borderRadius: 14, padding: 22, display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+              <div style={{ width: 42, height: 42, borderRadius: 11, background: 'rgba(124,58,237,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: '0 0 auto' }}><Ico d={'M6 10V7a6 6 0 0 1 12 0v3 M5 10h14v11H5z'} size={20} c={T.accentDeep} /></div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 16, color: T.ink }}>Finalizando o credenciamento</div>
+                <div style={{ fontFamily: DISP, fontSize: 14, color: T.dim, marginTop: 6, lineHeight: 1.55 }}>Este produto está finalizando o credenciamento e estará disponível para promoção nas próximas <b style={{ color: T.ink, fontWeight: 600 }}>24 horas</b>. Você será avisado.</div>
+              </div>
+            </div>
+          </div>
+          ) : (
           <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div style={{ fontFamily: DISP, fontSize: 14, color: T.dim, lineHeight: 1.55 }}>Venda este produto no seu checkout (Kiwify, Hotmart…). Conecte o webhook abaixo e <b style={{ color: T.ink, fontWeight: 600 }}>toda venda aprovada libera o acesso do cliente na hora</b> — e cai nas suas Vendas.</div>
             <Step n={1} title="Crie o produto/checkout na sua plataforma" desc="Na Kiwify (ou Hotmart), crie o produto e a oferta com o preço que você vai cobrar." />
@@ -92,6 +105,7 @@ function MaterialsSheet({ item, course, onClose }) {
             </div>
             <Step n={3} title="Pronto — a venda vira acesso sozinha" desc="Quando alguém comprar, o cliente recebe o acesso por email na hora, entra na base deste produto e a venda aparece na sua aba Vendas. Você não faz mais nada." />
           </div>
+          )
         ) : tab === 'mat' ? (
           <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div style={{ fontFamily: DISP, fontSize: 14, color: T.dim, lineHeight: 1.55 }}>Baixe os materiais e publique na sua estrutura. Todos os franqueados recebem os mesmos arquivos — você conecta seu checkout via integração.</div>

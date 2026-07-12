@@ -38,7 +38,7 @@ function DConfig() {
   const [notif, setNotif] = React.useState({ venda: true, acesso: true, resumo: false, mkt: false });
   const franqProds = (typeof window !== 'undefined' && window.__franquiaProducts) ? window.__franquiaProducts : [];
   // Produtos REAIS que o franqueado pode vender (id UUID, publicado, não-premium).
-  const promotable = franqProds.filter((p: any) => p && isBackendId(p.id) && !p.isPremium && p.access !== 'Premium (upsell)' && p.catalogPublished !== false);
+  const promotable = franqProds.filter((p: any) => p && isBackendId(p.id) && !p.isPremium && p.access !== 'Premium (upsell)' && p.catalogPublished !== false && !p.camouflaged);
   // Uma URL de webhook REAL por produto (backend /promotions, idempotente).
   React.useEffect(() => {
     let alive = true;
