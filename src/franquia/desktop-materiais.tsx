@@ -4,6 +4,11 @@ import { PhonePreview } from './author-preview';
 import { DISP, IC, Ico, MONO, Mark, T, useIsMobile } from './kit';
 import { getWebhookUrl } from '../lib/promotions';
 import { isCredentialing } from '../lib/credentialing';
+import { materialsFor, dlHref } from '../lib/materials';
+
+// 3 cards complementares (Copy / Artes / Roteiros) escondidos p/ o lançamento.
+// Reversível: troque para true e eles reaparecem.
+const SHOW_EXTRA_COMP = false;
 
 // Kit de Vendas (contextual, por produto da Franquia) — aba Materiais + Prévia.
 // Reusa T/DISP/MONO/Ico/IC/AIC/Mark + PhonePreview.
@@ -18,6 +23,7 @@ function MaterialsSheet({ item, course, onClose }) {
   const cover = item && item.coverImg;
   // URL de webhook REAL desta promoção (franqueado + este produto). Colada na Kiwify.
   const appId = item && ((item.raw && item.raw.id) || item.id);
+  const mats = materialsFor(appId); // materiais de download deste produto (URLs públicas)
   const [webhookUrl, setWebhookUrl] = React.useState('');
   const [whLoading, setWhLoading] = React.useState(true);
   React.useEffect(() => {
@@ -45,11 +51,14 @@ function MaterialsSheet({ item, course, onClose }) {
       </div>
     </div>
   );
-  const Btn = ({ icon, children, solid, onClick }) => (
-    <div onClick={onClick} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontFamily: DISP, fontWeight: 600, fontSize: 13, padding: '9px 15px', borderRadius: 10, background: solid ? T.accent : '#fff', color: solid ? '#fff' : T.ink, border: `1px solid ${solid ? T.accent : T.line}` }}>
-      {icon && <Ico d={icon} size={15} c={solid ? '#fff' : T.ink} />}{children}
-    </div>
-  );
+  // Com href → <a> de download real (Storage público). Sem href → botão placeholder (onClick).
+  const Btn = ({ icon, children, solid, onClick, href, download }: any) => {
+    const st: any = { display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontFamily: DISP, fontWeight: 600, fontSize: 13, padding: '9px 15px', borderRadius: 10, background: solid ? T.accent : '#fff', color: solid ? '#fff' : T.ink, border: `1px solid ${solid ? T.accent : T.line}`, textDecoration: 'none' };
+    const inner = <>{icon && <Ico d={icon} size={15} c={solid ? '#fff' : T.ink} />}{children}</>;
+    return href
+      ? <a href={href} download={download} style={st}>{inner}</a>
+      : <div onClick={onClick} style={st}>{inner}</div>;
+  };
   const DL = 'M12 15V4 M8 11l4 4 4-4 M5 19h14';
   const CP = 'M9 9h10v10H9z M5 15V5h10';
 
@@ -111,16 +120,17 @@ function MaterialsSheet({ item, course, onClose }) {
             <div style={{ fontFamily: DISP, fontSize: 14, color: T.dim, lineHeight: 1.55 }}>Baixe os materiais e publique na sua estrutura. Todos os franqueados recebem os mesmos arquivos — você conecta seu checkout via integração.</div>
 
             <AssetCard icon={'M4 5h16v14H4z M4 9h16 M8 5v4'} title="Página de vendas (HTML)" desc="A landing/VSL pronta pra publicar no seu domínio ou hospedagem.">
-              <Btn icon={DL} solid onClick={() => copy('html', 'download')}>{copied === 'html' ? 'Baixando…' : 'Baixar HTML'}</Btn>
+              <Btn icon={DL} solid href={dlHref(mats.html)} download="MVS-pagina-de-vendas.html" onClick={() => copy('html', 'download')}>{copied === 'html' ? 'Baixando…' : 'Baixar HTML'}</Btn>
               <Btn icon={IC.search} onClick={() => setTab('prev')}>Ver prévia</Btn>
             </AssetCard>
 
-            <AssetCard icon={AIC.image} title="Imagem do produto" desc="Mockup/arte oficial do produto, em alta resolução (PNG).">
-              <Btn icon={DL} solid onClick={() => copy('img', 'download')}>{copied === 'img' ? 'Baixando…' : 'Baixar imagem'}</Btn>
+            <AssetCard icon={AIC.image} title="Imagem do produto" desc="Mockup/arte oficial do produto, em alta resolução (JPEG).">
+              <Btn icon={DL} solid href={dlHref(mats.imagem)} download="MVS-imagem-do-produto.jpeg" onClick={() => copy('img', 'download')}>{copied === 'img' ? 'Baixando…' : 'Baixar imagem'}</Btn>
             </AssetCard>
 
-            <AssetCard icon={'M3 5h18v11H3z M3 16l5-4 3 2 4-4 6 5'} title="Banner de checkout" desc="Banner de topo para usar na página do seu checkout.">
-              <Btn icon={DL} solid onClick={() => copy('ban', 'download')}>{copied === 'ban' ? 'Baixando…' : 'Baixar banner'}</Btn>
+            <AssetCard icon={'M3 5h18v11H3z M3 16l5-4 3 2 4-4 6 5'} title="Banner de checkout" desc="Banner de topo + selo de garantia para usar na página do seu checkout.">
+              <Btn icon={DL} solid href={dlHref(mats.banner)} download="MVS-banner-de-checkout.png" onClick={() => copy('ban', 'download')}>{copied === 'ban' ? 'Baixando…' : 'Baixar banner'}</Btn>
+              <Btn icon={DL} href={dlHref(mats.selo)} download="MVS-selo-de-garantia.png" onClick={() => copy('selo', 'download')}>{copied === 'selo' ? 'Baixando…' : 'Baixar selo'}</Btn>
             </AssetCard>
 
             {/* integração via webhook */}
@@ -137,10 +147,12 @@ function MaterialsSheet({ item, course, onClose }) {
           <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div style={{ fontFamily: DISP, fontSize: 14, color: T.dim, lineHeight: 1.55 }}>Materiais extras para divulgar e escalar suas vendas nas redes. Todos os franqueados recebem os mesmos arquivos.</div>
 
-            <AssetCard icon={'M3 5h18v11H3z M3 16l5-4 3 2 4-4 6 5'} title="Criativos para anúncios" desc="Pacote de imagens e vídeos prontos para tráfego pago (Meta e Google).">
-              <Btn icon={DL} solid onClick={() => copy('cre', 'download')}>{copied === 'cre' ? 'Baixando…' : 'Baixar criativos'}</Btn>
+            <AssetCard icon={'M3 5h18v11H3z M3 16l5-4 3 2 4-4 6 5'} title="Criativos para anúncios" desc="Vídeos prontos para tráfego pago (Meta e Google).">
+              <Btn icon={DL} solid href={dlHref(mats.criativo1)} download="MVS-criativo-1.mp4" onClick={() => copy('cre1', 'download')}>{copied === 'cre1' ? 'Baixando…' : 'Criativo 1'}</Btn>
+              <Btn icon={DL} href={dlHref(mats.criativo2)} download="MVS-criativo-2.mp4" onClick={() => copy('cre2', 'download')}>{copied === 'cre2' ? 'Baixando…' : 'Criativo 2'}</Btn>
             </AssetCard>
 
+            {SHOW_EXTRA_COMP && (<>
             <AssetCard icon={'M4 5h16v14H4z M4 9l8 5 8-5'} title="Copy para e-mail e WhatsApp" desc="Sequência de mensagens prontas para aquecer e converter sua lista.">
               <Btn icon={DL} solid onClick={() => copy('cpy', 'download')}>{copied === 'cpy' ? 'Baixando…' : 'Baixar copies'}</Btn>
             </AssetCard>
@@ -152,6 +164,7 @@ function MaterialsSheet({ item, course, onClose }) {
             <AssetCard icon={AIC.play} title="Roteiros de stories e reels" desc="Roteiros prontos para gravar e divulgar o produto no seu perfil.">
               <Btn icon={DL} solid onClick={() => copy('rot', 'download')}>{copied === 'rot' ? 'Baixando…' : 'Baixar roteiros'}</Btn>
             </AssetCard>
+            </>)}
           </div>
         ) : (
           <div style={{ padding: 24, textAlign: 'center' }}>
