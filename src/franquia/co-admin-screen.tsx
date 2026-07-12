@@ -196,10 +196,15 @@ function ProductsAdminScreen({ scope, sharedProducts, setSharedProducts }) {
     }
   };
   // Salva o CONTEÚDO real da aula (substitui TODOS os blocos). Lança em erro → o modal exibe.
-  const saveBlocks = async (pid, mid, lid, frontBlocks) => {
+  const saveBlocks = async (pid, mid, lid, payload) => {
+    const frontBlocks = (payload && payload.blocks) || [];
+    const rawDesc = payload ? payload.desc : undefined;
     const saved = await replaceBlocks(lid, frontBlocks.map(blkFrontToBackend));
+    // description é campo SEPARADO dos blocos (lesson.summary). '' para remover (o backend ignora null).
+    if (rawDesc !== undefined) await patchLesson(lid, { summary: (rawDesc && rawDesc.trim()) ? rawDesc : '' });
     const newFront = (saved || []).map(mapBlock);
-    setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, modules: p.modules.map((m) => (m.id === mid ? { ...m, lessons: m.lessons.map((l) => (l.id === lid ? { ...l, blocks: newFront } : l)) } : m)) } : p)));
+    const newDesc = (rawDesc && rawDesc.trim()) ? rawDesc : '';
+    setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, modules: p.modules.map((m) => (m.id === mid ? { ...m, lessons: m.lessons.map((l) => (l.id === lid ? { ...l, blocks: newFront, desc: newDesc } : l)) } : m)) } : p)));
     flashSaved();
   };
   const setProdBanner = (pid, v) => setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, banner: v } : p)));

@@ -152,6 +152,7 @@ function newBlk(kind) {
 
 function BlockEditorModal({ lesson, onClose, onSave }) {
   const [blocks, setBlocks] = React.useState(() => (lesson.blocks || []).map((b) => ({ ...b })));
+  const [desc, setDesc] = React.useState(lesson.desc || '');
   const [saving, setSaving] = React.useState(false);
   const [err, setErr] = React.useState('');
   const upd = (i, patch) => setBlocks((bs) => bs.map((b, k) => (k === i ? { ...b, ...patch } : b)));
@@ -160,13 +161,17 @@ function BlockEditorModal({ lesson, onClose, onSave }) {
   const add = (kind) => setBlocks((bs) => [...bs, newBlk(kind)]);
   const save = async () => {
     setSaving(true); setErr('');
-    try { await onSave(blocks); onClose(); }
+    try { await onSave({ blocks, desc }); onClose(); }
     catch (e) { setErr((e && e.message) || 'Falha ao salvar. Tente de novo.'); setSaving(false); }
   };
   return (
     <AdmModal title="Conteúdo da aula" onClose={onClose} onSave={save} saveLabel={saving ? 'Salvando…' : 'Salvar conteúdo'} width={640}>
       <div style={{ fontFamily: DISP, fontSize: 13, color: T.dim, marginBottom: 14, lineHeight: 1.5 }}>Edite, reordene ou <b style={{ color: T.ink }}>remova</b> blocos. Ao salvar, isto substitui o conteúdo REAL que o comprador vê.</div>
-      {err && <div style={{ fontFamily: DISP, fontSize: 13, color: '#B4231F', background: 'rgba(180,35,31,.08)', border: '1px solid rgba(180,35,31,.25)', borderRadius: 10, padding: '10px 12px', marginBottom: 12 }}>{err}</div>}
+      <div style={{ marginBottom: 16 }}>
+        <label style={{ ...admLbl, fontSize: 11.5, letterSpacing: '0.04em', textTransform: 'uppercase', color: T.dim }}>Descrição da aula (subtítulo)</label>
+        <textarea value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Subtítulo curto — deixe vazio para remover" style={{ ...admInput, minHeight: 50, resize: 'vertical' }} />
+      </div>
+      {err &&<div style={{ fontFamily: DISP, fontSize: 13, color: '#B4231F', background: 'rgba(180,35,31,.08)', border: '1px solid rgba(180,35,31,.25)', borderRadius: 10, padding: '10px 12px', marginBottom: 12 }}>{err}</div>}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {blocks.length === 0 && <div style={{ fontFamily: DISP, fontSize: 14, color: T.dim, textAlign: 'center', padding: '18px 0' }}>Sem blocos — adicione conteúdo abaixo.</div>}
         {blocks.map((b, i) => (

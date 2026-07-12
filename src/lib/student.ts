@@ -57,15 +57,15 @@ async function sfetch(path: string, token: string): Promise<any> {
 function mapBlock(b: any) {
   const attrs = b.attrs || {};
   switch (b.type) {
-    case 'heading': return { kind: 'heading', text: b.text };
-    case 'list': return { kind: 'list', items: attrs.items || [] };
-    case 'quote': return { kind: 'quote', text: b.text, cite: attrs.cite };
-    case 'video': { const url = b.external_ref || attrs.url || null; return { kind: 'video', title: b.text || attrs.title, url, embed: videoEmbed(url) }; }
-    case 'image': return { kind: 'image', caption: attrs.caption };
-    case 'divider': return { kind: 'divider' };
+    case 'heading': return { id: b.id, kind: 'heading', text: b.text };
+    case 'list': return { id: b.id, kind: 'list', items: attrs.items || [] };
+    case 'quote': return { id: b.id, kind: 'quote', text: b.text, cite: attrs.cite };
+    case 'video': { const url = b.external_ref || attrs.url || null; return { id: b.id, kind: 'video', title: b.text || attrs.title, url, embed: videoEmbed(url) }; }
+    case 'image': return { id: b.id, kind: 'image', caption: attrs.caption };
+    case 'divider': return { id: b.id, kind: 'divider' };
     case 'paragraph':
     case 'text':
-    default: return { kind: 'paragraph', text: b.text || '' };
+    default: return { id: b.id, kind: 'paragraph', text: b.text || '' };
   }
 }
 
@@ -89,7 +89,8 @@ export async function loadStudentCourse(token: string): Promise<{ student: any; 
     modules: (content.modules || []).map((m: any, mi: number) => ({
       id: m.id,
       title: m.title,
-      cover: isB64(m.cover_image_url) ? m.cover_image_url : mi,
+      coverImg: isB64(m.cover_image_url) ? m.cover_image_url : null,
+      cover: mi,
       lessons: (m.lessons || []).map((l: any, li: number) => ({
         id: l.id,
         title: l.title,
