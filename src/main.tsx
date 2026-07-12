@@ -19,9 +19,11 @@ const hasCreatorSession = (() => {
 })();
 const showStudent = isStudentRoute || (hasStudentToken && !hasCreatorSession);
 
-// Service worker → instalabilidade PWA (Android) + shell offline.
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(() => {}); });
+// PWA adiado: NÃO registrar service worker (sw.js não existe → /sw.js cai no index.html e o
+// registro falharia mesmo). Além disso, DESREGISTRA qualquer SW antigo — um SW obsoleto
+// poderia servir resposta de API cacheada de OUTRO tenant (vazamento entre logins).
+if ('serviceWorker' in navigator && navigator.serviceWorker.getRegistrations) {
+  navigator.serviceWorker.getRegistrations().then((rs) => rs.forEach((r) => r.unregister())).catch(() => {});
 }
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

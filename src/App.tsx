@@ -74,7 +74,7 @@ export default function App() {
 
   useEffect(() => {
     window.__go = (key: string) => {
-      if (key === 'logout') { try { localStorage.removeItem('fia_products'); } catch (e) {} logout(); setScreen('dashboard'); return; }
+      if (key === 'logout') { setFranquiaProducts([]); try { (window as any).__franquiaProducts = []; localStorage.removeItem('fia_products'); } catch (e) {} logout(); setScreen('dashboard'); return; }
       const t = SCREEN_FOR[key];
       if (t) setScreen(t);
     };

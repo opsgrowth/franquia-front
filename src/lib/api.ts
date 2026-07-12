@@ -32,6 +32,9 @@ export async function api<T = any>(
     method: opts.method || 'GET',
     headers,
     body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
+    // API multi-tenant: NUNCA usar/gravar cache do browser — senão o GET de um tenant
+    // pode ser servido cacheado para outro (vazamento entre logins sem hard refresh).
+    cache: 'no-store',
   });
   if (res.status === 204) return null as T;
   if (!res.ok) {
@@ -54,7 +57,7 @@ export async function apiUploadForm<T = any>(path: string, form: FormData): Prom
   const headers: Record<string, string> = {};
   if (_token) headers['Authorization'] = `Bearer ${_token}`;
   if (_tenant) headers['X-Tenant-Id'] = _tenant;
-  const res = await fetch(`${BASE}${path}`, { method: 'POST', headers, body: form });
+  const res = await fetch(`${BASE}${path}`, { method: 'POST', headers, body: form, cache: 'no-store' });
   if (res.status === 204) return null as T;
   if (!res.ok) {
     const detail = await res.text().catch(() => res.statusText);
