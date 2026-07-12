@@ -174,15 +174,19 @@ function CoCourse({ course, progress, app }) {
 }
 
 // Render dos blocos reais da aula (semente do app do aluno) — tema escuro do player.
-// Container 16:9 À PROVA DE BALA: padding-bottom 56.25% (altura = 9/16 da largura fluida),
-// não depende de aspect-ratio nem de flex — idêntico em TODA aula (hero e corpo).
+// Container 16:9 À PROVA DE BALA + À PROVA DE FLEX. O box com padding é um BLOCO dentro de
+// um wrapper flex-item (flex:0 0 auto). Padding-% num flex-item DIRETO de coluna é ignorado
+// pelo flex (dimensiona pela flex-basis/conteúdo → altura vem do iframe/Panda, que no loading
+// fica gigante). Aqui o padding-top (56.25% da LARGURA) governa a altura de forma imune ao flex.
 function VideoPlayer({ embed, rounded = false }) {
   if (!embed || !embed.src) return null;
   return (
-    <div style={{ position: 'relative', width: '100%', height: 0, paddingBottom: '56.25%', overflow: 'hidden', background: '#000', borderRadius: rounded ? 12 : 0 }}>
-      {embed.kind === 'iframe'
-        ? <iframe src={embed.src} title="vídeo da aula" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowFullScreen style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }} />
-        : <video src={embed.src} controls playsInline style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', background: '#000' }} />}
+    <div style={{ flex: '0 0 auto', width: '100%' }}>
+      <div style={{ position: 'relative', width: '100%', paddingTop: '56.25%', overflow: 'hidden', background: '#000', borderRadius: rounded ? 12 : 0 }}>
+        {embed.kind === 'iframe'
+          ? <iframe src={embed.src} title="vídeo da aula" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowFullScreen style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }} />
+          : <video src={embed.src} controls playsInline style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', background: '#000' }} />}
+      </div>
     </div>
   );
 }
