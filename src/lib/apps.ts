@@ -135,3 +135,9 @@ export async function deleteBlock(blockId: string): Promise<void> {
   if (!isBackendId(blockId)) return;
   await api(`/blocks/${blockId}`, { method: 'DELETE' });
 }
+// SUBSTITUI todos os blocos da aula (editar/adicionar/remover/reordenar) numa chamada
+// atômica. Devolve os blocos salvos (backend). Lança em erro → a UI mostra a falha.
+export async function replaceBlocks(lessonId: string, blocks: any[]): Promise<any[]> {
+  if (!isBackendId(lessonId)) return [];
+  return api(`/lessons/${lessonId}/blocks`, { method: 'PUT', body: { blocks } });
+}

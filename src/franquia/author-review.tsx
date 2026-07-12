@@ -49,6 +49,18 @@ const setH = (el) => { if (el) { el.style.height = 'auto'; el.style.height = el.
 const fldR = { fontFamily: DISP, width: '100%', border: 'none', outline: 'none', background: 'transparent', resize: 'none', padding: 0, color: 'rgba(24,18,31,.82)' };
 
 function ReviewDeskScreen({ scope }) {
+  // DESATIVADO: esta mesa de revisão era MOCK (não persistia). A edição de conteúdo real
+  // virou o botão "Conteúdo" em cada aula no Catálogo Franquia, que salva no backend.
+  // Evita editar aqui achando que salva. (Renasce sobre o caminho do co-admin no futuro.)
+  return (
+    <DShell active="fadmin" sub="Admin · Catálogo Franquia" title="Edição de conteúdo">
+      <div style={{ maxWidth: 460, margin: '60px auto', textAlign: 'center' }}>
+        <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 20, color: T.ink, marginBottom: 10 }}>A edição de conteúdo mudou de lugar</div>
+        <div style={{ fontFamily: DISP, fontSize: 14.5, color: T.dim, lineHeight: 1.6, marginBottom: 22 }}>Edite o conteúdo real de cada aula no <b style={{ color: T.ink }}>Catálogo Franquia</b>: abra o produto → a aula → clique em <b style={{ color: T.ink }}>Conteúdo</b>. Tudo salva no servidor.</div>
+        <div onClick={() => window.__go && window.__go('fadmin')} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: T.accent, color: '#fff', borderRadius: 11, padding: '12px 20px', fontFamily: DISP, fontWeight: 600, fontSize: 14.5, cursor: 'pointer' }}>Ir para o Catálogo Franquia</div>
+      </div>
+    </DShell>
+  );
   const isFAdmin = scope === 'franquia';
   const [lessons, setLessons] = useStateRev(REVIEW_INIT);
   const [sel, setSel] = useStateRev(0);

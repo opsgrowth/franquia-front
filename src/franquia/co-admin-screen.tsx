@@ -3,12 +3,13 @@ import { LOCK_ICON } from './author-app';
 import { ABtn, AIC, AuthorShell, CoverField } from './author-kit';
 import { PhonePreview } from './author-preview';
 import { ADM_ACCESS, ADM_COLORS, ADM_INIT, ADM_KINDS, ADM_PROGRESS, ADM_TYPES, AdmIconSquare, AdmStatus, BannerEditor, FRANQUIA_INIT, aid } from './co-admin';
-import { LessonModal, ModuleModal, ProductModal } from './co-admin-modals';
+import { BlockEditorModal, LessonModal, ModuleModal, ProductModal } from './co-admin-modals';
 import { coDarken, coTheme, moduleDuration } from './co-app';
 import { DBtn, DShell } from './desktop-screens-1';
 import { DISP, IC, Ico, MONO, T, useIsMobile } from './kit';
 import { persistAppCover, persistBanners, persistModuleCover } from '../lib/covers';
-import { createLesson, createModule, createVideoBlock, deleteLesson, deleteModule, isBackendId, loadProductModules, patchApp, patchBlock, patchLesson, patchModule, reorderApps } from '../lib/apps';
+import { createLesson, createModule, createVideoBlock, deleteLesson, deleteModule, isBackendId, loadProductModules, patchApp, patchBlock, patchLesson, patchModule, replaceBlocks, reorderApps } from '../lib/apps';
+import { mapBlock } from '../lib/catalog';
 import { videoEmbed } from '../lib/video';
 
 // "R$ 397" / "R$ 1.997,00" → centavos (inteiro de reais * 100; ignora centavos do texto).
@@ -64,8 +65,10 @@ function ProductsAdminScreen({ scope, sharedProducts, setSharedProducts }) {
     }
   }, []);
 
-  // Carrega o CONTEÚDO (módulos/aulas) do produto aberto sob demanda — o /apps traz só
-  // metadados. Sem isso, um produto real (ex. gerado pela IA) abre "vazio".
+  // Carrega o CONTEÚDO (módulos/aulas) do produto aberto sob demanda — o /apps (admin) traz
+  // só metadados (o /catalog do franqueado já traz inline). Dispara ao ABRIR o produto E ao
+  // ABRIR o preview ([preview] nas deps) — senão o preview do admin mostra 0 módulos quando
+  // o load on-demand ainda não completou. Como tudo lê ao vivo, ao chegar o preview atualiza.
   React.useEffect(() => {
     if (!isFranquia || !sel || !isBackendId(sel.id)) return;
     if ((sel.modules && sel.modules.length) || !((sel.modulesCount || 0) > 0)) return;
@@ -74,7 +77,7 @@ function ProductsAdminScreen({ scope, sharedProducts, setSharedProducts }) {
       .then((mods) => { if (alive && mods) setProducts((ps) => ps.map((p) => (p.id === sel.id ? { ...p, modules: mods } : p))); })
       .catch(() => {});
     return () => { alive = false; };
-  }, [selId]);
+  }, [selId, preview]);
 
   // ── mutations ──
   const addProduct = (data) => { const id = aid('p'); setProducts((ps) => [...ps, { id, students: 0, status: data.access === 'Premium (upsell)' ? 'Premium' : 'Rascunho', modules: [], ...data }]); setSelId(id); setView('product'); };
@@ -179,6 +182,25 @@ function ProductsAdminScreen({ scope, sharedProducts, setSharedProducts }) {
   const delLesson = (pid, mid, lid) => {
     if (isFranquia && isBackendId(lid)) deleteLesson(lid).then(flashSaved).catch((e) => { alert('Não consegui excluir a aula.'); console.warn('excluir aula:', e); });
     setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, modules: p.modules.map((m) => (m.id === mid ? { ...m, lessons: m.lessons.filter((l) => l.id !== lid) } : m)) } : p)));
+  };
+  // Bloco do FRONT (kind/text/items/cite/url) → formato do backend (BlockIn).
+  const blkFrontToBackend = (b) => {
+    switch (b.kind) {
+      case 'heading': return { type: 'heading', text: b.text || '' };
+      case 'quote': return { type: 'quote', text: b.text || '', attrs: b.cite ? { cite: b.cite } : {} };
+      case 'list': return { type: 'list', attrs: { items: (b.items || []).filter((x) => x != null && String(x).trim() !== '') } };
+      case 'video': return { type: 'video', text: b.title || null, provider: b.url ? 'embed' : null, external_ref: b.url || null };
+      case 'image': return { type: 'image', attrs: b.caption ? { caption: b.caption } : {} };
+      case 'divider': return { type: 'divider' };
+      default: return { type: 'paragraph', text: b.text || '' };
+    }
+  };
+  // Salva o CONTEÚDO real da aula (substitui TODOS os blocos). Lança em erro → o modal exibe.
+  const saveBlocks = async (pid, mid, lid, frontBlocks) => {
+    const saved = await replaceBlocks(lid, frontBlocks.map(blkFrontToBackend));
+    const newFront = (saved || []).map(mapBlock);
+    setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, modules: p.modules.map((m) => (m.id === mid ? { ...m, lessons: m.lessons.map((l) => (l.id === lid ? { ...l, blocks: newFront } : l)) } : m)) } : p)));
+    flashSaved();
   };
   const setProdBanner = (pid, v) => setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, banner: v } : p)));
   const setProdBanners = (pid, arr) => {
@@ -335,6 +357,7 @@ function ProductsAdminScreen({ scope, sharedProducts, setSharedProducts }) {
                             ? <span style={{ fontFamily: MONO, fontSize: 10, fontWeight: 600, letterSpacing: '0.04em', color: '#0E7A40', background: 'rgba(14,154,80,.14)', padding: '4px 8px', borderRadius: 6 }}>AMOSTRA</span>
                             : <Ico d={LOCK_ICON} size={15} c={T.dim} />)}
                           <span style={{ fontFamily: MONO, fontSize: 12, color: T.dim }}>{l.duration}</span>
+                          {isBackendId(l.id) && <div onClick={() => setModal({ type: 'blocks', pid: sel.id, mid: m.id, lid: l.id, lesson: l })} title="Editar o conteúdo (texto e blocos)" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, cursor: 'pointer', fontFamily: DISP, fontWeight: 600, fontSize: 12, color: T.accent }}><Ico d={'M4 6h16 M4 12h10 M4 18h7'} size={14} c={T.accent} />Conteúdo</div>}
                           <div onClick={() => setModal({ type: 'lesson', mid: m.id, editId: l.id, data: { title: l.title, type: l.type, duration: l.duration, link: l.link || '', notes: l.notes || '', sample: !!l.sample } })} style={{ cursor: 'pointer' }}><Ico d={AIC.pencil} size={15} c={T.dim} /></div>
                           <div onClick={() => delLesson(sel.id, m.id, l.id)} style={{ cursor: 'pointer' }}><Ico d={AIC.trash} size={15} c={T.dim} /></div>
                         </div>
@@ -425,6 +448,7 @@ function ProductsAdminScreen({ scope, sharedProducts, setSharedProducts }) {
           {modal && modal.type === 'product' && <ProductModal init={modal.data} editId={modal.editId} onClose={() => setModal(null)} onSave={(d) => { if (modal.editId) updateProduct(modal.editId, d); else addProduct(d); setModal(null); }} />}
           {modal && modal.type === 'module' && <ModuleModal init={modal.data} editId={modal.editId} onClose={() => setModal(null)} onSave={(d) => { if (modal.editId) updateModule(selId, modal.editId, d); else addModule(selId, d); setModal(null); }} />}
           {modal && modal.type === 'lesson' && <LessonModal init={modal.data} editId={modal.editId} accent={sel && sel.color} productLocked={sel && sel.access === 'Premium (upsell)'} onClose={() => setModal(null)} onSave={(d) => { if (modal.editId) updateLesson(selId, modal.mid, modal.editId, d); else addLesson(selId, modal.mid, d); setModal(null); }} />}
+          {modal && modal.type === 'blocks' && <BlockEditorModal lesson={modal.lesson} onClose={() => setModal(null)} onSave={(blocks) => saveBlocks(modal.pid, modal.mid, modal.lid, blocks)} />}
           <PhonePreview open={preview} onClose={() => setPreview(false)} courses={sel ? previewCourses.filter((c) => c.id === sel.id) : previewCourses} />
         </div>
       </DShell>
@@ -464,6 +488,7 @@ function ProductsAdminScreen({ scope, sharedProducts, setSharedProducts }) {
         {modal && modal.type === 'product' && <ProductModal init={modal.data} editId={modal.editId} onClose={() => setModal(null)} onSave={(d) => { if (modal.editId) updateProduct(modal.editId, d); else addProduct(d); setModal(null); }} />}
         {modal && modal.type === 'module' && <ModuleModal init={modal.data} editId={modal.editId} onClose={() => setModal(null)} onSave={(d) => { if (modal.editId) updateModule(sel.id, modal.editId, d); else addModule(sel.id, d); setModal(null); }} />}
         {modal && modal.type === 'lesson' && <LessonModal init={modal.data} editId={modal.editId} accent={sel.color} productLocked={sel.access === 'Premium (upsell)'} onClose={() => setModal(null)} onSave={(d) => { if (modal.editId) updateLesson(sel.id, modal.mid, modal.editId, d); else addLesson(sel.id, modal.mid, d); setModal(null); }} />}
+        {modal && modal.type === 'blocks' && <BlockEditorModal lesson={modal.lesson} onClose={() => setModal(null)} onSave={(blocks) => saveBlocks(modal.pid, modal.mid, modal.lid, blocks)} />}
 
         <PhonePreview open={preview} onClose={() => setPreview(false)} courses={sel ? previewCourses.filter((c) => c.id === sel.id) : previewCourses} />
       </div>

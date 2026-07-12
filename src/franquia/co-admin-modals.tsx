@@ -2,7 +2,7 @@ import React from 'react';
 import { AIC, CoverField } from './author-kit';
 import { ADM_ACCESS, ADM_COLORS, ADM_KINDS, ADM_TYPES, AdmModal, BannerEditor, PlatformIds, admInput, admLbl } from './co-admin';
 import { coRgba, coTheme } from './co-app';
-import { DISP, Ico, T } from './kit';
+import { DISP, Ico, MONO, T } from './kit';
 
 // "Criar do zero" — modais (Produto, Módulo, Aula).
 
@@ -139,4 +139,60 @@ function LessonModal({ init, editId, accent, productLocked, onClose, onSave }) {
   );
 }
 
-export { ProductModal, ModuleModal, LessonModal };
+// ── Editor de CONTEÚDO (blocos) — dados REAIS + persistência (o onSave grava no backend) ──
+const BLOCK_KINDS = [['text', 'Texto'], ['heading', 'Título'], ['quote', 'Citação'], ['list', 'Lista'], ['video', 'Vídeo']];
+const BLK_LABEL = { heading: 'Título', quote: 'Citação', list: 'Lista', video: 'Vídeo', image: 'Imagem', divider: 'Divisória', paragraph: 'Texto', text: 'Texto' };
+function newBlk(kind) {
+  if (kind === 'heading') return { kind: 'heading', text: '' };
+  if (kind === 'quote') return { kind: 'quote', text: '', cite: '' };
+  if (kind === 'list') return { kind: 'list', items: [''] };
+  if (kind === 'video') return { kind: 'video', title: '', url: '' };
+  return { kind: 'paragraph', text: '' };
+}
+
+function BlockEditorModal({ lesson, onClose, onSave }) {
+  const [blocks, setBlocks] = React.useState(() => (lesson.blocks || []).map((b) => ({ ...b })));
+  const [saving, setSaving] = React.useState(false);
+  const [err, setErr] = React.useState('');
+  const upd = (i, patch) => setBlocks((bs) => bs.map((b, k) => (k === i ? { ...b, ...patch } : b)));
+  const del = (i) => setBlocks((bs) => bs.filter((_, k) => k !== i));
+  const move = (i, dir) => setBlocks((bs) => { const j = i + dir; if (j < 0 || j >= bs.length) return bs; const a = [...bs]; [a[i], a[j]] = [a[j], a[i]]; return a; });
+  const add = (kind) => setBlocks((bs) => [...bs, newBlk(kind)]);
+  const save = async () => {
+    setSaving(true); setErr('');
+    try { await onSave(blocks); onClose(); }
+    catch (e) { setErr((e && e.message) || 'Falha ao salvar. Tente de novo.'); setSaving(false); }
+  };
+  return (
+    <AdmModal title="Conteúdo da aula" onClose={onClose} onSave={save} saveLabel={saving ? 'Salvando…' : 'Salvar conteúdo'} width={640}>
+      <div style={{ fontFamily: DISP, fontSize: 13, color: T.dim, marginBottom: 14, lineHeight: 1.5 }}>Edite, reordene ou <b style={{ color: T.ink }}>remova</b> blocos. Ao salvar, isto substitui o conteúdo REAL que o comprador vê.</div>
+      {err && <div style={{ fontFamily: DISP, fontSize: 13, color: '#B4231F', background: 'rgba(180,35,31,.08)', border: '1px solid rgba(180,35,31,.25)', borderRadius: 10, padding: '10px 12px', marginBottom: 12 }}>{err}</div>}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {blocks.length === 0 && <div style={{ fontFamily: DISP, fontSize: 14, color: T.dim, textAlign: 'center', padding: '18px 0' }}>Sem blocos — adicione conteúdo abaixo.</div>}
+        {blocks.map((b, i) => (
+          <div key={i} style={{ border: `1px solid ${T.line}`, borderRadius: 12, padding: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+              <span style={{ fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.08em', color: T.dim, textTransform: 'uppercase' }}>{BLK_LABEL[b.kind] || b.kind}</span>
+              <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
+                <div onClick={() => move(i, -1)} title="Subir" style={{ cursor: i === 0 ? 'default' : 'pointer', opacity: i === 0 ? 0.3 : 1 }}><Ico d="M6 15l6-6 6 6" size={16} c={T.dim} /></div>
+                <div onClick={() => move(i, 1)} title="Descer" style={{ cursor: i === blocks.length - 1 ? 'default' : 'pointer', opacity: i === blocks.length - 1 ? 0.3 : 1 }}><Ico d="M6 9l6 6 6-6" size={16} c={T.dim} /></div>
+                <div onClick={() => del(i)} title="Remover bloco" style={{ cursor: 'pointer' }}><Ico d={AIC.trash} size={16} c="#B4231F" /></div>
+              </div>
+            </div>
+            {b.kind === 'heading' && <input value={b.text || ''} onChange={(e) => upd(i, { text: e.target.value })} placeholder="Título da seção" style={{ ...admInput, fontWeight: 700 }} />}
+            {(b.kind === 'paragraph' || b.kind === 'text') && <textarea value={b.text || ''} onChange={(e) => upd(i, { text: e.target.value })} placeholder="Texto da aula…" style={{ ...admInput, minHeight: 80, resize: 'vertical' }} />}
+            {b.kind === 'quote' && <React.Fragment><textarea value={b.text || ''} onChange={(e) => upd(i, { text: e.target.value })} placeholder="Citação…" style={{ ...admInput, minHeight: 56, resize: 'vertical' }} /><input value={b.cite || ''} onChange={(e) => upd(i, { cite: e.target.value })} placeholder="— fonte (opcional)" style={{ ...admInput, marginTop: 8, fontFamily: MONO, fontSize: 13 }} /></React.Fragment>}
+            {b.kind === 'list' && <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>{(b.items || []).map((it, ii) => (<div key={ii} style={{ display: 'flex', gap: 8, alignItems: 'center' }}><input value={it} onChange={(e) => upd(i, { items: (b.items || []).map((x, k) => (k === ii ? e.target.value : x)) })} style={admInput} /><div onClick={() => upd(i, { items: (b.items || []).filter((_, k) => k !== ii) })} style={{ cursor: 'pointer', flex: '0 0 auto' }}><Ico d={AIC.trash} size={14} c={T.dim} /></div></div>))}<div onClick={() => upd(i, { items: [...(b.items || []), ''] })} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: DISP, fontWeight: 600, fontSize: 12.5, color: T.accent, cursor: 'pointer', marginTop: 2 }}><Ico d={AIC.plus} size={13} c={T.accent} />item</div></div>}
+            {b.kind === 'video' && <input value={b.url || ''} onChange={(e) => upd(i, { url: e.target.value })} placeholder="URL do vídeo (YouTube / Vimeo / link direto)" style={{ ...admInput, fontFamily: MONO, fontSize: 13 }} />}
+            {(b.kind === 'image' || b.kind === 'divider') && <div style={{ fontFamily: DISP, fontSize: 12.5, color: T.dim }}>{b.kind === 'divider' ? 'Divisória visual.' : 'Bloco de imagem.'}</div>}
+          </div>
+        ))}
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
+        {BLOCK_KINDS.map(([k, label]) => (<div key={k} onClick={() => add(k)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, border: `1px solid ${T.line}`, borderRadius: 9, padding: '8px 12px', fontFamily: DISP, fontWeight: 600, fontSize: 13, color: T.ink, cursor: 'pointer' }}><Ico d={AIC.plus} size={14} c={T.accent} />{label}</div>))}
+      </div>
+    </AdmModal>
+  );
+}
+
+export { ProductModal, ModuleModal, LessonModal, BlockEditorModal };

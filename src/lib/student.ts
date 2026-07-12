@@ -1,6 +1,9 @@
 // App do comprador (aluno) — carrega o produto pelo LINK MÁGICO (token na URL).
 // Usa um token PRÓPRIO do aluno (separado da sessão do painel).
 import { API_BASE } from './api';
+import { videoEmbed } from './video';
+
+const isB64 = (v: any): boolean => typeof v === 'string' && v.startsWith('data:');
 
 const KEY = 'fia_student_token';
 
@@ -57,7 +60,7 @@ function mapBlock(b: any) {
     case 'heading': return { kind: 'heading', text: b.text };
     case 'list': return { kind: 'list', items: attrs.items || [] };
     case 'quote': return { kind: 'quote', text: b.text, cite: attrs.cite };
-    case 'video': return { kind: 'video', title: b.text || attrs.title };
+    case 'video': { const url = b.external_ref || attrs.url || null; return { kind: 'video', title: b.text || attrs.title, url, embed: videoEmbed(url) }; }
     case 'image': return { kind: 'image', caption: attrs.caption };
     case 'divider': return { kind: 'divider' };
     case 'paragraph':
@@ -80,13 +83,13 @@ export async function loadStudentCourse(token: string): Promise<{ student: any; 
     subtitle: '',
     kind: 'Meu produto',
     color: p.accent_color || '#7C3AED',
-    coverImg: null,
+    coverImg: isB64(p.cover_image_url) ? p.cover_image_url : null,
     students: 0,
-    banners: [],
+    banners: (p.banners || []).filter(isB64),
     modules: (content.modules || []).map((m: any, mi: number) => ({
       id: m.id,
       title: m.title,
-      cover: mi,
+      cover: isB64(m.cover_image_url) ? m.cover_image_url : mi,
       lessons: (m.lessons || []).map((l: any, li: number) => ({
         id: l.id,
         title: l.title,
