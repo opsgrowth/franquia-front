@@ -1,0 +1,7 @@
+# CODEOWNERS — quem é auto-solicitado para revisar PRs.
+#
+# ATIVAR: troque <SEU_USUARIO_GITHUB> pelo handle do fundador (ou um time, ex. @opsgrowth/maintainers)
+# e remova o "#" da linha abaixo. Depois, no GitHub → Settings → Branches → regra da `main`,
+# marque "Require review from Code Owners".
+#
+# * @<SEU_USUARIO_GITHUB>
