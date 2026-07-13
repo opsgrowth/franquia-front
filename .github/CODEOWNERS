@@ -1,0 +1,4 @@
+# CODEOWNERS — @opsgrowth é auto-solicitado para revisar PRs.
+# Para EXIGIR a revisão: GitHub → Settings → Branches → regra da `main` →
+# marque "Require review from Code Owners".
+* @opsgrowth

@@ -5,3 +5,9 @@ dist-ssr
 .DS_Store
 .vscode/*
 !.vscode/extensions.json
+
+# Envs locais — NUNCA commitar segredos. O .env.example (só chaves) fica versionado.
+.env
+.env.local
+.env.*.local
+!.env.example

@@ -1,0 +1,38 @@
+name: CI
+
+# Portão de qualidade dos PRs. O gate real é o BUILD do Vite (o mesmo que a Vercel roda) —
+# se o bundle não compila, não mescla. tsc tem baseline de tipagem frouxa, então roda como
+# informativo (não bloqueia). Vira "required status check" na proteção de branch (dashboard).
+
+on:
+  pull_request:
+    branches: [staging, main]
+  push:
+    branches: [staging]
+
+jobs:
+  build:
+    name: front (build Vite)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Instala deps (lockfile)
+        run: npm ci
+
+      - name: Type-check (tsc) — informativo
+        run: npx tsc --noEmit
+        continue-on-error: true
+
+      - name: Build (o gate)
+        run: npm run build
+        env:
+          # Placeholders só p/ o build inlinar algo — o build não executa auth.
+          VITE_API_URL: https://ci.placeholder
+          VITE_SUPABASE_URL: https://ci.placeholder.supabase.co
+          VITE_SUPABASE_ANON_KEY: ci-placeholder
