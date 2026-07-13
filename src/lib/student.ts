@@ -62,7 +62,7 @@ function mapBlock(b: any) {
     case 'list': return { id: b.id, kind: 'list', items: attrs.items || [] };
     case 'quote': return { id: b.id, kind: 'quote', text: b.text, cite: attrs.cite };
     case 'video': { const url = b.external_ref || attrs.url || null; return { id: b.id, kind: 'video', title: b.text || attrs.title, url, embed: videoEmbed(url) }; }
-    case 'image': return { id: b.id, kind: 'image', caption: attrs.caption };
+    case 'image': return { id: b.id, kind: 'image', url: b.external_ref || attrs.url || null, caption: attrs.caption };
     case 'divider': return { id: b.id, kind: 'divider' };
     case 'paragraph':
     case 'text':
