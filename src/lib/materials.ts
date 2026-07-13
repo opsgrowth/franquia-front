@@ -18,7 +18,7 @@ export type ProductMaterials = {
 const MATERIALS: Record<string, ProductMaterials> = {
   // MVS — 42d93ba6-5c13-49a6-99f2-a05098f5670b
   '42d93ba6-5c13-49a6-99f2-a05098f5670b': {
-    html: { url: `${BASE}/mvs/mvs_pagina_v1.html`, name: 'MVS-pagina-de-vendas.html' },
+    html: { url: `${BASE}/mvs/mvs_pagina_v2.html`, name: 'MVS-pagina-de-vendas.html' },
     imagem: { url: `${BASE}/mvs/imagem_do_produto.jpeg`, name: 'MVS-imagem-do-produto.jpeg' },
     banner: { url: `${BASE}/mvs/checkout.png`, name: 'MVS-banner-de-checkout.png' },
     selo: { url: `${BASE}/mvs/selo_de_garantia.png`, name: 'MVS-selo-de-garantia.png' },
