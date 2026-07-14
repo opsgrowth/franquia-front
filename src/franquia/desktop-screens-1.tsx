@@ -9,6 +9,7 @@ import { getMe } from '../lib/auth';
 import { loadSales } from '../lib/sales';
 import { camoName } from '../lib/camo';
 import { isCredentialing } from '../lib/credentialing';
+import { ensureProductModules } from '../lib/apps';
 
 // ── KILL-SWITCH GLOBAL de camuflagem (pitch) ────────────────────────
 // Em produção a camuflagem é POR PRODUTO (flag `camouflaged` do backend, controlado
@@ -305,6 +306,12 @@ function DCatalogo() {
     return () => clearInterval(id);
   }, []);
 
+  // BUG A: a prévia do catálogo carrega os módulos do produto SOZINHA ao abrir o sheet
+  // (não depende mais de visitar o Estúdio). Franqueado não dispara (guard no helper).
+  React.useEffect(() => {
+    if (sheetItem && sheetItem.id) ensureProductModules(sheetItem.id);
+  }, [sheetItem]);
+
   const rawFran = (window.__franquiaProducts || []);
   const FRAN = rawFran.map((p) => ({ n: p.title, p: p.displayPrice || (p.access === 'Premium (upsell)' ? 'Premium' : 'R$ —'), c: p.color, id: p.id, raw: p, coverImg: typeof p.coverImg === 'string' ? p.coverImg : null, isPremium: !!p.isPremium || p.access === 'Premium (upsell)', camouflaged: !!p.camouflaged }));
   const MEUS = [
@@ -385,7 +392,7 @@ function DCatalogo() {
         )}
       </div>
       {previewCourse && <PhonePreview open={true} onClose={() => setPreviewCourse(null)} courses={[previewCourse]} />}
-      {sheetItem && <MaterialsSheet item={sheetItem} course={toCourse(sheetItem)} onClose={() => setSheetItem(null)} />}
+      {sheetItem && <MaterialsSheet item={sheetItem} course={toCourse({ ...sheetItem, raw: (window.__franquiaProducts || []).find((p) => p.id === sheetItem.id) || sheetItem.raw })} onClose={() => setSheetItem(null)} />}
       {credModal && (
         <div onClick={() => setCredModal(false)} style={{ position: 'fixed', inset: 0, zIndex: 90, background: 'rgba(20,16,25,.62)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
           <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 420, background: T.darkBg, borderRadius: 24, overflow: 'hidden', boxShadow: '0 30px 80px rgba(0,0,0,.5)', position: 'relative' }}>

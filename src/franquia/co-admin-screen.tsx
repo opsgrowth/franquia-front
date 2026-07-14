@@ -8,7 +8,7 @@ import { coDarken, coTheme, moduleDuration } from './co-app';
 import { DBtn, DShell } from './desktop-screens-1';
 import { DISP, IC, Ico, MONO, T, useIsMobile } from './kit';
 import { persistAppCover, persistBanners, persistModuleCover } from '../lib/covers';
-import { createLesson, createModule, createVideoBlock, deleteLesson, deleteModule, isBackendId, loadProductModules, patchApp, patchBlock, patchLesson, patchModule, replaceBlocks, reorderApps } from '../lib/apps';
+import { createLesson, createModule, createVideoBlock, deleteLesson, deleteModule, ensureProductModules, isBackendId, patchApp, patchBlock, patchLesson, patchModule, replaceBlocks, reorderApps } from '../lib/apps';
 import { mapBlock } from '../lib/catalog';
 import { videoEmbed } from '../lib/video';
 
@@ -70,13 +70,7 @@ function ProductsAdminScreen({ scope, sharedProducts, setSharedProducts }) {
   // ABRIR o preview ([preview] nas deps) — senão o preview do admin mostra 0 módulos quando
   // o load on-demand ainda não completou. Como tudo lê ao vivo, ao chegar o preview atualiza.
   React.useEffect(() => {
-    if (!isFranquia || !sel || !isBackendId(sel.id)) return;
-    if ((sel.modules && sel.modules.length) || !((sel.modulesCount || 0) > 0)) return;
-    let alive = true;
-    loadProductModules(sel.id)
-      .then((mods) => { if (alive && mods) setProducts((ps) => ps.map((p) => (p.id === sel.id ? { ...p, modules: mods } : p))); })
-      .catch(() => {});
-    return () => { alive = false; };
+    if (isFranquia && sel) ensureProductModules(sel.id);  // guard + writeback dentro do helper
   }, [selId, preview]);
 
   // ── mutations ──
