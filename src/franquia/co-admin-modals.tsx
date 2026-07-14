@@ -140,13 +140,14 @@ function LessonModal({ init, editId, accent, productLocked, onClose, onSave }) {
 }
 
 // ── Editor de CONTEÚDO (blocos) — dados REAIS + persistência (o onSave grava no backend) ──
-const BLOCK_KINDS = [['text', 'Texto'], ['heading', 'Título'], ['quote', 'Citação'], ['list', 'Lista'], ['video', 'Vídeo']];
+const BLOCK_KINDS = [['text', 'Texto'], ['heading', 'Título'], ['quote', 'Citação'], ['list', 'Lista'], ['video', 'Vídeo'], ['image', 'Imagem']];
 const BLK_LABEL = { heading: 'Título', quote: 'Citação', list: 'Lista', video: 'Vídeo', image: 'Imagem', divider: 'Divisória', paragraph: 'Texto', text: 'Texto' };
 function newBlk(kind) {
   if (kind === 'heading') return { kind: 'heading', text: '' };
   if (kind === 'quote') return { kind: 'quote', text: '', cite: '' };
   if (kind === 'list') return { kind: 'list', items: [''] };
   if (kind === 'video') return { kind: 'video', title: '', url: '' };
+  if (kind === 'image') return { kind: 'image', url: '', caption: '' };
   return { kind: 'paragraph', text: '' };
 }
 
@@ -189,7 +190,12 @@ function BlockEditorModal({ lesson, onClose, onSave }) {
             {b.kind === 'quote' && <React.Fragment><textarea value={b.text || ''} onChange={(e) => upd(i, { text: e.target.value })} placeholder="Citação…" style={{ ...admInput, minHeight: 56, resize: 'vertical' }} /><input value={b.cite || ''} onChange={(e) => upd(i, { cite: e.target.value })} placeholder="— fonte (opcional)" style={{ ...admInput, marginTop: 8, fontFamily: MONO, fontSize: 13 }} /></React.Fragment>}
             {b.kind === 'list' && <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>{(b.items || []).map((it, ii) => (<div key={ii} style={{ display: 'flex', gap: 8, alignItems: 'center' }}><input value={it} onChange={(e) => upd(i, { items: (b.items || []).map((x, k) => (k === ii ? e.target.value : x)) })} style={admInput} /><div onClick={() => upd(i, { items: (b.items || []).filter((_, k) => k !== ii) })} style={{ cursor: 'pointer', flex: '0 0 auto' }}><Ico d={AIC.trash} size={14} c={T.dim} /></div></div>))}<div onClick={() => upd(i, { items: [...(b.items || []), ''] })} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: DISP, fontWeight: 600, fontSize: 12.5, color: T.accent, cursor: 'pointer', marginTop: 2 }}><Ico d={AIC.plus} size={13} c={T.accent} />item</div></div>}
             {b.kind === 'video' && <input value={b.url || ''} onChange={(e) => upd(i, { url: e.target.value })} placeholder="URL do vídeo (YouTube / Vimeo / link direto)" style={{ ...admInput, fontFamily: MONO, fontSize: 13 }} />}
-            {(b.kind === 'image' || b.kind === 'divider') && <div style={{ fontFamily: DISP, fontSize: 12.5, color: T.dim }}>{b.kind === 'divider' ? 'Divisória visual.' : 'Bloco de imagem.'}</div>}
+            {b.kind === 'image' && <React.Fragment>
+              <input value={b.url || ''} onChange={(e) => upd(i, { url: e.target.value })} placeholder="URL pública da imagem (bucket)" style={{ ...admInput, fontFamily: MONO, fontSize: 13 }} />
+              <input value={b.caption || ''} onChange={(e) => upd(i, { caption: e.target.value })} placeholder="Legenda (opcional)" style={{ ...admInput, marginTop: 8 }} />
+              {b.url && <img src={b.url} alt="" style={{ width: '100%', borderRadius: 8, marginTop: 8, display: 'block' }} />}
+            </React.Fragment>}
+            {b.kind === 'divider' && <div style={{ fontFamily: DISP, fontSize: 12.5, color: T.dim }}>Divisória visual.</div>}
           </div>
         ))}
       </div>

@@ -72,9 +72,8 @@ export async function loadMyAppsMapped(): Promise<any[]> {
   return apps.map(mapMyApp);
 }
 
-// Conteúdo (módulos + aulas) de UM produto, sob demanda — quando o admin abre pra editar.
-// A capa do módulo vem como URL gated (não exibe direto no front); cai no determinístico
-// (índice). O upload novo de capa persiste no backend e aparece na vitrine/catálogo.
+// Conteúdo (módulos + aulas) de UM produto, sob demanda — quando o admin abre pra editar/prever.
+// A capa do módulo agora vem INLINE base64 do backend (fix bug B) → renderiza direto no front.
 export async function loadProductModules(appId: string): Promise<any[]> {
   const mods: any[] = await api(`/apps/${appId}/modules`);
   return (mods || []).map((m: any, mi: number) => ({
@@ -97,6 +96,22 @@ export async function loadProductModules(appId: string): Promise<any[]> {
       };
     }),
   }));
+}
+
+// Garante que os módulos de UM produto estejam carregados no store compartilhado
+// (window.__franquiaProducts). QUALQUER superfície de prévia chama isto antes de renderizar,
+// em vez de depender de outra tela ter populado o store (era a causa do bug A). Franqueado não
+// dispara (já vem com módulos inline → guard falso). Carrega no máximo 1x por produto.
+export async function ensureProductModules(id: string): Promise<void> {
+  const store: any[] = (typeof window !== 'undefined' && (window as any).__franquiaProducts) || [];
+  const p = store.find((x) => x && x.id === id);
+  if (!p || !isBackendId(id) || (p.modules && p.modules.length) || !((p.modulesCount || 0) > 0)) return;
+  try {
+    const mods = await loadProductModules(id);
+    if (!mods) return;
+    const setFn = (window as any).__setFranquiaProducts;
+    if (setFn) setFn((ps: any[]) => (ps || []).map((x) => (x.id === id ? { ...x, modules: mods } : x)));
+  } catch (e) { /* silencioso: a prévia fica no estado atual */ }
 }
 
 // ── Autoria manual: módulos, aulas e blocos persistem no backend ──

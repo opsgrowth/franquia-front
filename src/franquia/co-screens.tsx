@@ -233,6 +233,13 @@ function StudentBlocks({ blocks, color, skipId }) {
                   )}
               </div>
             );
+          case 'image':
+            return b.url ? (
+              <figure key={i} style={{ margin: '18px 0 0' }}>
+                <img src={b.url} alt={b.caption || ''} loading="lazy" style={{ width: '100%', display: 'block', borderRadius: 12, background: 'rgba(255,255,255,.04)' }} />
+                {b.caption && <figcaption style={{ fontFamily: MONO, fontSize: 11, color: 'rgba(246,241,251,.5)', marginTop: 8, textAlign: 'center' }}>{b.caption}</figcaption>}
+              </figure>
+            ) : null;
           case 'divider':
             return <div key={i} style={{ height: 1, background: 'rgba(246,241,251,.12)', margin: '24px 0 6px' }} />;
           case 'paragraph':

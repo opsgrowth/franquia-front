@@ -16,7 +16,7 @@ export function mapBlock(b: any) {
       return { id: b.id, kind: 'video', title: b.text || attrs.title, url, embed: videoEmbed(url) };
     }
     case 'image':
-      return { id: b.id, kind: 'image', caption: attrs.caption };
+      return { id: b.id, kind: 'image', url: b.external_ref || attrs.url || null, caption: attrs.caption };
     case 'divider':
       return { id: b.id, kind: 'divider' };
     case 'paragraph':
