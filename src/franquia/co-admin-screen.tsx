@@ -190,7 +190,7 @@ function ProductsAdminScreen({ scope, sharedProducts, setSharedProducts }) {
       case 'quote': return { type: 'quote', text: b.text || '', attrs: b.cite ? { cite: b.cite } : {} };
       case 'list': return { type: 'list', attrs: { items: (b.items || []).filter((x) => x != null && String(x).trim() !== '') } };
       case 'video': return { type: 'video', text: b.title || null, provider: b.url ? 'embed' : null, external_ref: b.url || null };
-      case 'image': return { type: 'image', attrs: b.caption ? { caption: b.caption } : {} };
+      case 'image': return { type: 'image', provider: b.url ? 'url' : null, external_ref: b.url || null, attrs: b.caption ? { caption: b.caption } : {} };
       case 'divider': return { type: 'divider' };
       default: return { type: 'paragraph', text: b.text || '' };
     }
