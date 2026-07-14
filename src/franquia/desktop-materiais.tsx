@@ -120,17 +120,17 @@ function MaterialsSheet({ item, course, onClose }) {
             <div style={{ fontFamily: DISP, fontSize: 14, color: T.dim, lineHeight: 1.55 }}>Baixe os materiais e publique na sua estrutura. Todos os franqueados recebem os mesmos arquivos — você conecta seu checkout via integração.</div>
 
             <AssetCard icon={'M4 5h16v14H4z M4 9h16 M8 5v4'} title="Página de vendas (HTML)" desc="A landing/VSL pronta pra publicar no seu domínio ou hospedagem.">
-              <Btn icon={DL} solid href={dlHref(mats.html)} download="MVS-pagina-de-vendas.html" onClick={() => copy('html', 'download')}>{copied === 'html' ? 'Baixando…' : 'Baixar HTML'}</Btn>
+              <Btn icon={DL} solid href={dlHref(mats.html)} download={mats.html && mats.html.name} onClick={() => copy('html', 'download')}>{copied === 'html' ? 'Baixando…' : 'Baixar HTML'}</Btn>
               <Btn icon={IC.search} onClick={() => setTab('prev')}>Ver prévia</Btn>
             </AssetCard>
 
             <AssetCard icon={AIC.image} title="Imagem do produto" desc="Mockup/arte oficial do produto, em alta resolução (JPEG).">
-              <Btn icon={DL} solid href={dlHref(mats.imagem)} download="MVS-imagem-do-produto.jpeg" onClick={() => copy('img', 'download')}>{copied === 'img' ? 'Baixando…' : 'Baixar imagem'}</Btn>
+              <Btn icon={DL} solid href={dlHref(mats.imagem)} download={mats.imagem && mats.imagem.name} onClick={() => copy('img', 'download')}>{copied === 'img' ? 'Baixando…' : 'Baixar imagem'}</Btn>
             </AssetCard>
 
-            <AssetCard icon={'M3 5h18v11H3z M3 16l5-4 3 2 4-4 6 5'} title="Banner de checkout" desc="Banner de topo + selo de garantia para usar na página do seu checkout.">
-              <Btn icon={DL} solid href={dlHref(mats.banner)} download="MVS-banner-de-checkout.png" onClick={() => copy('ban', 'download')}>{copied === 'ban' ? 'Baixando…' : 'Baixar banner'}</Btn>
-              <Btn icon={DL} href={dlHref(mats.selo)} download="MVS-selo-de-garantia.png" onClick={() => copy('selo', 'download')}>{copied === 'selo' ? 'Baixando…' : 'Baixar selo'}</Btn>
+            <AssetCard icon={'M3 5h18v11H3z M3 16l5-4 3 2 4-4 6 5'} title="Banner de checkout" desc={mats.selo ? 'Banner de topo + selo de garantia para usar na página do seu checkout.' : 'Banner de topo para usar na página do seu checkout.'}>
+              <Btn icon={DL} solid href={dlHref(mats.banner)} download={mats.banner && mats.banner.name} onClick={() => copy('ban', 'download')}>{copied === 'ban' ? 'Baixando…' : 'Baixar banner'}</Btn>
+              {mats.selo && <Btn icon={DL} href={dlHref(mats.selo)} download={mats.selo.name} onClick={() => copy('selo', 'download')}>{copied === 'selo' ? 'Baixando…' : 'Baixar selo'}</Btn>}
             </AssetCard>
 
             {/* integração via webhook */}
@@ -147,9 +147,10 @@ function MaterialsSheet({ item, course, onClose }) {
           <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div style={{ fontFamily: DISP, fontSize: 14, color: T.dim, lineHeight: 1.55 }}>Materiais extras para divulgar e escalar suas vendas nas redes. Todos os franqueados recebem os mesmos arquivos.</div>
 
-            <AssetCard icon={'M3 5h18v11H3z M3 16l5-4 3 2 4-4 6 5'} title="Criativos para anúncios" desc="Vídeos prontos para tráfego pago (Meta e Google).">
-              <Btn icon={DL} solid href={dlHref(mats.criativo1)} download="MVS-criativo-1.mp4" onClick={() => copy('cre1', 'download')}>{copied === 'cre1' ? 'Baixando…' : 'Criativo 1'}</Btn>
-              <Btn icon={DL} href={dlHref(mats.criativo2)} download="MVS-criativo-2.mp4" onClick={() => copy('cre2', 'download')}>{copied === 'cre2' ? 'Baixando…' : 'Criativo 2'}</Btn>
+            <AssetCard icon={'M3 5h18v11H3z M3 16l5-4 3 2 4-4 6 5'} title="Criativos para anúncios" desc="Criativos prontos para tráfego pago (Meta e Google).">
+              {[mats.criativo1, mats.criativo2, mats.criativo3, mats.criativo4].filter(Boolean).map((c: any, i: number) => (
+                <Btn key={i} icon={DL} solid={i === 0} href={dlHref(c)} download={c && c.name} onClick={() => copy('cre' + i, 'download')}>{copied === 'cre' + i ? 'Baixando…' : `Criativo ${i + 1}`}</Btn>
+              ))}
             </AssetCard>
 
             {SHOW_EXTRA_COMP && (<>

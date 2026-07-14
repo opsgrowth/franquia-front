@@ -13,6 +13,8 @@ export type ProductMaterials = {
   selo?: Material;
   criativo1?: Material;
   criativo2?: Material;
+  criativo3?: Material;
+  criativo4?: Material;
 };
 
 const MATERIALS: Record<string, ProductMaterials> = {
@@ -24,6 +26,17 @@ const MATERIALS: Record<string, ProductMaterials> = {
     selo: { url: `${BASE}/mvs/selo_de_garantia.png`, name: 'MVS-selo-de-garantia.png' },
     criativo1: { url: `${BASE}/mvs/criativo1.mp4`, name: 'MVS-criativo-1.mp4' },
     criativo2: { url: `${BASE}/mvs/criativo2.mp4`, name: 'MVS-criativo-2.mp4' },
+  },
+  // Lancheirinha Prática e Saudável — ba3d8183-afe4-4573-9dca-2d28230a9ead
+  // Criativos são .PNG (maiúsculo no Storage) → a URL respeita o case; o nome de download é limpo.
+  'ba3d8183-afe4-4573-9dca-2d28230a9ead': {
+    html: { url: `${BASE}/lancheirinha-materiais/clube_lancheirinha.html`, name: 'Lancheirinha-pagina-de-vendas.html' },
+    imagem: { url: `${BASE}/lancheirinha-materiais/imagem_do_produto.jpeg`, name: 'Lancheirinha-imagem-do-produto.jpeg' },
+    banner: { url: `${BASE}/lancheirinha-materiais/checkout.png`, name: 'Lancheirinha-banner-de-checkout.png' },
+    criativo1: { url: `${BASE}/lancheirinha-materiais/criativo1.PNG`, name: 'Lancheirinha-criativo-1.png' },
+    criativo2: { url: `${BASE}/lancheirinha-materiais/criativo2.PNG`, name: 'Lancheirinha-criativo-2.png' },
+    criativo3: { url: `${BASE}/lancheirinha-materiais/criativo3.PNG`, name: 'Lancheirinha-criativo-3.png' },
+    criativo4: { url: `${BASE}/lancheirinha-materiais/criativo4.PNG`, name: 'Lancheirinha-criativo-4.png' },
   },
 };
 
