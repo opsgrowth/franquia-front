@@ -3,7 +3,9 @@
 // para liberar a promoção, apague o id da lista abaixo (1 linha) e o produto volta ao
 // fluxo normal (sheet + URL). Nada de backend/migração — é uma trava temporária de UI.
 const CREDENTIALING_IDS: string[] = [
-  'ba3d8183-afe4-4573-9dca-2d28230a9ead', // Lancheirinha Prática e Saudável — remover quando o ebook estiver pronto
+  // Vazio: nenhum produto em credenciamento agora. Para travar a promoção de um produto
+  // (mostra o aviso das 24h no lugar da URL de webhook), adicione o app id aqui.
+  // A Lancheirinha saiu em 2026-07-14 — ebook pronto e validado em prod.
 ];
 
 export function isCredentialing(id: any): boolean {
