@@ -157,7 +157,10 @@ export default function App() {
     // subir), reusa a capa fixa atual (FIXED_COVERS) p/ não regredir o visual. Capa
     // do backend (base64) SEMPRE ganha.
     const norm = (s: string) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
-    const isB64 = (v: any) => typeof v === 'string' && v.startsWith('data:');
+    // render-gate: base64 (data:) OU URL http do backend (F1). Overrides locais (localStorage)
+    // seguem data:; o merge de withLocalCovers fica intacto — aceitar http aqui é dormente até F2.
+    const isB64 = (v: any) =>
+      typeof v === 'string' && (v.startsWith('data:') || v.startsWith('http'));
     const init: any[] = typeof FRANQUIA_INIT !== 'undefined' ? FRANQUIA_INIT : [];
     let saved: any[] = [];
     try { saved = JSON.parse(localStorage.getItem('fia_products') || '[]'); } catch (e) {}
