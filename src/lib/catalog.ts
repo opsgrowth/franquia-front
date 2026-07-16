@@ -26,7 +26,10 @@ export function mapBlock(b: any) {
   }
 }
 
-const isB64 = (v: any): boolean => typeof v === 'string' && v.startsWith('data:');
+// render-gate: aceita capa/banner como base64 (data:) OU URL http do backend (F1 base64->CDN).
+// NÃO é o detector de UPLOAD (covers.ts), que precisa continuar só data: senão atob crasha.
+const isB64 = (v: any): boolean =>
+  typeof v === 'string' && (v.startsWith('data:') || v.startsWith('http'));
 
 function mapProduct(d: any) {
   const modules = (d.modules || []).map((m: any, mi: number) => ({
