@@ -39,7 +39,10 @@ export async function loadMyApps(): Promise<any[]> {
   }
 }
 
-const isB64 = (v: any): boolean => typeof v === 'string' && v.startsWith('data:');
+// render-gate: aceita capa/banner como base64 (data:) OU URL http do backend (F1 base64->CDN).
+// NÃO é o detector de UPLOAD (covers.ts), que precisa continuar só data: senão atob crasha.
+const isB64 = (v: any): boolean =>
+  typeof v === 'string' && (v.startsWith('data:') || v.startsWith('http'));
 
 // AppOut (backend) → shape que o catálogo/painel usam. Conteúdo (módulos) é carregado
 // sob demanda no editor; aqui vêm metadados + flags + capa/banners.
