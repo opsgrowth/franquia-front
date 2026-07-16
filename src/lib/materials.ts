@@ -33,6 +33,7 @@ const MATERIALS: Record<string, ProductMaterials> = {
     html: { url: `${BASE}/lancheirinha-materiais/clube_lancheirinha.html`, name: 'Lancheirinha-pagina-de-vendas.html' },
     imagem: { url: `${BASE}/lancheirinha-materiais/imagem_do_produto.jpeg`, name: 'Lancheirinha-imagem-do-produto.jpeg' },
     banner: { url: `${BASE}/lancheirinha-materiais/checkout.png`, name: 'Lancheirinha-banner-de-checkout.png' },
+    selo: { url: `${BASE}/lancheirinha-materiais/selo_de_garantia.png`, name: 'Lancheirinha-selo-de-garantia.png' },
     criativo1: { url: `${BASE}/lancheirinha-materiais/criativo1.PNG`, name: 'Lancheirinha-criativo-1.png' },
     criativo2: { url: `${BASE}/lancheirinha-materiais/criativo2.PNG`, name: 'Lancheirinha-criativo-2.png' },
     criativo3: { url: `${BASE}/lancheirinha-materiais/criativo3.PNG`, name: 'Lancheirinha-criativo-3.png' },
