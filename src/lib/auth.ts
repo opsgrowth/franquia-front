@@ -1,6 +1,6 @@
 // Auth do painel — login real via Supabase (email/senha) com auto-provisão.
 // SEM dev-bearer: o login é sempre o do usuário (evita sessão fantasma de token fixo).
-import { api, clearSession, setSession } from './api';
+import { api, API_BASE, clearSession, setSession } from './api';
 import { getSupabase, supabaseConfigured } from './supabase';
 
 let _authed = false;
@@ -78,4 +78,16 @@ export async function loginWithPassword(email: string, password: string): Promis
 export async function logout(): Promise<void> {
   try { if (supabaseConfigured()) await getSupabase().auth.signOut(); } catch {}
   _authed = false; _me = null; clearSession(); emit();
+}
+
+// Recuperação de senha (PÚBLICA — SEM Authorization). O backend SEMPRE responde 200 com a
+// mesma mensagem, exista o email ou não; o chamador mostra a mensagem fixa em qualquer caso
+// (sucesso, 4xx ou falha de rede) — nunca revela se o email é de um franqueado.
+export async function forgotPassword(email: string): Promise<any> {
+  const res = await fetch(`${API_BASE}/auth/forgot-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+  return res.json().catch(() => ({}));
 }
