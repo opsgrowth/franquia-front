@@ -87,7 +87,7 @@ function StudentHome({ course, student, onOpenCourse, onLocked }) {
 
         {/* greeting */}
         <div style={{ marginTop: 22 }}>
-          <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 24, letterSpacing: '-0.03em', color: T.ink }}>Boa noite, {student || 'Marina'}.</div>
+          <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 24, letterSpacing: '-0.03em', color: T.ink }}>Boa noite, {student || 'Aluno'}.</div>
           <div style={{ fontFamily: DISP, fontSize: 14.5, lineHeight: 1.5, color: T.dim, marginTop: 6 }}>Sua trilha é <span style={{ color: T.accent, fontWeight: 600 }}>{course.title}</span> — vamos avançar mais uma etapa hoje.</div>
         </div>
 

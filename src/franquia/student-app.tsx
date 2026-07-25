@@ -100,7 +100,7 @@ export function StudentApp() {
   }
   return (
     <div style={{ height: vh, overflow: 'hidden' }}>
-      <CoApp courses={[course]} narrow={mob} studentName={student?.name} creator={{ name: course?.title || 'FranquIA' }} onLogout={logout} />
+      <CoApp courses={[course]} narrow={mob} studentName={student?.name} studentEmail={student?.email} creator={{ name: course?.title || 'FranquIA' }} onLogout={logout} />
     </div>
   );
 }

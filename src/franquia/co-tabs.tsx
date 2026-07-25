@@ -93,18 +93,18 @@ function Suporte({ accent = T.accent }) {
 }
 
 // ── Perfil ────────────────────────────────────────────────────────
-function Perfil({ accent = T.accent, courses = [], progress = {}, onLogout }) {
+function Perfil({ accent = T.accent, courses = [], progress = {}, onLogout, name, email }) {
   const done = courses.reduce((n, c) => n + c.modules.flatMap((m) => m.lessons).filter((l) => progress[l.id]).length, 0);
-  const stats = [['Cursos', String(courses.length)], ['Aulas feitas', String(done)], ['Sequência', '4 dias']];
+  const stats = [['Cursos', String(courses.length)], ['Aulas feitas', String(done)]];
   const items = [['Editar perfil', AIC.pencil], ['Meus acessos', AIC.grid], ['Notificações', 'M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9 M13.7 21a2 2 0 0 1-3.4 0'], ['Sair', 'M16 17l5-5-5-5 M21 12H9 M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4']];
   return (
     <div style={{ flex: 1, overflow: 'auto', background: T.paper, minHeight: 0 }}>
       <div style={{ background: T.darkBg, padding: '50px 18px 22px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', right: -20, top: 10, opacity: 0.16 }}><Mark size={120} front="#fff" ghost="#fff" inner="transparent" /></div>
         <div style={{ position: 'relative' }}>
-          <div style={{ width: 76, height: 76, borderRadius: '50%', background: accent, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: DISP, fontWeight: 700, fontSize: 30, margin: '0 auto', border: '3px solid rgba(255,255,255,.2)' }}>M</div>
-          <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 21, color: '#F6F1FB', marginTop: 12 }}>Marina Souza</div>
-          <div style={{ fontFamily: MONO, fontSize: 11.5, color: 'rgba(246,241,251,.55)', marginTop: 2 }}>marina.souza@email.com</div>
+          <div style={{ width: 76, height: 76, borderRadius: '50%', background: accent, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: DISP, fontWeight: 700, fontSize: 30, margin: '0 auto', border: '3px solid rgba(255,255,255,.2)' }}>{((name || '').trim().charAt(0) || 'A').toUpperCase()}</div>
+          <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 21, color: '#F6F1FB', marginTop: 12 }}>{name || 'Aluno'}</div>
+          {email && <div style={{ fontFamily: MONO, fontSize: 11.5, color: 'rgba(246,241,251,.55)', marginTop: 2 }}>{email}</div>}
         </div>
       </div>
       <div style={{ padding: 18 }}>
