@@ -11,7 +11,7 @@ import { DISP, IC, Ico, MONO, Mark, T } from './kit';
 const { useState: useStateAppD } = React;
 
 function DeskSidebar({ creator, active, onTab, studentName, onLogout }) {
-  const alunoNome = (studentName || '').trim() || 'Marina Souza';
+  const alunoNome = (studentName || '').trim() || 'Aluno';
   const alunoInicial = alunoNome.charAt(0).toUpperCase();
   const menu = [['inicio', 'Início', IC.home], ['mentor', 'Mentor IA', AIC.spark || IC.spark]];
   const you = [['suporte', 'Suporte', SUP_ICON], ['perfil', 'Perfil', IC.user]];
@@ -78,7 +78,7 @@ function DeskHome({ course, onOpenCourse, onLocked }) {
         {/* greeting + quick cards */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24, marginTop: 28, flexWrap: 'wrap' }}>
           <div>
-            <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 34, letterSpacing: '-0.03em', color: T.ink }}>Boa noite, Marina.</div>
+            <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 34, letterSpacing: '-0.03em', color: T.ink }}>Boa noite!</div>
             <div style={{ fontFamily: DISP, fontSize: 16.5, color: T.dim, marginTop: 6 }}>Sua trilha é <span style={{ color: T.accent, fontWeight: 600 }}>{course.title}</span> — vamos avançar mais uma etapa hoje.</div>
           </div>
           <div style={{ display: 'flex', gap: 14 }}>
