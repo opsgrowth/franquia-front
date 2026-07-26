@@ -56,7 +56,7 @@ function mapProduct(d: any) {
     color: d.accent_color || '#7C3AED',
     coverImg: isB64(d.cover_image_url) ? d.cover_image_url : null, // só base64 (não URL gated)
     students: d.students_count || 0,
-    displayPrice: priceCents ? `R$ ${Math.round(priceCents / 100)}` : (d.is_premium ? 'Premium' : 'R$ —'),
+    displayPrice: priceCents ? `R$ ${(priceCents / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : (d.is_premium ? 'Premium' : 'R$ —'),
     // premium: flag do backend → dispara a tag + popup "libera em 7 dias" (mesma UI do mock)
     access: d.is_premium ? 'Premium (upsell)' : 'Liberado',
     isPremium: !!d.is_premium,

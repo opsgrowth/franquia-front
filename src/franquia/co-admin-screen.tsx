@@ -12,12 +12,13 @@ import { createLesson, createModule, createVideoBlock, deleteLesson, deleteModul
 import { mapBlock } from '../lib/catalog';
 import { videoEmbed } from '../lib/video';
 
-// "R$ 397" / "R$ 1.997,00" → centavos (inteiro de reais * 100; ignora centavos do texto).
+// "R$ 397" / "R$ 1.997,90" → centavos (lê o decimal: '.' milhar, ',' decimal; arredonda p/ centavo).
 function parsePriceCents(s: any): number | null | undefined {
   const t = String(s == null ? '' : s).replace(/[^\d,.]/g, '');
   if (!t) return null; // vazio → limpa o preço
-  const reais = parseInt(t.split(',')[0].replace(/\./g, ''), 10);
-  return isNaN(reais) ? undefined : reais * 100;
+  const normalized = t.replace(/\./g, '').replace(',', '.');
+  const reais = parseFloat(normalized);
+  return isNaN(reais) ? undefined : Math.round(reais * 100);
 }
 
 // "Criar do zero" — ProductsAdminScreen (lista, produto, módulos & aulas, modais).
