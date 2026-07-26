@@ -14,7 +14,7 @@ import { LoginScreen } from './franquia/desktop-login';
 import { IngestScreen } from './franquia/author-ingest';
 import { ReviewDeskScreen } from './franquia/author-review';
 import { ProductsAdminScreen } from './franquia/co-admin-screen';
-import { FranchiseesScreen, LeadsScreen, ProductLinksScreen } from './franquia/admin-screens';
+import { FranchiseesScreen, LeadsScreen, ProductLinksScreen, WebhookEvents } from './franquia/admin-screens';
 
 // Blindagem: qualquer erro de render vira uma mensagem legível (nunca tela preta).
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { err: Error | null }> {
@@ -38,7 +38,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { err
 const SCREEN_FOR: Record<string, string> = {
   home: 'dashboard', cat: 'catalog', gen: 'ingest', sales: 'sales', cfg: 'config', config: 'config',
   fadmin: 'fadmin', 'fadmin-gen': 'fadmin-gen', 'fadmin-review': 'fadmin-review',
-  franqueados: 'franqueados', applinks: 'applinks', interessados: 'interessados',
+  franqueados: 'franqueados', applinks: 'applinks', interessados: 'interessados', webhooks: 'webhooks',
   dashboard: 'dashboard', catalog: 'catalog', generator: 'generator', editor: 'editor',
   ingest: 'ingest', review: 'review', manual: 'manual', logout: 'login', login: 'login',
 };
@@ -226,6 +226,7 @@ export default function App() {
     franqueados: FranchiseesScreen,
     applinks: ProductLinksScreen,
     interessados: LeadsScreen,
+    webhooks: WebhookEvents,
   };
   // Splash enquanto resolve a sessão (evita piscar o login).
   if (booting) {
