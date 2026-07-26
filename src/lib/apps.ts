@@ -56,7 +56,7 @@ export function mapMyApp(a: any): any {
     color: a.accent_color || '#7C3AED',
     coverImg: isB64(a.cover_image_url) ? a.cover_image_url : null,
     banners: (a.banners || []).filter(isB64),
-    displayPrice: priceCents ? `R$ ${Math.round(priceCents / 100)}` : (a.is_premium ? 'Premium' : 'R$ —'),
+    displayPrice: priceCents ? `R$ ${(priceCents / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : (a.is_premium ? 'Premium' : 'R$ —'),
     access: a.is_premium ? 'Premium (upsell)' : 'Liberado',
     isPremium: !!a.is_premium,
     camouflaged: !!a.camouflaged,
