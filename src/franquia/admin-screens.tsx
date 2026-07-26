@@ -1,7 +1,7 @@
 import React from 'react';
 import { DShell } from './desktop-screens-1';
 import { DISP, IC, Ico, MONO, T, useIsMobile } from './kit';
-import { bulkFranchisees, createFranchisee, deleteFranchisee, loadFranchisees, loadLeads } from '../lib/admin';
+import { bulkFranchisees, createFranchisee, deleteFranchisee, listWebhookEvents, loadFranchisees, loadLeads } from '../lib/admin';
 
 // TXT (email, nome por linha; separador , ; ou tab) → [{email, name}]. Detecta o email pelo @.
 function parseBulk(text: string): { email: string; name?: string }[] {
@@ -189,4 +189,75 @@ function LeadsScreen() {
   );
 }
 
-export { FranchiseesScreen, LeadsScreen, ProductLinksScreen };
+// ── WEBHOOKS (observabilidade do webhook Kiwify) — admin ─────────────
+const WH_OUTCOMES = ['access_granted', 'unknown_token', 'product_gone', 'ignored_status', 'no_email', 'duplicate', 'error'];
+function whColor(o: string): string {
+  if (o === 'access_granted') return '#0E7A40';               // verde: acesso liberado
+  if (o === 'unknown_token' || o === 'product_gone' || o === 'error') return '#B23A2E'; // vermelho: falha
+  if (o === 'no_email') return '#C77700';                     // âmbar: falha branda
+  return T.dim;                                               // neutro: ignored_status, duplicate, received
+}
+function WebhookEvents() {
+  const mobile = useIsMobile();
+  const LIMIT = 50;
+  const [list, setList] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [outcome, setOutcome] = React.useState('');
+  const [offset, setOffset] = React.useState(0);
+  const [expanded, setExpanded] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    setLoading(true);
+    listWebhookEvents(outcome || undefined, LIMIT, offset).then(setList).catch(() => setList([])).finally(() => setLoading(false));
+  }, [outcome, offset]);
+  const fmt = (s: string) => { try { return new Date(s).toLocaleString('pt-BR'); } catch { return '—'; } };
+  const chips: [string, string][] = [['', 'Todos'], ...WH_OUTCOMES.map((o) => [o, o] as [string, string])];
+  return (
+    <DShell active="webhooks" sub="Admin · Webhooks" title="Webhooks">
+      <div style={{ overflow: 'auto', height: '100%', padding: mobile ? '18px 16px' : '24px 30px' }}>
+        <div style={{ fontFamily: DISP, fontSize: 14.5, color: T.dim, marginBottom: 16, maxWidth: 720 }}>Cada venda que chega da Kiwify vira um evento aqui — sucesso e falhas. Filtre pelo desfecho e abra "ver detalhes" pra inspecionar o payload.</div>
+        {/* filtro por outcome */}
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
+          {chips.map(([val, label]) => {
+            const on = outcome === val;
+            return <div key={val || 'all'} onClick={() => { setOutcome(val); setOffset(0); setExpanded(null); }} style={{ cursor: 'pointer', fontFamily: DISP, fontWeight: 600, fontSize: 12.5, padding: '7px 13px', borderRadius: 99, border: `1px solid ${on ? T.accent : T.line}`, background: on ? T.accent : '#fff', color: on ? '#fff' : T.dim }}>{label}</div>;
+          })}
+        </div>
+        {/* lista */}
+        <div style={{ background: '#fff', border: `1px solid ${T.line}`, borderRadius: 18, overflow: 'hidden' }}>
+          {loading ? (
+            <div style={{ padding: 32, textAlign: 'center', fontFamily: DISP, color: T.dim }}>Carregando…</div>
+          ) : list.length === 0 ? (
+            <div style={{ padding: 40, textAlign: 'center', fontFamily: DISP, fontSize: 15, color: T.dim }}>Nenhum evento{outcome ? ` com desfecho "${outcome}"` : ''}.</div>
+          ) : list.map((ev, i) => {
+            const open = expanded === ev.id;
+            const col = whColor(ev.outcome);
+            return (
+              <div key={ev.id} style={{ borderBottom: i < list.length - 1 ? `1px solid ${T.line}` : 'none' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 22px', flexWrap: 'wrap' }}>
+                  <span style={{ fontFamily: MONO, fontSize: 12.5, color: T.dim, flex: '0 0 auto' }}>{fmt(ev.received_at)}</span>
+                  <span style={{ fontFamily: DISP, fontWeight: 600, fontSize: 14, color: T.ink, flex: 1, minWidth: 120 }}>{ev.franchisee_name || '—'}</span>
+                  <span style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, color: col, border: `1px solid ${col}`, padding: '3px 9px', borderRadius: 7, flex: '0 0 auto' }}>{ev.outcome}</span>
+                  <span onClick={() => setExpanded(open ? null : ev.id)} style={{ fontFamily: DISP, fontSize: 12.5, fontWeight: 600, color: T.accent, cursor: 'pointer', flex: '0 0 auto' }}>{open ? 'ocultar' : 'ver detalhes'}</span>
+                </div>
+                {ev.error_detail && <div style={{ padding: '0 22px 12px', marginTop: -4, fontFamily: MONO, fontSize: 12, color: '#B23A2E', wordBreak: 'break-word' }}>{ev.error_detail}</div>}
+                {open && (
+                  <div style={{ padding: '0 22px 16px' }}>
+                    <pre style={{ margin: 0, background: '#18121F', color: '#E8E0F5', borderRadius: 12, padding: 16, fontFamily: MONO, fontSize: 12, lineHeight: 1.5, overflow: 'auto', maxHeight: 360 }}>{JSON.stringify(ev.raw_payload, null, 2)}</pre>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        {/* paginação */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 }}>
+          <div onClick={() => offset > 0 && setOffset(Math.max(0, offset - LIMIT))} style={{ cursor: offset > 0 ? 'pointer' : 'default', opacity: offset > 0 ? 1 : 0.4, fontFamily: DISP, fontWeight: 600, fontSize: 14, color: T.ink, border: `1px solid ${T.line}`, borderRadius: 10, padding: '9px 16px', background: '#fff' }}>← Anterior</div>
+          <span style={{ fontFamily: MONO, fontSize: 12, color: T.dim }}>{list.length ? `${offset + 1}–${offset + list.length}` : '—'}</span>
+          <div onClick={() => list.length >= LIMIT && setOffset(offset + LIMIT)} style={{ cursor: list.length >= LIMIT ? 'pointer' : 'default', opacity: list.length >= LIMIT ? 1 : 0.4, fontFamily: DISP, fontWeight: 600, fontSize: 14, color: T.ink, border: `1px solid ${T.line}`, borderRadius: 10, padding: '9px 16px', background: '#fff' }}>Próximo →</div>
+        </div>
+      </div>
+    </DShell>
+  );
+}
+
+export { FranchiseesScreen, LeadsScreen, ProductLinksScreen, WebhookEvents };
