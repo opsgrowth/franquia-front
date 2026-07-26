@@ -143,7 +143,22 @@ function ProductsAdminScreen({ scope, sharedProducts, setSharedProducts }) {
     if (isFranquia && isBackendId(mid)) deleteModule(mid).then(flashSaved).catch((e) => { alert('Não consegui excluir o módulo.'); console.warn('excluir módulo:', e); });
     setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, modules: p.modules.filter((m) => m.id !== mid), modulesCount: Math.max(0, (p.modulesCount || 1) - 1) } : p)));
   };
-  const moveModule = (pid, mid, dir) => setProducts((ps) => ps.map((p) => { if (p.id !== pid) return p; const i = p.modules.findIndex((m) => m.id === mid); const j = i + dir; if (j < 0 || j >= p.modules.length) return p; const a = [...p.modules]; [a[i], a[j]] = [a[j], a[i]]; return { ...p, modules: a }; }));
+  const moveModule = (pid, mid, dir) => {
+    const p = products.find((x) => x.id === pid);
+    if (!p) return;
+    const i = (p.modules || []).findIndex((m) => m.id === mid);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= p.modules.length) return;
+    const a = [...p.modules];
+    [a[i], a[j]] = [a[j], a[i]];
+    setProducts((ps) => ps.map((x) => (x.id === pid ? { ...x, modules: a } : x)));
+    // Reordenar PERSISTE: cada módulo ganha position = índice (produto real da franquia).
+    if (isFranquia && isBackendId(mid)) {
+      Promise.all(a.map((m, idx) => (isBackendId(m.id) ? patchModule(m.id, { position: idx }) : null)))
+        .then(flashSaved)
+        .catch((e) => { alert('Não consegui salvar a nova ordem dos módulos.'); console.warn('reordenar módulos:', e?.message || e); });
+    }
+  };
   const addLesson = async (pid, mid, data) => {
     if (isFranquia && isBackendId(mid)) {
       try {
