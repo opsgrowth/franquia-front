@@ -46,7 +46,7 @@ const CO_COURSES = [
 // ── capa temática ─────────────────────────────────────────────────
 function CoCover({ color, img, label, title, h = 150, radius = 14, num, locked, progress, children, style }) {
   return (
-    <div style={{ height: h, borderRadius: radius, background: img ? `center/cover no-repeat url("${img}")` : coTheme(color), position: 'relative', overflow: 'hidden', flex: '0 0 auto', ...style }}>
+    <div style={{ aspectRatio: '16 / 9', borderRadius: radius, background: img ? `center/cover no-repeat url("${img}")` : coTheme(color), position: 'relative', overflow: 'hidden', flex: '0 0 auto', ...style }}>
       {!img && <div style={{ position: 'absolute', inset: 0, background: 'repeating-linear-gradient(135deg, rgba(255,255,255,.06) 0 14px, rgba(255,255,255,0) 14px 28px)' }}></div>}
       {!img && <div style={{ position: 'absolute', right: -16, bottom: -20, opacity: 0.22 }}><Mark size={Math.round(h * 0.6)} front="#fff" ghost="#fff" inner="transparent" /></div>}
       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,.05), rgba(0,0,0,.5))' }}></div>
