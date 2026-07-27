@@ -39,6 +39,14 @@ const MATERIALS: Record<string, ProductMaterials> = {
     criativo3: { url: `${BASE}/lancheirinha-materiais/criativo3.PNG`, name: 'Lancheirinha-criativo-3.png' },
     criativo4: { url: `${BASE}/lancheirinha-materiais/criativo4.PNG`, name: 'Lancheirinha-criativo-4.png' },
   },
+  // Trafego Pago Infoprodutos (WeFit) — d68cac33-763f-44cb-8219-2e387fc73dd4
+  'd68cac33-763f-44cb-8219-2e387fc73dd4': {
+    html: { url: `${BASE}/wefit-materiais/wefit.html`, name: 'WeFit-pagina-de-vendas.html' },
+    imagem: { url: `${BASE}/wefit-materiais/imagem_do_produto.png`, name: 'WeFit-imagem-do-produto.png' },
+    banner: { url: `${BASE}/wefit-materiais/checkout.png`, name: 'WeFit-banner-de-checkout.png' },
+    criativo1: { url: `${BASE}/wefit-materiais/criativo1.mp4`, name: 'WeFit-criativo-1.mp4' },
+    criativo2: { url: `${BASE}/wefit-materiais/criativo2.mp4`, name: 'WeFit-criativo-2.mp4' },
+  },
 };
 
 export function materialsFor(appId: any): ProductMaterials {
