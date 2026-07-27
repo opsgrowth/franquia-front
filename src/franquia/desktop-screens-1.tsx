@@ -334,7 +334,8 @@ function DCatalogo() {
   };
 
   const Capa = ({ c, img, children }) => (
-    <div style={{ height: 120, borderRadius: 12, background: img ? `center/cover no-repeat url("${img}")` : coT(c), position: 'relative', overflow: 'hidden' }}>
+    <div style={{ position: 'relative', width: '100%', paddingTop: '56.25%', borderRadius: 12, overflow: 'hidden' }}>
+      <div style={{ position: 'absolute', inset: 0, background: img ? `center/cover no-repeat url("${img}")` : coT(c) }}></div>
       {!img && <div style={{ position: 'absolute', inset: 0, background: STRIP }}></div>}
       {!img && <div style={{ position: 'absolute', right: -10, bottom: -14, opacity: 0.25 }}><Mark size={70} front="#fff" ghost="#fff" inner="transparent" /></div>}
       {img && <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,.1), rgba(0,0,0,.45))' }}></div>}
