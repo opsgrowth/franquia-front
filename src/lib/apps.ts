@@ -122,7 +122,7 @@ export async function ensureProductModules(id: string): Promise<void> {
 export async function createModule(appId: string, data: { title: string; summary?: string | null; position?: number }): Promise<any> {
   return api(`/apps/${appId}/modules`, { method: 'POST', body: { title: data.title, summary: data.summary ?? null, position: data.position ?? 0 } });
 }
-export async function patchModule(moduleId: string, fields: { title?: string; summary?: string | null; cover_show_title?: boolean }): Promise<any> {
+export async function patchModule(moduleId: string, fields: { title?: string; summary?: string | null; cover_show_title?: boolean; position?: number }): Promise<any> {
   if (!isBackendId(moduleId)) return null;
   return api(`/modules/${moduleId}`, { method: 'PATCH', body: fields });
 }
@@ -133,7 +133,7 @@ export async function deleteModule(moduleId: string): Promise<void> {
 export async function createLesson(moduleId: string, data: { title: string; summary?: string | null; position?: number }): Promise<any> {
   return api(`/modules/${moduleId}/lessons`, { method: 'POST', body: { title: data.title, summary: data.summary ?? null, position: data.position ?? 0 } });
 }
-export async function patchLesson(lessonId: string, fields: { title?: string; summary?: string | null }): Promise<any> {
+export async function patchLesson(lessonId: string, fields: { title?: string; summary?: string | null; position?: number }): Promise<any> {
   if (!isBackendId(lessonId)) return null;
   return api(`/lessons/${lessonId}`, { method: 'PATCH', body: fields });
 }
