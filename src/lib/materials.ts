@@ -44,6 +44,7 @@ const MATERIALS: Record<string, ProductMaterials> = {
     html: { url: `${BASE}/wefit-materiais/wefit.html`, name: 'WeFit-pagina-de-vendas.html' },
     imagem: { url: `${BASE}/wefit-materiais/imagem_do_produto.png`, name: 'WeFit-imagem-do-produto.png' },
     banner: { url: `${BASE}/wefit-materiais/checkout.png`, name: 'WeFit-banner-de-checkout.png' },
+    selo: { url: `${BASE}/wefit-materiais/selo_de_garantia.png`, name: 'WeFit-selo-de-garantia.png' },
     criativo1: { url: `${BASE}/wefit-materiais/criativo1.mp4`, name: 'WeFit-criativo-1.mp4' },
     criativo2: { url: `${BASE}/wefit-materiais/criativo2.mp4`, name: 'WeFit-criativo-2.mp4' },
   },
