@@ -261,7 +261,7 @@ function CoPlayer({ course, lesson, progress, app, narrow }) {
   const done = !!progress[lesson.id];
 
   const Side = (
-    <div style={{ width: narrow ? '100%' : 320, flex: '0 0 auto', borderLeft: narrow ? 'none' : `1px solid ${T.line}`, borderTop: narrow ? `1px solid ${T.line}` : 'none', background: '#fff', overflow: 'auto' }}>
+    <div style={{ width: narrow ? '100%' : 320, flex: '0 0 auto', borderLeft: narrow ? 'none' : `1px solid ${T.line}`, borderTop: narrow ? `1px solid ${T.line}` : 'none', background: '#fff', overflow: narrow ? 'visible' : 'auto' }}>
       <div style={{ padding: '18px 20px 8px' }}>
         <button onClick={() => app.openCourse(course.id)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', color: T.accent, fontFamily: DISP, fontWeight: 600, fontSize: 13.5, cursor: 'pointer', padding: 0 }}><Ico d={AIC.chevron} size={15} c={T.accent} style={{ transform: 'rotate(90deg)' }} />{course.title}</button>
         <div style={{ fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.1em', color: T.accentDeep, textTransform: 'uppercase', marginTop: 14 }}>Módulo {String(mIdx + 1).padStart(2, '0')}</div>
@@ -296,7 +296,7 @@ function CoPlayer({ course, lesson, progress, app, narrow }) {
 
   const heroVid = (lesson.blocks || []).find((b) => b.kind === 'video' && b.embed);
   const Stage = (
-    <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', background: T.darkBg, overflow: 'auto' }}>
+    <div style={{ flex: narrow ? '0 0 auto' : 1, minWidth: 0, display: 'flex', flexDirection: 'column', background: T.darkBg, overflow: narrow ? 'visible' : 'auto' }}>
       {heroVid && <VideoPlayer embed={heroVid.embed} />}
       {!heroVid && lesson.type === 'audio' && (
       <div style={{ position: 'relative', background: '#000', width: '100%', height: 0, paddingBottom: '56.25%', flex: '0 0 auto' }}>
@@ -317,7 +317,7 @@ function CoPlayer({ course, lesson, progress, app, narrow }) {
           <button onClick={() => app.toggleLesson(lesson.id)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: done ? 'rgba(255,255,255,.14)' : coLighten(course.color, .05), color: '#fff', border: 'none', borderRadius: 11, padding: '11px 18px', fontFamily: DISP, fontWeight: 600, fontSize: 14, cursor: 'pointer' }}><Ico d={AIC.check} size={16} c="#fff" sw={2.4} />{done ? 'Concluída' : 'Marcar como concluída'}</button>
         </div>
       </div>
-      <div style={{ padding: '8px 20px 24px', flex: 1 }}>
+      <div style={{ padding: '8px 20px 24px', flex: narrow ? '0 0 auto' : 1 }}>
         <div style={{ fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.1em', color: coLighten(course.color, .35), textTransform: 'uppercase' }}>{lesson.type === 'video' ? 'Vídeo' : 'Aula'} · {lesson.duration}</div>
         <h1 style={{ fontFamily: DISP, fontWeight: 700, fontSize: 26, letterSpacing: '-0.03em', color: T.darkText, margin: '8px 0 12px' }}>{lesson.title}</h1>
         {lesson.desc && <p style={{ fontFamily: DISP, fontSize: 15, lineHeight: 1.6, color: 'rgba(246,241,251,.72)', margin: '4px 0 2px', maxWidth: 560 }}>{lesson.desc}</p>}
