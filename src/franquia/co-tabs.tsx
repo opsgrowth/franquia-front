@@ -5,6 +5,13 @@ import { DISP, IC, Ico, MONO, Mark, T } from './kit';
 // App do aluno — abas Mentor IA · Suporte · Perfil. Reusa T/DISP/MONO/Ico/IC/AIC/Mark + helpers do co-app.
 const { useState: useStateCT } = React;
 
+// Suporte — canal ÚNICO de contato do comprador (link + textos num só ponto de config).
+const SUPPORT_URL = 'https://t.me/Osuporteapp';
+const SUPPORT_LABEL = 'Telegram';
+const SUPPORT_SUB = 'Resposta em até 1 dia útil.';
+const SUPPORT_CTA = 'Falar com o suporte';
+const TELEGRAM_ICON = 'M22 2 11 13 M22 2 15 22 11 13 2 9z'; // paper-plane
+
 // ── Mentor IA — chat ──────────────────────────────────────────────
 function MentorIA({ accent = T.accent }) {
   const [msgs, setMsgs] = useStateCT([
@@ -59,18 +66,11 @@ function Suporte({ accent = T.accent }) {
         <div style={{ fontFamily: DISP, fontSize: 13.5, color: 'rgba(246,241,251,.6)', marginTop: 4 }}>Estamos aqui para ajudar você a destravar.</div>
       </div>
       <div style={{ padding: 18 }}>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <div style={{ flex: 1, background: '#fff', border: `1px solid ${T.line}`, borderRadius: 14, padding: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ width: 38, height: 38, borderRadius: 11, background: 'rgba(37,211,102,.14)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ico d={'M12 21a9 9 0 1 0-8-4.9L3 21l4.9-1A9 9 0 0 0 12 21z'} size={19} c="#1FA567" /></div>
-            <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 14.5, color: T.ink }}>WhatsApp</div>
-            <div style={{ fontFamily: DISP, fontSize: 12.5, color: T.dim }}>Resposta em até 1 dia útil.</div>
-          </div>
-          <div style={{ flex: 1, background: '#fff', border: `1px solid ${T.line}`, borderRadius: 14, padding: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ width: 38, height: 38, borderRadius: 11, background: 'rgba(124,58,237,.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ico d={'M4 5h16v14H4z M4 7l8 6 8-6'} size={19} c={accent} /></div>
-            <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 14.5, color: T.ink }}>E-mail</div>
-            <div style={{ fontFamily: DISP, fontSize: 12.5, color: T.dim }}>ajuda@franquia.ia</div>
-          </div>
-        </div>
+        <a href={SUPPORT_URL} target="_blank" rel="noopener noreferrer" style={{ background: '#fff', border: `1px solid ${T.line}`, borderRadius: 14, padding: 16, display: 'flex', flexDirection: 'column', gap: 8, textDecoration: 'none' }}>
+          <div style={{ width: 38, height: 38, borderRadius: 11, background: 'rgba(34,158,217,.14)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ico d={TELEGRAM_ICON} size={19} c="#229ED9" /></div>
+          <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 14.5, color: T.ink }}>{SUPPORT_LABEL}</div>
+          <div style={{ fontFamily: DISP, fontSize: 12.5, color: T.dim }}>{SUPPORT_SUB}</div>
+        </a>
         <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 16, color: T.ink, margin: '24px 0 12px' }}>Perguntas frequentes</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {faqs.map(([q, a], i) => {
@@ -86,7 +86,7 @@ function Suporte({ accent = T.accent }) {
             );
           })}
         </div>
-        <div style={{ marginTop: 18, background: accent, color: '#fff', borderRadius: 13, padding: '15px', textAlign: 'center', fontFamily: DISP, fontWeight: 600, fontSize: 15, cursor: 'pointer' }}>Falar com o suporte</div>
+        <a href={SUPPORT_URL} target="_blank" rel="noopener noreferrer" style={{ display: 'block', marginTop: 18, background: accent, color: '#fff', borderRadius: 13, padding: '15px', textAlign: 'center', fontFamily: DISP, fontWeight: 600, fontSize: 15, cursor: 'pointer', textDecoration: 'none' }}>{SUPPORT_CTA}</a>
       </div>
     </div>
   );
