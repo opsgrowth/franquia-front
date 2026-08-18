@@ -171,6 +171,7 @@ function BlockEditorModal({ lesson, onClose, onSave }) {
       <div style={{ marginBottom: 16 }}>
         <label style={{ ...admLbl, fontSize: 11.5, letterSpacing: '0.04em', textTransform: 'uppercase', color: T.dim }}>Descrição da aula (subtítulo)</label>
         <textarea value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Subtítulo curto — deixe vazio para remover" style={{ ...admInput, minHeight: 50, resize: 'vertical' }} />
+        <div style={{ fontFamily: DISP, fontSize: 12, color: T.dim, marginTop: 6 }}>Dica: crie um link com <b style={{ color: T.ink }}>[texto](https://exemplo.com)</b>. Só http/https.</div>
       </div>
       {err &&<div style={{ fontFamily: DISP, fontSize: 13, color: '#B4231F', background: 'rgba(180,35,31,.08)', border: '1px solid rgba(180,35,31,.25)', borderRadius: 10, padding: '10px 12px', marginBottom: 12 }}>{err}</div>}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
