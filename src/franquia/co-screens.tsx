@@ -5,6 +5,7 @@ import { AIC } from './author-kit';
 import { CO_COURSES, CoCover, Row, allLessons, coDarken, coLighten, coRgba, coTheme, courseProgress, firstOpenLessonInModule, lessonLocked, moduleDuration, moduleProgress, nextLessonInModule } from './co-app';
 import { MentorIA, Perfil, Suporte } from './co-tabs';
 import { DISP, IC, Ico, MONO, Mark, T } from './kit';
+import { renderRichText } from '../lib/richtext';
 
 const { useState: useStateCO } = React;
 
@@ -320,7 +321,7 @@ function CoPlayer({ course, lesson, progress, app, narrow }) {
       <div style={{ padding: '8px 20px 24px', flex: narrow ? '0 0 auto' : 1 }}>
         <div style={{ fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.1em', color: coLighten(course.color, .35), textTransform: 'uppercase' }}>{lesson.type === 'video' ? 'Vídeo' : 'Aula'} · {lesson.duration}</div>
         <h1 style={{ fontFamily: DISP, fontWeight: 700, fontSize: 26, letterSpacing: '-0.03em', color: T.darkText, margin: '8px 0 12px' }}>{lesson.title}</h1>
-        {lesson.desc && <p style={{ fontFamily: DISP, fontSize: 15, lineHeight: 1.6, color: 'rgba(246,241,251,.72)', margin: '4px 0 2px', maxWidth: 560 }}>{lesson.desc}</p>}
+        {lesson.desc && <p style={{ fontFamily: DISP, fontSize: 15, lineHeight: 1.6, color: 'rgba(246,241,251,.72)', margin: '4px 0 2px', maxWidth: 560 }}>{renderRichText(lesson.desc, { color: coLighten(course.color, .35) })}</p>}
         {lesson.blocks && lesson.blocks.length
           ? <StudentBlocks blocks={lesson.blocks} color={course.color} skipId={heroVid ? heroVid.id : undefined} />
           : (!lesson.desc && <p style={{ fontFamily: DISP, fontSize: 14.5, lineHeight: 1.6, color: 'rgba(246,241,251,.6)', marginTop: 10, maxWidth: 560 }}>Conteúdo da aula. No produto final, aqui toca o vídeo/áudio ou aparece o texto da aula.</p>)}
