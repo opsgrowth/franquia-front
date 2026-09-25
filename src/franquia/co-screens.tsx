@@ -94,21 +94,55 @@ function CoVitrine({ courses, progress, openCourse, studentName }) {
   );
 }
 
+// ── liberação gradual (anti-reembolso) ────────────────────────────
+// Módulo com prazo chega do servidor travado (dripLocked) e SEM conteúdo; aqui só mostramos
+// o cadeado + quando libera. Não confundir com `locked` (paywall de produto premium).
+function dripLabel(at) {
+  if (!at) return 'Em breve';
+  const d = new Date(at);
+  const days = Math.ceil((d.getTime() - Date.now()) / 86400000);
+  const dd = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+  if (days <= 0) return 'Libera em instantes';
+  if (days === 1) return `Libera amanhã (${dd})`;
+  return `Libera em ${days} dias (${dd})`;
+}
+
+function DripModal({ mod, color, onClose }) {
+  return (
+    <div onClick={onClose} style={{ position: 'absolute', inset: 0, zIndex: 50, background: 'rgba(12,8,18,.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', borderRadius: 18, padding: '26px 24px', maxWidth: 360, width: '100%', textAlign: 'center', boxShadow: '0 24px 60px rgba(0,0,0,.3)' }}>
+        <div style={{ width: 52, height: 52, borderRadius: '50%', background: coRgba(color, .12), display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}><Ico d={LOCK_ICON} size={22} c={color} /></div>
+        <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 18, color: T.ink, marginTop: 14 }}>{mod.title}</div>
+        <div style={{ fontFamily: DISP, fontWeight: 600, fontSize: 14.5, color, marginTop: 6 }}>{dripLabel(mod.unlockAt)}</div>
+        <div style={{ fontFamily: DISP, fontSize: 13.5, color: T.dim, marginTop: 10, lineHeight: 1.55 }}>Os módulos deste curso são liberados aos poucos. Enquanto isso, continue pelos módulos que já estão abertos.</div>
+        <button onClick={onClose} style={{ marginTop: 18, background: color, color: '#fff', border: 'none', borderRadius: 11, padding: '12px 22px', fontFamily: DISP, fontWeight: 600, fontSize: 14.5, cursor: 'pointer', width: '100%' }}>Entendi</button>
+      </div>
+    </div>
+  );
+}
+
 function CoCourse({ course, progress, app }) {
   const pct = courseProgress(course, progress);
   const totalLessons = allLessons(course).length;
   const totalMin = course.modules.reduce((a, m) => a + moduleDuration(m), 0);
   const started = pct > 0;
   let resumeMod = null, resumeLesson = null;
-  for (const m of course.modules) { const nx = m.lessons.find((l) => !progress[l.id]); if (nx) { resumeMod = m; resumeLesson = nx; break; } }
+  for (const m of course.modules) { if (m.dripLocked) continue; const nx = m.lessons.find((l) => !progress[l.id]); if (nx) { resumeMod = m; resumeLesson = nx; break; } }
   const locked = course.locked && !app.unlocked[course.id];
   const moduleHasSample = (m) => m.lessons.some((l) => l.sample);
   const openModule = (m) => {
+    if (m.dripLocked) return app.openDrip(m);
     if (!locked) return app.openLesson(course.id, nextLessonInModule(m, progress).id, m.id);
     const s = firstOpenLessonInModule(course, m, app.unlocked);
     return s ? app.openLesson(course.id, s.id, m.id) : app.openPaywall(course.id);
   };
-  const cont = () => { if (locked) return app.openPaywall(course.id); const m = resumeMod || course.modules[0], l = resumeLesson || m.lessons[0]; app.openLesson(course.id, l.id, m.id); };
+  const cont = () => {
+    if (locked) return app.openPaywall(course.id);
+    const m = resumeMod || course.modules.find((x) => !x.dripLocked);
+    if (!m) return app.openDrip(course.modules[0]); // tudo ainda travado
+    const l = (m === resumeMod && resumeLesson) || m.lessons[0];
+    if (l) app.openLesson(course.id, l.id, m.id);
+  };
 
   return (
     <div style={{ flex: 1, overflow: 'auto', minWidth: 0 }}>
@@ -151,13 +185,15 @@ function CoCourse({ course, progress, app }) {
           {course.modules.map((m, i) => {
             const mp = moduleProgress(m, progress);
             const allDone = mp === 100;
-            const mLocked = locked && !moduleHasSample(m);
-            const mSample = locked && moduleHasSample(m);
-            const state = mLocked ? 'Desbloquear' : mSample ? 'Ver amostra' : allDone ? 'Revisar módulo' : mp > 0 ? 'Continuar módulo' : 'Começar módulo';
+            const drip = !!m.dripLocked;
+            const mLocked = drip || (locked && !moduleHasSample(m));
+            const mSample = !drip && locked && moduleHasSample(m);
+            const state = drip ? dripLabel(m.unlockAt) : mLocked ? 'Desbloquear' : mSample ? 'Ver amostra' : allDone ? 'Revisar módulo' : mp > 0 ? 'Continuar módulo' : 'Começar módulo';
             return (
               <div key={m.id} onClick={() => openModule(m)} style={{ width: 240, flex: '0 0 auto', cursor: 'pointer' }}>
                 <CoCover color={course.color} img={m.coverImg} num={`Módulo ${String(i + 1).padStart(2, '0')}`} h={130} progress={mLocked ? null : mp}>
                   <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(255,255,255,.9)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ico d={mLocked ? LOCK_ICON : AIC.play} size={20} c={course.color} fill={mLocked ? 'none' : course.color} /></span></div>
+                  {drip && m.unlockAt && <span style={{ position: 'absolute', top: 10, right: 10, fontFamily: MONO, fontSize: 9, fontWeight: 700, letterSpacing: '0.04em', color: '#fff', background: 'rgba(0,0,0,.45)', padding: '4px 8px', borderRadius: 6 }}>LIBERA {new Date(m.unlockAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>}
                   {mSample && <span style={{ position: 'absolute', top: 10, right: 10, fontFamily: MONO, fontSize: 9, fontWeight: 700, letterSpacing: '0.04em', color: '#fff', background: 'rgba(0,0,0,.45)', padding: '4px 8px', borderRadius: 6 }}>AMOSTRA</span>}
                 </CoCover>
                 <div style={{ fontFamily: DISP, fontWeight: 600, fontSize: 15, color: T.ink, marginTop: 10 }}>{m.title}</div>
@@ -289,7 +325,7 @@ function CoPlayer({ course, lesson, progress, app, narrow }) {
       </div>
       {mIdx < course.modules.length - 1 && (
         <div style={{ padding: '4px 20px 24px' }}>
-          <button onClick={() => { const nm = course.modules[mIdx + 1]; app.openLesson(course.id, nextLessonInModule(nm, progress).id, nm.id); }} style={{ width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#fff', border: `1.5px solid ${T.line}`, borderRadius: 11, padding: '12px', fontFamily: DISP, fontWeight: 600, fontSize: 14, color: T.ink, cursor: 'pointer' }}>Próximo módulo <Ico d={AIC.chevron} size={15} c={T.ink} style={{ transform: 'rotate(-90deg)' }} /></button>
+          <button onClick={() => { const nm = course.modules[mIdx + 1]; if (nm.dripLocked) return app.openDrip(nm); app.openLesson(course.id, nextLessonInModule(nm, progress).id, nm.id); }} style={{ width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#fff', border: `1.5px solid ${T.line}`, borderRadius: 11, padding: '12px', fontFamily: DISP, fontWeight: 600, fontSize: 14, color: T.ink, cursor: 'pointer' }}>Próximo módulo <Ico d={AIC.chevron} size={15} c={T.ink} style={{ transform: 'rotate(-90deg)' }} /></button>
         </div>
       )}
     </div>
@@ -312,8 +348,8 @@ function CoPlayer({ course, lesson, progress, app, narrow }) {
         <div style={{ height: 5, borderRadius: 99, background: 'rgba(255,255,255,.16)', overflow: 'hidden' }}><div style={{ width: done ? '100%' : '34%', height: '100%', background: coLighten(course.color, .25) }}></div></div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <button disabled={!prev} onClick={() => prev && app.openLesson(course.id, prev.l.id, prev.m.id)} style={{ width: 38, height: 38, borderRadius: '50%', border: `1px solid rgba(255,255,255,.2)`, background: 'transparent', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: prev ? 'pointer' : 'default', opacity: prev ? 1 : 0.4 }}><Ico d={AIC.chevron} size={18} c="#fff" style={{ transform: 'rotate(90deg)' }} /></button>
-            <button disabled={!next} onClick={() => next && app.openLesson(course.id, next.l.id, next.m.id)} style={{ width: 38, height: 38, borderRadius: '50%', border: `1px solid rgba(255,255,255,.2)`, background: 'transparent', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: next ? 'pointer' : 'default', opacity: next ? 1 : 0.4 }}><Ico d={AIC.chevron} size={18} c="#fff" style={{ transform: 'rotate(-90deg)' }} /></button>
+            <button disabled={!prev} onClick={() => prev && (prev.m.dripLocked ? app.openDrip(prev.m) : app.openLesson(course.id, prev.l.id, prev.m.id))} style={{ width: 38, height: 38, borderRadius: '50%', border: `1px solid rgba(255,255,255,.2)`, background: 'transparent', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: prev ? 'pointer' : 'default', opacity: prev ? 1 : 0.4 }}><Ico d={AIC.chevron} size={18} c="#fff" style={{ transform: 'rotate(90deg)' }} /></button>
+            <button disabled={!next} onClick={() => next && (next.m.dripLocked ? app.openDrip(next.m) : app.openLesson(course.id, next.l.id, next.m.id))} style={{ width: 38, height: 38, borderRadius: '50%', border: `1px solid rgba(255,255,255,.2)`, background: 'transparent', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: next ? 'pointer' : 'default', opacity: next ? 1 : 0.4 }}><Ico d={AIC.chevron} size={18} c="#fff" style={{ transform: 'rotate(-90deg)' }} /></button>
           </div>
           <button onClick={() => app.toggleLesson(lesson.id)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: done ? 'rgba(255,255,255,.14)' : coLighten(course.color, .05), color: '#fff', border: 'none', borderRadius: 11, padding: '11px 18px', fontFamily: DISP, fontWeight: 600, fontSize: 14, cursor: 'pointer' }}><Ico d={AIC.check} size={16} c="#fff" sw={2.4} />{done ? 'Concluída' : 'Marcar como concluída'}</button>
         </div>
@@ -353,6 +389,7 @@ function CoApp({ courses, narrow, creator, studentName, studentEmail, onLogout }
   const [unlocked, setUnlocked] = useStateCO({});
   const [route, setRoute] = useStateCO({ name: 'home' });
   const [pay, setPay] = useStateCO(null);
+  const [drip, setDrip] = useStateCO(null); // módulo travado pela liberação gradual
   const [tab, setTab] = useStateCO('inicio');
 
   const app = {
@@ -362,6 +399,7 @@ function CoApp({ courses, narrow, creator, studentName, studentEmail, onLogout }
     openCourse: (courseId) => setRoute({ name: 'course', courseId }),
     openLesson: (courseId, lessonId, moduleId) => setRoute({ name: 'player', courseId, lessonId, moduleId }),
     openPaywall: (courseId) => setPay(courseId),
+    openDrip: (mod) => setDrip(mod),
     toggleLesson: (id) => setProgress((p) => ({ ...p, [id]: !p[id] })),
   };
   const course = data.find((c) => c.id === route.courseId);
@@ -377,7 +415,10 @@ function CoApp({ courses, narrow, creator, studentName, studentEmail, onLogout }
     body = <CoCourse course={course} progress={progress} app={app} />;
   } else if (route.name === 'player' && course) {
     const lesson = allLessons(course).find((l) => l.id === route.lessonId) || course.modules[0].lessons[0];
-    body = <CoPlayer course={course} lesson={lesson} progress={progress} app={app} narrow={narrow} />;
+    // aula de módulo travado nunca abre o player (o conteúdo nem veio do servidor)
+    body = lesson && !lesson.dripLocked
+      ? <CoPlayer course={course} lesson={lesson} progress={progress} app={app} narrow={narrow} />
+      : <CoCourse course={course} progress={progress} app={app} />;
   } else {
     body = <CoVitrine courses={data} progress={progress} openCourse={app.openCourse} studentName={studentName} />;
   }
@@ -387,6 +428,7 @@ function CoApp({ courses, narrow, creator, studentName, studentEmail, onLogout }
       {narrow && <MobileTopBar creator={creator || { name: 'Camila Oliveira' }} />}
       {!narrow && <DeskSidebar creator={creator || { name: 'Camila Oliveira' }} studentName={studentName} active={tab} onTab={(t) => { setTab(t); if (t === 'inicio') setRoute({ name: 'home' }); }} onLogout={onLogout} />}
       <div style={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex', overflow: 'hidden' }}>{body}</div>
+      {drip && <DripModal mod={drip} color={(course && course.color) || (data[0] && data[0].color) || T.accent} onClose={() => setDrip(null)} />}
       {pay && <PaywallModal offer={(data.find((c) => c.id === pay) || {}).offer || DEFAULT_OFFER} onClose={() => setPay(null)} />}
       {narrow && <StudentTabBar active={tab} onTab={(t) => { setTab(t); if (t === 'inicio') setRoute({ name: 'home' }); }} />}
     </div>

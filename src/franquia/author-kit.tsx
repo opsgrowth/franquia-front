@@ -9,6 +9,7 @@ import { getMe } from '../lib/auth';
 // ── ícones extras p/ autoria (24×24 stroke) ───────────────────────
 const AIC = {
   play: 'M7 5l12 7-12 7z',
+  check: 'M5 12.5l4.5 4.5L19 7', // usado em 18 botões "Salvar"/confirmar — faltava (ícone saía vazio)
   bookmark: 'M6 3h12v18l-6-4-6 4z',
   plus: ['M12 5v14', 'M5 12h14'],
   chevron: 'M6 9l6 6 6-6',
