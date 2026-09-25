@@ -189,13 +189,18 @@ function LeadsScreen() {
   );
 }
 
-// ── WEBHOOKS (observabilidade do webhook Kiwify) — admin ─────────────
-const WH_OUTCOMES = ['access_granted', 'unknown_token', 'product_gone', 'ignored_status', 'no_email', 'duplicate', 'error'];
+// ── WEBHOOKS (observabilidade dos webhooks Hubla/Kiwify) — admin ─────
+const WH_OUTCOMES = [
+  'access_granted', 'access_kept', 'access_revoked', 'access_expired', 'kept_other_sale',
+  'unknown_token', 'product_gone', 'product_mismatch', 'no_email', 'no_student',
+  'ignored_event', 'ignored_status', 'stale', 'duplicate', 'error',
+];
 function whColor(o: string): string {
-  if (o === 'access_granted') return '#0E7A40';               // verde: acesso liberado
-  if (o === 'unknown_token' || o === 'product_gone' || o === 'error') return '#B23A2E'; // vermelho: falha
+  if (o === 'access_granted' || o === 'access_kept' || o === 'kept_other_sale') return '#0E7A40'; // verde: acesso ok
+  if (o === 'access_revoked' || o === 'access_expired') return '#5246E5';                         // roxo: bloqueio aplicado
+  if (o === 'unknown_token' || o === 'product_gone' || o === 'product_mismatch' || o === 'error') return '#B23A2E'; // vermelho: falha
   if (o === 'no_email') return '#C77700';                     // âmbar: falha branda
-  return T.dim;                                               // neutro: ignored_status, duplicate, received
+  return T.dim;                                               // neutro: ignorados, stale, duplicate, no_student, received
 }
 function WebhookEvents() {
   const mobile = useIsMobile();
@@ -214,7 +219,7 @@ function WebhookEvents() {
   return (
     <DShell active="webhooks" sub="Admin · Webhooks" title="Webhooks">
       <div style={{ overflow: 'auto', height: '100%', padding: mobile ? '18px 16px' : '24px 30px' }}>
-        <div style={{ fontFamily: DISP, fontSize: 14.5, color: T.dim, marginBottom: 16, maxWidth: 720 }}>Cada venda que chega da Kiwify vira um evento aqui — sucesso e falhas. Filtre pelo desfecho e abra "ver detalhes" pra inspecionar o payload.</div>
+        <div style={{ fontFamily: DISP, fontSize: 14.5, color: T.dim, marginBottom: 16, maxWidth: 720 }}>Cada evento que chega da Hubla (ou da Kiwify, legado) fica registrado aqui — liberações, bloqueios e falhas. Filtre pelo desfecho e abra "ver detalhes" pra inspecionar o payload.</div>
         {/* filtro por outcome */}
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
           {chips.map(([val, label]) => {
@@ -236,6 +241,7 @@ function WebhookEvents() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 22px', flexWrap: 'wrap' }}>
                   <span style={{ fontFamily: MONO, fontSize: 12.5, color: T.dim, flex: '0 0 auto' }}>{fmt(ev.received_at)}</span>
                   <span style={{ fontFamily: DISP, fontWeight: 600, fontSize: 14, color: T.ink, flex: 1, minWidth: 120 }}>{ev.franchisee_name || '—'}</span>
+                  <span style={{ fontFamily: MONO, fontSize: 11.5, color: T.dim, flex: '0 0 auto' }}>{ev.provider || 'kiwify'}{ev.event_type ? ` · ${ev.event_type}` : ''}</span>
                   <span style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, color: col, border: `1px solid ${col}`, padding: '3px 9px', borderRadius: 7, flex: '0 0 auto' }}>{ev.outcome}</span>
                   <span onClick={() => setExpanded(open ? null : ev.id)} style={{ fontFamily: DISP, fontSize: 12.5, fontWeight: 600, color: T.accent, cursor: 'pointer', flex: '0 0 auto' }}>{open ? 'ocultar' : 'ver detalhes'}</span>
                 </div>

@@ -25,9 +25,10 @@ export async function loadLeads(): Promise<Lead[]> {
   try { return await api('/admin/leads'); } catch { return []; }
 }
 
-// Observabilidade do webhook Kiwify (admin). Query string no path; catch → [] (padrão getLeads).
+// Observabilidade dos webhooks Hubla/Kiwify (admin). Query string no path; catch → [] (padrão getLeads).
 export type WebhookEvent = {
   id: string; received_at: string; webhook_token: string; franchisee_name: string | null;
+  provider: string; event_type: string | null; // 'hubla' | 'kiwify'; ex.: invoice.payment_succeeded
   outcome: string; error_detail: string | null; sale_id: string | null; student_id: string | null;
   raw_payload: any;
 };

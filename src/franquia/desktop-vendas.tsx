@@ -5,7 +5,7 @@ import { DISP, IC, Ico, MONO, T, useIsMobile } from './kit';
 import { loadSales } from '../lib/sales';
 import { camoName } from '../lib/camo';
 
-// Tela: Vendas — transações por webhook das plataformas (Digistore/Kiwify/Hotmart…).
+// Tela: Vendas — transações por webhook das plataformas (Hubla; Kiwify legado).
 // Reusa T/DISP/MONO/Ico/IC/AIC + DShell (desktop-screens-1).
 
 function DVendas() {
@@ -30,7 +30,7 @@ function DVendas() {
     'Reembolso': { fg: '#B23A2E', bg: 'rgba(226,80,47,.12)', dot: '#E2502F' },
   };
   const ranges = [['hoje', 'Hoje'], ['7d', '7 dias'], ['30d', '30 dias']];
-  const plats = ['Todas', 'Kiwify'];
+  const plats = ['Todas', 'Hubla', 'Kiwify'];
   const maxD = range === 'hoje' ? 0 : range === '7d' ? 7 : 30;
   const rows = SALES.filter((s) => (plat === 'Todas' || s.plat === plat) && s.d <= maxD);
 
@@ -127,7 +127,7 @@ function DVendas() {
       {/* nota webhook */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginTop: 16, fontFamily: DISP, fontSize: 12.5, color: T.dim }}>
         <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#0E9A50' }}></span>
-        Webhooks conectados — cada venda aprovada libera o acesso automaticamente pela URL de webhook do produto.
+        Webhooks conectados — cada venda aprovada libera o acesso automaticamente pela URL de webhook do produto; reembolsos bloqueiam.
       </div>
     </DShell>
   );
