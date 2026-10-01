@@ -21,7 +21,7 @@ function MaterialsSheet({ item, course, onClose }) {
   const copy = (key, text) => { try { navigator.clipboard && navigator.clipboard.writeText(text); } catch (e) {} setCopied(key); setTimeout(() => setCopied(''), 1600); };
   const coT = (c) => `linear-gradient(135deg, ${c}99 0%, ${c} 100%)`;
   const cover = item && item.coverImg;
-  // URL de webhook REAL desta promoção (franqueado + este produto). Colada na Hubla.
+  // URL de webhook REAL desta promoção (franqueado + este produto). Colada na Kiwify.
   const appId = item && ((item.raw && item.raw.id) || item.id);
   const mats = materialsFor(appId); // materiais de download deste produto (URLs públicas)
   const [webhookUrl, setWebhookUrl] = React.useState('');
@@ -97,14 +97,14 @@ function MaterialsSheet({ item, course, onClose }) {
           </div>
           ) : (
           <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ fontFamily: DISP, fontSize: 14, color: T.dim, lineHeight: 1.55 }}>Venda este produto no seu checkout da Hubla. Conecte o webhook abaixo e <b style={{ color: T.ink, fontWeight: 600 }}>toda venda aprovada libera o acesso do cliente na hora</b> — e cai nas suas Vendas. Reembolso ou assinatura cancelada bloqueiam o acesso sozinhos.</div>
-            <Step n={1} title="Crie o produto/checkout na sua plataforma" desc="Na Hubla, crie o produto e a oferta (venda avulsa ou assinatura) com o preço que você vai cobrar." />
+            <div style={{ fontFamily: DISP, fontSize: 14, color: T.dim, lineHeight: 1.55 }}>Venda este produto no seu checkout (Kiwify, Hotmart…). Conecte o webhook abaixo e <b style={{ color: T.ink, fontWeight: 600 }}>toda venda aprovada libera o acesso do cliente na hora</b> — e cai nas suas Vendas.</div>
+            <Step n={1} title="Crie o produto/checkout na sua plataforma" desc="Na Kiwify (ou Hotmart), crie o produto e a oferta com o preço que você vai cobrar." />
             <div style={{ background: '#fff', border: `1.5px solid ${T.accent}`, borderRadius: 14, padding: 18 }}>
               <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                 <StepNum n={2} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 15.5, color: T.ink }}>Cole esta URL de webhook na Hubla</div>
-                  <div style={{ fontFamily: DISP, fontSize: 13, color: T.dim, marginTop: 3, lineHeight: 1.5 }}>Na Hubla: <b style={{ color: T.ink, fontWeight: 600 }}>Integrações → Webhooks</b> → novo webhook, marque os eventos de <b style={{ color: T.ink, fontWeight: 600 }}>Fatura, Assinatura e Membro</b>, e cole a URL:</div>
+                  <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 15.5, color: T.ink }}>Cole esta URL de webhook na Kiwify</div>
+                  <div style={{ fontFamily: DISP, fontSize: 13, color: T.dim, marginTop: 3, lineHeight: 1.5 }}>Na Kiwify: <b style={{ color: T.ink, fontWeight: 600 }}>Apps → Webhooks</b> → novo webhook, evento <b style={{ color: T.ink, fontWeight: 600 }}>compra aprovada</b>, e cole a URL:</div>
                   <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
                     <div style={{ flex: 1, minWidth: 0, fontFamily: MONO, fontSize: 12.5, color: T.ink, background: T.paper, border: `1px solid ${T.line}`, borderRadius: 10, padding: '13px 14px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{whLoading ? 'Gerando sua URL…' : (webhookUrl || 'Erro ao gerar — recarregue a página.')}</div>
                     <div onClick={() => webhookUrl && copy('wh', webhookUrl)} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, cursor: webhookUrl ? 'pointer' : 'default', background: T.accent, color: '#fff', borderRadius: 10, padding: '0 18px', fontFamily: DISP, fontWeight: 700, fontSize: 13.5, opacity: webhookUrl ? 1 : 0.5, flex: '0 0 auto' }}><Ico d={CP} size={15} c="#fff" />{copied === 'wh' ? 'Copiado!' : 'Copiar'}</div>
@@ -112,7 +112,7 @@ function MaterialsSheet({ item, course, onClose }) {
                 </div>
               </div>
             </div>
-            <Step n={3} title="Pronto — a venda vira acesso sozinha" desc="Quando alguém comprar, o cliente recebe o acesso por email na hora, entra na base deste produto e a venda aparece na sua aba Vendas. Dica: em Integrações, informe o ID do produto na Hubla para essa URL só liberar este produto." />
+            <Step n={3} title="Pronto — a venda vira acesso sozinha" desc="Quando alguém comprar, o cliente recebe o acesso por email na hora, entra na base deste produto e a venda aparece na sua aba Vendas. Você não faz mais nada." />
           </div>
           )
         ) : tab === 'mat' ? (
@@ -138,7 +138,7 @@ function MaterialsSheet({ item, course, onClose }) {
               <div style={{ width: 42, height: 42, borderRadius: 11, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: '0 0 auto' }}><Ico d={'M9 2v4 M15 2v4 M7 6h10v3a5 5 0 0 1-10 0z M12 14v6'} size={20} c={T.accentDeep} /></div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 15.5, color: T.ink }}>Checkout próprio + integração</div>
-                <div style={{ fontFamily: DISP, fontSize: 13, color: T.dim, marginTop: 3, lineHeight: 1.55 }}>Venda pelo seu checkout da Hubla. Depois, conecte o produto via webhook para o cliente receber (e perder, em caso de reembolso) o acesso automaticamente.</div>
+                <div style={{ fontFamily: DISP, fontSize: 13, color: T.dim, marginTop: 3, lineHeight: 1.55 }}>Venda pelo checkout da plataforma que você escolher (Kiwify, Hotmart…). Depois, conecte o produto via webhook para o cliente receber o acesso automaticamente.</div>
                 <div onClick={() => { onClose && onClose(); if (typeof window !== 'undefined') { window.__integProduct = item && item.n; (window as any).__integAppId = item && ((item.raw && item.raw.id) || item.id); window.__cfgSection = 'integ'; } window.__go && window.__go('cfg'); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, marginTop: 12, fontFamily: DISP, fontWeight: 600, fontSize: 13, color: T.accent, cursor: 'pointer' }}>Configurar integração <Ico d={AIC.chevron} size={14} c={T.accent} style={{ transform: 'rotate(-90deg)' }} /></div>
               </div>
             </div>

@@ -3,8 +3,7 @@ import { AIC } from './author-kit';
 import { Perfil } from './co-tabs';
 import { DShell } from './desktop-screens-1';
 import { DISP, IC, Ico, MONO, Mark, T, useIsMobile } from './kit';
-import { loadAllPromotions, updatePromotion } from '../lib/promotions';
-import type { ProductKind, Promotion } from '../lib/promotions';
+import { loadAllWebhookUrls } from '../lib/promotions';
 import { isBackendId } from '../lib/apps';
 import { getMe, setMeName } from '../lib/auth';
 import { api } from '../lib/api';
@@ -12,70 +11,11 @@ import { api } from '../lib/api';
 // Tela: Config — conta, identidade do app do aluno, integrações (webhooks), preferências.
 // Reusa T/DISP/MONO/Ico/IC/AIC/Mark + DShell (desktop-screens-1).
 
-// De-para do produto com a Hubla (por promoção). Componente de TOPO de propósito: os
-// componentes definidos dentro do DConfig (Card etc.) remontam a cada render e o input
-// perderia o foco a cada tecla.
-const KIND_OPTS: [ProductKind | null, string, string][] = [
-  [null, 'Detectar', 'Pelo evento da Hubla (recorrente = assinatura).'],
-  ['sale', 'Venda avulsa', 'Acesso vitalício — só cai por reembolso.'],
-  ['subscription', 'Assinatura', 'Acesso cai quando a assinatura é desativada.'],
-];
-function HublaProductConfig({ promo, onSaved }: { promo: Promotion; onSaved: (p: Promotion) => void }) {
-  const [ids, setIds] = React.useState((promo.hubla_product_ids || []).join(', '));
-  const [kind, setKind] = React.useState<ProductKind | null>(promo.product_kind);
-  const [st, setSt] = React.useState<'idle' | 'saving' | 'ok' | 'err'>('idle');
-  const parsed = ids.split(/[\s,;]+/).map((x) => x.trim()).filter(Boolean);
-  const dirty = parsed.join(',') !== (promo.hubla_product_ids || []).join(',') || kind !== promo.product_kind;
-  const save = async () => {
-    if (!dirty || st === 'saving') return;
-    setSt('saving');
-    try {
-      const out = await updatePromotion(promo.id, { hubla_product_ids: parsed, product_kind: kind });
-      onSaved(out);
-      setIds((out.hubla_product_ids || []).join(', '));
-      setSt('ok'); setTimeout(() => setSt('idle'), 1800);
-    } catch (e) {
-      setSt('err');
-    }
-  };
-  const lbl = { fontFamily: DISP, fontWeight: 600, fontSize: 13, color: T.ink, display: 'block', margin: '0 0 6px' };
-  return (
-    <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px dashed ${T.line}`, display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div>
-        <label style={lbl}>ID do produto na Hubla <span style={{ fontWeight: 400, color: T.dim }}>(opcional, recomendado)</span></label>
-        <input
-          value={ids}
-          onChange={(e) => { setIds(e.target.value); setSt('idle'); }}
-          placeholder="ex.: JgGqG4RWiDkyG7Wl1Zpc"
-          style={{ fontFamily: MONO, width: '100%', border: `1px solid ${T.line}`, borderRadius: 10, padding: '10px 12px', fontSize: 13, color: T.ink, outline: 'none', background: '#fff', boxSizing: 'border-box' }}
-        />
-        <div style={{ fontFamily: DISP, fontSize: 12, color: T.dim, marginTop: 6, lineHeight: 1.5 }}>É o código no fim do seu link de checkout (<span style={{ fontFamily: MONO }}>pay.hub.la/<b style={{ color: T.ink }}>CÓDIGO</b></span>). Preenchido, esta URL só libera acesso para esse produto — protege contra colar a URL no produto errado. Vários IDs: separe por vírgula.</div>
-      </div>
-      <div>
-        <label style={lbl}>Tipo do produto</label>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {KIND_OPTS.map(([k, t, d]) => {
-            const on = kind === k;
-            return (
-              <div key={t} onClick={() => { setKind(k); setSt('idle'); }} title={d} style={{ cursor: 'pointer', fontFamily: DISP, fontWeight: 600, fontSize: 12.5, padding: '7px 13px', borderRadius: 99, border: `1px solid ${on ? T.accent : T.line}`, background: on ? T.accent : '#fff', color: on ? '#fff' : T.dim }}>{t}</div>
-            );
-          })}
-        </div>
-        <div style={{ fontFamily: DISP, fontSize: 12, color: T.dim, marginTop: 6 }}>{(KIND_OPTS.find(([k]) => k === kind) || KIND_OPTS[0])[2]}</div>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div onClick={save} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: st === 'ok' ? '#0E9A50' : T.accent, color: '#fff', borderRadius: 9, padding: '8px 14px', fontFamily: DISP, fontWeight: 600, fontSize: 13, cursor: dirty ? 'pointer' : 'default', opacity: dirty || st === 'ok' ? 1 : 0.45 }}><Ico d={IC.check} size={14} c="#fff" />{st === 'ok' ? 'Salvo!' : st === 'saving' ? 'Salvando…' : 'Salvar'}</div>
-        {st === 'err' && <span style={{ fontFamily: DISP, fontSize: 12.5, color: '#C0392B' }}>Não foi possível salvar. Tente de novo.</span>}
-      </div>
-    </div>
-  );
-}
-
 function DConfig() {
   const cmob = useIsMobile();
   const [sec, setSec] = React.useState(() => (typeof window !== 'undefined' && window.__cfgSection) ? window.__cfgSection : 'conta');
   const [color, setColor] = React.useState('#7C3AED');
-  const [promoMap, setPromoMap] = React.useState<Record<string, Promotion>>({});
+  const [whMap, setWhMap] = React.useState<Record<string, string>>({});
   const [copied, setCopied] = React.useState('');
   const [, _forceCfg] = React.useState(0);
   const _me = getMe();
@@ -99,12 +39,12 @@ function DConfig() {
   const franqProds = (typeof window !== 'undefined' && window.__franquiaProducts) ? window.__franquiaProducts : [];
   // Produtos REAIS que o franqueado pode vender (id UUID, publicado, não-premium).
   const promotable = franqProds.filter((p: any) => p && isBackendId(p.id) && !p.isPremium && p.access !== 'Premium (upsell)' && p.catalogPublished !== false && !p.camouflaged);
-  // Uma URL de webhook REAL por produto (backend /promotions, idempotente) + o de-para Hubla.
+  // Uma URL de webhook REAL por produto (backend /promotions, idempotente).
   React.useEffect(() => {
     let alive = true;
     const ids = promotable.map((p: any) => p.id);
     if (!ids.length) return;
-    loadAllPromotions(ids).then((m) => { if (alive) setPromoMap(m); }).catch(() => {});
+    loadAllWebhookUrls(ids).then((m) => { if (alive) setWhMap(m); }).catch(() => {});
     return () => { alive = false; };
   }, [promotable.map((p: any) => p.id).join(',')]);
   // window.__franquiaProducts chega assíncrono → re-render curto até a lista popular.
@@ -210,18 +150,16 @@ function DConfig() {
 
   const Integ = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {/* div comum (não o Card local): o Card é recriado a cada render e remontaria os campos */}
-      <div style={{ background: '#fff', border: `1px solid ${T.line}`, borderRadius: 18, padding: 26 }}>
-        <CardTitle sub="Cada produto tem uma URL PRÓPRIA. Na Hubla, cole a URL do produto que você está vendendo.">Suas URLs de webhook</CardTitle>
+      <Card>
+        <CardTitle sub="Cada produto tem uma URL PRÓPRIA. Na sua plataforma de vendas (Kiwify), cole a URL do produto que você está vendendo.">Suas URLs de webhook</CardTitle>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, background: 'rgba(224,99,47,.08)', border: '1px solid rgba(224,99,47,.25)', borderRadius: 12, padding: '12px 14px', marginBottom: 16 }}>
           <Ico d={'M12 9v4 M12 17h.01 M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z'} size={17} c={'#C2521F'} />
-          <span style={{ fontFamily: DISP, fontSize: 13, color: '#8A3A12', lineHeight: 1.5 }}><b style={{ fontWeight: 700 }}>Use a URL do produto certo.</b> Colar a URL de um produto na venda de outro libera o produto errado pro comprador. Preencher o <b style={{ fontWeight: 700 }}>ID do produto na Hubla</b> bloqueia esse engano.</span>
+          <span style={{ fontFamily: DISP, fontSize: 13, color: '#8A3A12', lineHeight: 1.5 }}><b style={{ fontWeight: 700 }}>Use a URL do produto certo.</b> Colar a URL de um produto na venda de outro libera o produto errado pro comprador.</span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {promotable.length === 0 && <div style={{ fontFamily: DISP, fontSize: 14, color: T.dim, padding: '20px 0', textAlign: 'center' }}>Publique um produto no catálogo para gerar as URLs.</div>}
           {promotable.map((p: any) => {
-            const promo = promoMap[p.id];
-            const url = promo && promo.webhook_url;
+            const url = whMap[p.id];
             const on = copied === p.id;
             return (
               <div key={p.id} style={{ border: `1px solid ${T.line}`, borderRadius: 14, padding: 14 }}>
@@ -234,13 +172,12 @@ function DConfig() {
                   <span style={{ flex: 1, fontFamily: MONO, fontSize: 12.5, color: url ? T.ink : T.dim, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{url || 'Gerando…'}</span>
                   <div onClick={() => url && copyWebhook(url, p.id)} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: on ? '#0E9A50' : '#fff', border: `1px solid ${on ? '#0E9A50' : T.line}`, borderRadius: 8, padding: '7px 12px', fontFamily: DISP, fontWeight: 600, fontSize: 12.5, color: on ? '#fff' : (url ? T.ink : T.dim), cursor: url ? 'pointer' : 'default' }}><Ico d={AIC.copy} size={14} c={on ? '#fff' : (url ? T.ink : T.dim)} />{on ? 'Copiado!' : 'Copiar'}</div>
                 </div>
-                {promo && <HublaProductConfig key={promo.id} promo={promo} onSaved={(np) => setPromoMap((m) => ({ ...m, [p.id]: np }))} />}
               </div>
             );
           })}
         </div>
-        <div style={{ fontFamily: DISP, fontSize: 12.5, color: T.dim, marginTop: 16, lineHeight: 1.6 }}><b style={{ color: T.ink, fontWeight: 600 }}>Como configurar:</b> 1) Copie a URL do produto. 2) Na Hubla, vá em <b style={{ color: T.ink, fontWeight: 600 }}>Integrações → Webhooks</b>, crie um webhook com essa URL e marque os eventos de <b style={{ color: T.ink, fontWeight: 600 }}>Fatura, Assinatura e Membro</b>. 3) Informe aqui o ID do produto e o tipo, e salve. Pronto — compra paga libera o acesso; reembolso ou assinatura desativada bloqueia, automaticamente.</div>
-      </div>
+        <div style={{ fontFamily: DISP, fontSize: 12.5, color: T.dim, marginTop: 16, lineHeight: 1.6 }}><b style={{ color: T.ink, fontWeight: 600 }}>Como configurar:</b> 1) Copie a URL do produto. 2) Na Kiwify, vá em <b style={{ color: T.ink, fontWeight: 600 }}>Webhooks</b> e cole. 3) Pronto — cada venda desse produto libera o acesso automaticamente.</div>
+      </Card>
     </div>
   );
 

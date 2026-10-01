@@ -30,13 +30,8 @@
 - [ ] Produtos camuflados **não** aparecem em Integrações.
 
 ## 5. Venda → acesso do comprador
-- [ ] Simular um webhook **Hubla** de staging (`invoice.payment_succeeded` na URL de webhook de um produto)
-      → o comprador recebe acesso (e-mail enviado se `RESEND_API_KEY` setado, ou **logado** se vazio) e a
-      venda aparece em Vendas.
-- [ ] Em **Integrações**, salvar o ID do produto na Hubla + tipo → reabrir confirma; evento de OUTRO
-      produto na mesma URL volta `product_mismatch` e não libera.
-- [ ] Simular `invoice.refunded` da mesma fatura → login do comprador volta **403** com a mensagem de
-      acesso encerrado; o app do aluno já aberto cai pro login com o motivo; a venda vira Reembolso.
+- [ ] Simular um webhook Kiwify de staging (URL de webhook de um produto) → o comprador recebe acesso
+      (e-mail enviado se `RESEND_API_KEY` setado, ou **logado** se vazio) e a venda aparece em Vendas.
 - [ ] **App do aluno**: abrir o magic link do comprador → app carrega o conteúdo do produto certo.
 
 ## 6. Isolamento multi-tenant
