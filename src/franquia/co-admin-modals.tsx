@@ -71,16 +71,38 @@ function ProductModal({ init, editId, onClose, onSave }) {
   );
 }
 
+// Liberação gradual: presets do prazo (dias após o início do acesso do aluno).
+const UNLOCK_PRESETS: [number, string][] = [[0, 'Na hora'], [8, '8 dias'], [15, '15 dias'], [30, '30 dias']];
 function ModuleModal({ init, editId, onClose, onSave }) {
   const [t, setT] = useStateMod(init.title);
   const [cover, setCover] = useStateMod(init.cover == null ? null : init.cover);
+  const [days, setDays] = useStateMod(String(init.unlockAfterDays || 0));
+  const n = Math.max(0, Math.min(3650, parseInt(days, 10) || 0));
   return (
-    <AdmModal title={editId ? 'Editar módulo' : 'Novo módulo'} onClose={onClose} onSave={() => onSave({ title: t || 'Novo módulo', cover })}>
+    <AdmModal title={editId ? 'Editar módulo' : 'Novo módulo'} onClose={onClose} onSave={() => onSave({ title: t || 'Novo módulo', cover, unlockAfterDays: n })}>
       <label style={admLbl}>Título do módulo</label>
       <input autoFocus value={t} onChange={(e) => setT(e.target.value)} placeholder="Ex.: Fundamentos do Vendedor Automático" style={{ ...admInput, borderColor: T.accent }} />
       <div style={{ height: 18 }}></div>
       <label style={admLbl}>Capa do módulo</label>
       <CoverField value={cover} onPick={setCover} h={110} title={t || 'Módulo'} />
+      <div style={{ height: 18 }}></div>
+      <label style={admLbl}>Liberar para o aluno</label>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+        {UNLOCK_PRESETS.map(([d, lbl]) => {
+          const on = n === d;
+          return <div key={d} onClick={() => setDays(String(d))} style={{ cursor: 'pointer', fontFamily: DISP, fontWeight: 600, fontSize: 13, padding: '8px 14px', borderRadius: 99, border: `1px solid ${on ? T.accent : T.line}`, background: on ? T.accent : '#fff', color: on ? '#fff' : T.dim }}>{lbl}</div>;
+        })}
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+          <input type="number" min={0} max={3650} value={days} onChange={(e) => setDays(e.target.value)} style={{ ...admInput, width: 84, padding: '8px 10px' } as React.CSSProperties} />
+          <span style={{ fontFamily: DISP, fontSize: 13, color: T.dim }}>dias após a compra</span>
+        </div>
+      </div>
+      <div style={{ fontFamily: DISP, fontSize: 12.5, color: T.dim, marginTop: 8, lineHeight: 1.55 }}>
+        {n > 0
+          ? <>O aluno vê o módulo com cadeado e a data de liberação; o conteúdo só chega a ele <b style={{ color: T.ink }}>{n} dia{n > 1 ? 's' : ''}</b> depois da compra.</>
+          : <>O módulo abre assim que a compra é aprovada.</>}
+        {' '}Quem pode pedir reembolso tem 7 dias — com <b style={{ color: T.ink }}>8 dias ou mais</b>, o conteúdo fica guardado até o prazo acabar. Alunos que já tinham acesso antes desta regra continuam com tudo liberado.
+      </div>
     </AdmModal>
   );
 }

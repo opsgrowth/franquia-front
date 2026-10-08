@@ -83,6 +83,8 @@ export async function loadProductModules(appId: string): Promise<any[]> {
     id: m.id,
     title: m.title,
     cover: isB64(m.cover_image_url) ? m.cover_image_url : mi,
+    // liberação gradual: dias após o início do acesso do aluno (null = libera na hora)
+    unlockAfterDays: m.unlock_after_days ?? null,
     lessons: (m.lessons || []).map((l: any, li: number) => {
       const blocks = (l.blocks || []).map(mapBlock);
       // tipo pelo conteúdo real: vídeo/áudio se houver bloco de mídia; senão LEITURA (texto)
@@ -122,7 +124,7 @@ export async function ensureProductModules(id: string): Promise<void> {
 export async function createModule(appId: string, data: { title: string; summary?: string | null; position?: number }): Promise<any> {
   return api(`/apps/${appId}/modules`, { method: 'POST', body: { title: data.title, summary: data.summary ?? null, position: data.position ?? 0 } });
 }
-export async function patchModule(moduleId: string, fields: { title?: string; summary?: string | null; cover_show_title?: boolean; position?: number }): Promise<any> {
+export async function patchModule(moduleId: string, fields: { title?: string; summary?: string | null; cover_show_title?: boolean; position?: number; unlock_after_days?: number }): Promise<any> {
   if (!isBackendId(moduleId)) return null;
   return api(`/modules/${moduleId}`, { method: 'PATCH', body: fields });
 }

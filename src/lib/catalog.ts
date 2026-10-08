@@ -37,6 +37,7 @@ function mapProduct(d: any) {
     title: m.title,
     // só aceita capa base64 do backend; URL gated (/modules/..) quebraria o <img> → cai no índice
     cover: isB64(m.cover_image_url) ? m.cover_image_url : mi,
+    unlockAfterDays: m.unlock_after_days ?? null, // liberação gradual (editável no admin)
     lessons: (m.lessons || []).map((l: any, li: number) => ({
       id: l.id,
       title: l.title,

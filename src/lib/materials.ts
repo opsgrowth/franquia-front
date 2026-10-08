@@ -48,6 +48,22 @@ const MATERIALS: Record<string, ProductMaterials> = {
     criativo1: { url: `${BASE}/wefit-materiais/criativo1.mp4`, name: 'WeFit-criativo-1.mp4' },
     criativo2: { url: `${BASE}/wefit-materiais/criativo2.mp4`, name: 'WeFit-criativo-2.mp4' },
   },
+  // Guia de Cabelos Incríveis — b8470afa-0d86-4f4b-915e-1b3c015c6a8e
+  'b8470afa-0d86-4f4b-915e-1b3c015c6a8e': {
+    imagem: { url: `${BASE}/cabelos-materiais/Imagem_o_produto.png`, name: 'Cabelos-imagem-do-produto.png' },
+    banner: { url: `${BASE}/cabelos-materiais/checkout.png`, name: 'Cabelos-banner-de-checkout.png' },
+    selo: { url: `${BASE}/cabelos-materiais/selo_de_garantia.png`, name: 'Cabelos-selo-de-garantia.png' },
+  },
+  // Natural Skin — cf8ef2c6-802c-4126-8a57-6916c957b362
+  'cf8ef2c6-802c-4126-8a57-6916c957b362': {
+    html: { url: `${BASE}/naturalskin-materiais/natural-skin.html`, name: 'NaturalSkin-pagina-de-vendas.html' },
+    imagem: { url: `${BASE}/naturalskin-materiais/Imagem_o_produto.png`, name: 'NaturalSkin-imagem-do-produto.png' },
+    banner: { url: `${BASE}/naturalskin-materiais/checkout.png`, name: 'NaturalSkin-banner-de-checkout.png' },
+    selo: { url: `${BASE}/naturalskin-materiais/selo_de_garantia.png`, name: 'NaturalSkin-selo-de-garantia.png' },
+    criativo1: { url: `${BASE}/naturalskin-materiais/criativo1.mp4`, name: 'NaturalSkin-criativo-1.mp4' },
+    criativo2: { url: `${BASE}/naturalskin-materiais/criativo2.mp4`, name: 'NaturalSkin-criativo-2.mp4' },
+    criativo3: { url: `${BASE}/naturalskin-materiais/criativo3.mp4`, name: 'NaturalSkin-criativo-3.mp4' },
+  },
 };
 
 export function materialsFor(appId: any): ProductMaterials {

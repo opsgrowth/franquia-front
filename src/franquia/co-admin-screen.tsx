@@ -123,11 +123,12 @@ function ProductsAdminScreen({ scope, sharedProducts, setSharedProducts }) {
         const pos = cur ? (cur.modules || []).length : 0;
         const m = await createModule(pid, { title: data.title || 'Novo módulo', position: pos });
         persistModuleCover(m.id, data.cover);
-        setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, modules: [...(p.modules || []), { id: m.id, title: m.title || data.title, cover: data.cover, lessons: [] }], modulesCount: (p.modulesCount || 0) + 1 } : p)));
+        if (data.unlockAfterDays) await patchModule(m.id, { unlock_after_days: data.unlockAfterDays });
+        setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, modules: [...(p.modules || []), { id: m.id, title: m.title || data.title, cover: data.cover, unlockAfterDays: data.unlockAfterDays || null, lessons: [] }], modulesCount: (p.modulesCount || 0) + 1 } : p)));
         flashSaved();
       } catch (e) { alert('Não consegui salvar o módulo no servidor. Tente de novo.'); console.warn('criar módulo:', e); }
     } else {
-      setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, modules: [...p.modules, { id: aid('m'), title: data.title, cover: data.cover, lessons: [] }] } : p)));
+      setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, modules: [...p.modules, { id: aid('m'), title: data.title, cover: data.cover, unlockAfterDays: data.unlockAfterDays || null, lessons: [] }] } : p)));
     }
   };
   const updateModule = (pid, mid, data) => {
@@ -137,7 +138,12 @@ function ProductsAdminScreen({ scope, sharedProducts, setSharedProducts }) {
     if (isFranquia && isBackendId(mid) && (!m0 || data.title !== m0.title)) {
       patchModule(mid, { title: data.title }).then(flashSaved).catch((e) => { alert('Não consegui salvar o nome do módulo.'); console.warn('renomear módulo:', e); });
     }
-    setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, modules: p.modules.map((m) => (m.id === mid ? { ...m, title: data.title, cover: data.cover } : m)) } : p)));
+    // liberação gradual: só manda quando mudou (0 = libera na hora)
+    const days = data.unlockAfterDays || 0;
+    if (isFranquia && isBackendId(mid) && days !== ((m0 && m0.unlockAfterDays) || 0)) {
+      patchModule(mid, { unlock_after_days: days }).then(flashSaved).catch((e) => { alert('Não consegui salvar a liberação do módulo.'); console.warn('liberação do módulo:', e); });
+    }
+    setProducts((ps) => ps.map((p) => (p.id === pid ? { ...p, modules: p.modules.map((m) => (m.id === mid ? { ...m, title: data.title, cover: data.cover, unlockAfterDays: days || null } : m)) } : p)));
   };
   const delModule = (pid, mid) => {
     if (isFranquia && isBackendId(mid)) deleteModule(mid).then(flashSaved).catch((e) => { alert('Não consegui excluir o módulo.'); console.warn('excluir módulo:', e); });
@@ -355,9 +361,9 @@ function ProductsAdminScreen({ scope, sharedProducts, setSharedProducts }) {
                   <div style={{ width: 56, flex: '0 0 auto' }}><CoverField value={m.cover == null ? null : m.cover} onPick={(v) => setModCover(sel.id, m.id, v)} h={40} radius={9} /></div>
                   <div style={{ flex: 1, minWidth: 0, cursor: 'pointer' }} onClick={() => setExpanded((e) => ({ ...e, [m.id]: !open }))}>
                     <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 16, color: T.ink }}><span style={{ color: sel.color }}>{String(mi + 1).padStart(2, '0')}</span> · {m.title}</div>
-                    <div style={{ fontFamily: MONO, fontSize: 11.5, color: T.dim, marginTop: 2 }}>{m.lessons.length} aulas · {dur} min</div>
+                    <div style={{ fontFamily: MONO, fontSize: 11.5, color: T.dim, marginTop: 2 }}>{m.lessons.length} aulas · {dur} min{m.unlockAfterDays > 0 && <span style={{ marginLeft: 8, color: T.accentDeep, fontWeight: 600 }}>· libera no dia {m.unlockAfterDays}</span>}</div>
                   </div>
-                  <div onClick={() => setModal({ type: 'module', editId: m.id, data: { title: m.title, cover: m.cover } })} style={{ cursor: 'pointer', width: 34, height: 34, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ico d={AIC.pencil} size={16} c={T.dim} /></div>
+                  <div onClick={() => setModal({ type: 'module', editId: m.id, data: { title: m.title, cover: m.cover, unlockAfterDays: m.unlockAfterDays || 0 } })} style={{ cursor: 'pointer', width: 34, height: 34, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ico d={AIC.pencil} size={16} c={T.dim} /></div>
                   <div onClick={() => delModule(sel.id, m.id)} style={{ cursor: 'pointer', width: 34, height: 34, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ico d={AIC.trash} size={16} c={T.dim} /></div>
                 </div>
                 {open && (

@@ -47,6 +47,13 @@ export function StudentApp() {
       .catch((e) => {
         if (!alive) return;
         const is401 = String(e?.message || '').includes('401');
+        // 403 = acesso encerrado (reembolso / assinatura desativada): volta pro login com o motivo
+        if (String(e?.message || '').includes('403')) {
+          clearStudentToken();
+          setMsg(e?.detail || 'Seu acesso a este produto não está ativo.');
+          setState('login');
+          return;
+        }
         setState('error');
         setMsg(is401 ? 'Seu link expirou. Peça um novo acesso ao suporte.' : 'Não conseguimos carregar seu produto. Tente abrir o link de novo.');
       });

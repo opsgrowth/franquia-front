@@ -54,7 +54,12 @@ async function sfetch(path: string, token: string): Promise<any> {
     headers: { Authorization: `Bearer ${token}` },
     cache: 'no-store',  // app do aluno NUNCA serve conteudo/banner/capa do cache HTTP
   });
-  if (!res.ok) throw new Error(`${res.status}`);
+  if (!res.ok) {
+    // mensagem começa pelo status (quem chama testa '401'/'403'); `detail` = texto do backend
+    const err: any = new Error(`${res.status}`);
+    try { const j = await res.json(); if (j && j.detail) err.detail = j.detail; } catch (e) {}
+    throw err;
+  }
   return res.json();
 }
 
@@ -95,7 +100,12 @@ export async function loadStudentCourse(token: string): Promise<{ student: any; 
       title: m.title,
       coverImg: isB64(m.cover_image_url) ? m.cover_image_url : null,
       cover: mi,
+      // liberação gradual: módulo travado chega SEM blocos (o servidor não os envia)
+      dripLocked: !!m.locked,
+      unlockAt: m.unlock_at || null,
       lessons: (m.lessons || []).map((l: any, li: number) => ({
+        dripLocked: !!m.locked,
+        unlockAt: m.unlock_at || null,
         id: l.id,
         title: l.title,
         type: 'video',
