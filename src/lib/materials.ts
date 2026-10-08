@@ -50,9 +50,13 @@ const MATERIALS: Record<string, ProductMaterials> = {
   },
   // Guia de Cabelos Incríveis — b8470afa-0d86-4f4b-915e-1b3c015c6a8e
   'b8470afa-0d86-4f4b-915e-1b3c015c6a8e': {
+    html: { url: `${BASE}/cabelos-materiais/guia-cabelos.html`, name: 'Cabelos-pagina-de-vendas.html' },
     imagem: { url: `${BASE}/cabelos-materiais/Imagem_o_produto.png`, name: 'Cabelos-imagem-do-produto.png' },
     banner: { url: `${BASE}/cabelos-materiais/checkout.png`, name: 'Cabelos-banner-de-checkout.png' },
     selo: { url: `${BASE}/cabelos-materiais/selo_de_garantia.png`, name: 'Cabelos-selo-de-garantia.png' },
+    criativo1: { url: `${BASE}/cabelos-materiais/criativo1.mp4`, name: 'Cabelos-criativo-1.mp4' },
+    criativo2: { url: `${BASE}/cabelos-materiais/criativo2.mp4`, name: 'Cabelos-criativo-2.mp4' },
+    criativo3: { url: `${BASE}/cabelos-materiais/criativo3.mp4`, name: 'Cabelos-criativo-3.mp4' },
   },
   // Natural Skin — cf8ef2c6-802c-4126-8a57-6916c957b362
   'cf8ef2c6-802c-4126-8a57-6916c957b362': {
