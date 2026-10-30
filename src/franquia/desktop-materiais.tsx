@@ -31,7 +31,7 @@ const WH_PLATFORMS: { key: string; label: string; title: string; detail: string 
     key: 'hotmart',
     label: 'Hotmart',
     title: 'Cole esta URL de webhook na Hotmart',
-    detail: 'Na Hotmart: Ferramentas → Webhook (Postback) → novo webhook, evento Compra aprovada, e cole a URL:',
+    detail: 'Na Hotmart: Ferramentas → Webhook → Cadastrar Webhook. Selecione o produto, use a versão 2.0.0, marque o evento Compra aprovada e cole a URL:',
   },
 ];
 
