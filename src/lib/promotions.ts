@@ -20,6 +20,16 @@ export async function getWebhookUrl(appId?: string): Promise<string> {
   return promo.webhook_url;
 }
 
+// Mapa { kiwify, hubla, hotmart } da promoção (MESMO token, caminhos diferentes) —
+// o seletor de plataforma na tela de Materiais escolhe qual mostrar. Mesmo fluxo
+// idempotente do getWebhookUrl. Fallback defensivo: backend sem webhook_urls → só Kiwify.
+export async function getWebhookUrls(appId?: string): Promise<Record<string, string>> {
+  const id = appId || firstRealProductId();
+  if (!id) throw new Error('nenhum produto real para promover');
+  const promo: any = await api('/promotions', { method: 'POST', body: { app_id: id } });
+  return promo.webhook_urls || (promo.webhook_url ? { kiwify: promo.webhook_url } : {});
+}
+
 // { [appId]: webhook_url } para TODOS os ids de uma vez. Usa GET /promotions (lista as
 // promoções do franqueado) e cria a promoção (POST, idempotente) só para as faltantes.
 // Fail-open: erro numa não derruba as outras.

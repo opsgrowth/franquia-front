@@ -2,13 +2,38 @@ import React from 'react';
 import { AIC } from './author-kit';
 import { PhonePreview } from './author-preview';
 import { DISP, IC, Ico, MONO, Mark, T, useIsMobile } from './kit';
-import { getWebhookUrl } from '../lib/promotions';
+import { getWebhookUrls } from '../lib/promotions';
 import { isCredentialing } from '../lib/credentialing';
 import { materialsFor, dlHref } from '../lib/materials';
 
 // 3 cards complementares (Copy / Artes / Roteiros) escondidos p/ o lançamento.
 // Reversível: troque para true e eles reaparecem.
 const SHOW_EXTRA_COMP = false;
+
+// Plataformas do seletor de webhook (mesmo token, caminhos diferentes — ver webhook_urls).
+// Config única (padrão do SUPPORT_URL em co-tabs.tsx): rótulo + título + instrução do passo 2.
+// ATENÇÃO: os caminhos de menu de Hubla/Hotmart vieram do produto e NÃO foram verificados nos
+// painéis por este código — confirmar antes de divulgar (ajuste de 1 linha aqui se mudar).
+const WH_PLATFORMS: { key: string; label: string; title: string; detail: string }[] = [
+  {
+    key: 'kiwify',
+    label: 'Kiwify',
+    title: 'Cole esta URL de webhook na Kiwify',
+    detail: 'Na Kiwify: Apps → Webhooks → novo webhook, evento compra aprovada, e cole a URL:',
+  },
+  {
+    key: 'hubla',
+    label: 'Hubla',
+    title: 'Cole esta URL de webhook na Hubla',
+    detail: 'Na Hubla: Integrações → Webhooks → nova regra, evento de compra aprovada, e cole a URL:',
+  },
+  {
+    key: 'hotmart',
+    label: 'Hotmart',
+    title: 'Cole esta URL de webhook na Hotmart',
+    detail: 'Na Hotmart: Ferramentas → Webhook (Postback) → novo webhook, evento Compra aprovada, e cole a URL:',
+  },
+];
 
 // Kit de Vendas (contextual, por produto da Franquia) — aba Materiais + Prévia.
 // Reusa T/DISP/MONO/Ico/IC/AIC/Mark + PhonePreview.
@@ -24,15 +49,21 @@ function MaterialsSheet({ item, course, onClose }) {
   // URL de webhook REAL desta promoção (franqueado + este produto). Colada na Kiwify.
   const appId = item && ((item.raw && item.raw.id) || item.id);
   const mats = materialsFor(appId); // materiais de download deste produto (URLs públicas)
-  const [webhookUrl, setWebhookUrl] = React.useState('');
+  // Mapa { kiwify, hubla, hotmart } (mesmo token). O seletor escolhe qual mostrar; trocar
+  // de plataforma NÃO chama o backend — o mapa já veio de uma vez. Default 'kiwify'
+  // preserva o comportamento de hoje.
+  const [urls, setUrls] = React.useState<Record<string, string>>({});
+  const [platform, setPlatform] = React.useState('kiwify');
   const [whLoading, setWhLoading] = React.useState(true);
   React.useEffect(() => {
     let alive = true; setWhLoading(true);
-    getWebhookUrl(appId)
-      .then((u) => { if (alive) { setWebhookUrl(u); setWhLoading(false); } })
-      .catch(() => { if (alive) { setWebhookUrl(''); setWhLoading(false); } });
+    getWebhookUrls(appId)
+      .then((m) => { if (alive) { setUrls(m || {}); setWhLoading(false); } })
+      .catch(() => { if (alive) { setUrls({}); setWhLoading(false); } });
     return () => { alive = false; };
   }, [appId]);
+  const webhookUrl = urls[platform] || '';
+  const plat = WH_PLATFORMS.find((p) => p.key === platform) || WH_PLATFORMS[0];
   const StepNum = ({ n }) => <div style={{ width: 26, height: 26, borderRadius: '50%', background: T.accent, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: DISP, fontWeight: 700, fontSize: 13, flex: '0 0 auto' }}>{n}</div>;
   const Step = ({ n, title, desc }) => (
     <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
@@ -103,8 +134,14 @@ function MaterialsSheet({ item, course, onClose }) {
               <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                 <StepNum n={2} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 15.5, color: T.ink }}>Cole esta URL de webhook na Kiwify</div>
-                  <div style={{ fontFamily: DISP, fontSize: 13, color: T.dim, marginTop: 3, lineHeight: 1.5 }}>Na Kiwify: <b style={{ color: T.ink, fontWeight: 600 }}>Apps → Webhooks</b> → novo webhook, evento <b style={{ color: T.ink, fontWeight: 600 }}>compra aprovada</b>, e cole a URL:</div>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    {WH_PLATFORMS.map((p) => {
+                      const on = platform === p.key;
+                      return <div key={p.key} onClick={() => setPlatform(p.key)} style={{ fontFamily: DISP, fontWeight: 600, fontSize: 12.5, padding: '6px 13px', borderRadius: 8, cursor: 'pointer', background: on ? T.accent : '#fff', color: on ? '#fff' : T.dim, border: `1px solid ${on ? T.accent : T.line}` }}>{p.label}</div>;
+                    })}
+                  </div>
+                  <div style={{ fontFamily: DISP, fontWeight: 700, fontSize: 15.5, color: T.ink, marginTop: 12 }}>{plat.title}</div>
+                  <div style={{ fontFamily: DISP, fontSize: 13, color: T.dim, marginTop: 3, lineHeight: 1.5 }}>{plat.detail}</div>
                   <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
                     <div style={{ flex: 1, minWidth: 0, fontFamily: MONO, fontSize: 12.5, color: T.ink, background: T.paper, border: `1px solid ${T.line}`, borderRadius: 10, padding: '13px 14px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{whLoading ? 'Gerando sua URL…' : (webhookUrl || 'Erro ao gerar — recarregue a página.')}</div>
                     <div onClick={() => webhookUrl && copy('wh', webhookUrl)} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, cursor: webhookUrl ? 'pointer' : 'default', background: T.accent, color: '#fff', borderRadius: 10, padding: '0 18px', fontFamily: DISP, fontWeight: 700, fontSize: 13.5, opacity: webhookUrl ? 1 : 0.5, flex: '0 0 auto' }}><Ico d={CP} size={15} c="#fff" />{copied === 'wh' ? 'Copiado!' : 'Copiar'}</div>
